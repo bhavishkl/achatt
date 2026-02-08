@@ -5,6 +5,7 @@ import type {
   WeekOffGroup,
   HolidayGroup,
   LeaveGroup,
+  LeaveRecord,
   ShiftGroup,
   HolidayEntry,
 } from "./types";
@@ -52,6 +53,11 @@ interface AppState {
   updateShiftGroup: (id: string, g: Partial<Omit<ShiftGroup, "id">>) => void;
   deleteShiftGroup: (id: string) => void;
 
+  // --- Leave Records (per-date) ---
+  leaveRecords: LeaveRecord[];
+  addLeaveRecord: (employeeId: string, date: string, reason: string) => void;
+  removeLeaveRecord: (id: string) => void;
+
   // --- Group membership helpers ---
   addEmployeeToGroup: (
     groupType: "weekoff" | "holiday" | "leave" | "shift",
@@ -89,7 +95,7 @@ export const useAppStore = create<AppState>()(
       deleteEmployee: (id) =>
         set((s) => ({
           employees: s.employees.filter((emp) => emp.id !== id),
-          // Also remove from all groups
+          // Also remove from all groups and leave records
           weekOffGroups: s.weekOffGroups.map((g) => ({
             ...g,
             employeeIds: g.employeeIds.filter((eid) => eid !== id),
@@ -106,6 +112,7 @@ export const useAppStore = create<AppState>()(
             ...g,
             employeeIds: g.employeeIds.filter((eid) => eid !== id),
           })),
+          leaveRecords: s.leaveRecords.filter((r) => r.employeeId !== id),
         })),
 
       // ---- Week-Off Groups ----
@@ -176,6 +183,20 @@ export const useAppStore = create<AppState>()(
           shiftGroups: s.shiftGroups.filter((g) => g.id !== id),
         })),
 
+      // ---- Leave Records (per-date) ----
+      leaveRecords: [],
+      addLeaveRecord: (employeeId, date, reason) =>
+        set((s) => ({
+          leaveRecords: [
+            ...s.leaveRecords,
+            { id: uid(), employeeId, date, reason },
+          ],
+        })),
+      removeLeaveRecord: (id) =>
+        set((s) => ({
+          leaveRecords: s.leaveRecords.filter((r) => r.id !== id),
+        })),
+
       // ---- Group membership ----
       addEmployeeToGroup: (groupType, groupId, employeeId) =>
         set((s) => {
@@ -226,10 +247,14 @@ export function computeAttendanceReport(
   holidayGroups: HolidayGroup[],
   leaveGroups: LeaveGroup[],
   shiftGroups: ShiftGroup[],
+  leaveRecords: LeaveRecord[],
   year: number,
   month: number, // 0-based
 ) {
   const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+  // Build a YYYY-MM prefix for filtering leave records
+  const monthPrefix = `${year}-${String(month + 1).padStart(2, "0")}`;
 
   return employees.map((emp) => {
     // Week-offs for this employee
@@ -256,11 +281,17 @@ export function computeAttendanceReport(
       }).length;
     }
 
-    // Leaves
-    const empLeave = leaveGroups.find((g) =>
+    // Leaves – count actual leave records for this employee in the month
+    const leaves = leaveRecords.filter(
+      (r) => r.employeeId === emp.id && r.date.startsWith(monthPrefix),
+    ).length;
+
+    // Also check leave group allowance (for reference, but actual count from records)
+    const empLeaveGroup = leaveGroups.find((g) =>
       g.employeeIds.includes(emp.id),
     );
-    const leaves = empLeave ? empLeave.leavesPerMonth : 0;
+    const _leaveAllowance = empLeaveGroup ? empLeaveGroup.leavesPerMonth : 0;
+    void _leaveAllowance; // available for future use
 
     // Shift
     const empShift = shiftGroups.find((g) =>

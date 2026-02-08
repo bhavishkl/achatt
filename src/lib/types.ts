@@ -41,6 +41,14 @@ export interface LeaveGroup {
   employeeIds: string[];
 }
 
+// Per-date leave record for individual employees
+export interface LeaveRecord {
+  id: string;
+  employeeId: string;
+  date: string; // YYYY-MM-DD
+  reason: string;
+}
+
 export interface ShiftGroup {
   id: string;
   name: string;

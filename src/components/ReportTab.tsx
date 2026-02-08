@@ -14,6 +14,7 @@ export default function ReportTab() {
   const holidayGroups = useAppStore((s) => s.holidayGroups);
   const leaveGroups = useAppStore((s) => s.leaveGroups);
   const shiftGroups = useAppStore((s) => s.shiftGroups);
+  const leaveRecords = useAppStore((s) => s.leaveRecords);
 
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
@@ -27,10 +28,11 @@ export default function ReportTab() {
         holidayGroups,
         leaveGroups,
         shiftGroups,
+        leaveRecords,
         year,
         month,
       ),
-    [employees, weekOffGroups, holidayGroups, leaveGroups, shiftGroups, year, month],
+    [employees, weekOffGroups, holidayGroups, leaveGroups, shiftGroups, leaveRecords, year, month],
   );
 
   const totalNetSalary = report.reduce((sum, r) => sum + r.netSalary, 0);

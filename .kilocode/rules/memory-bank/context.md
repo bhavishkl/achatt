@@ -23,6 +23,9 @@ The app is a single-page Next.js application with a tab-based interface for mana
 - [x] Group-employee assignment (add/remove employees to/from groups)
 - [x] Monthly Attendance Report with auto-calculated working days & salary
 - [x] Tab-based homepage interface with 6 tabs
+- [x] Redesigned Leave tab: daily employee view with date picker, search, mark leave/present per employee
+- [x] Added LeaveRecord type for per-date leave tracking
+- [x] Updated report computation to use actual leave records instead of static monthly count
 
 ## Current Structure
 
