@@ -8,6 +8,7 @@ import HolidayTab from "@/components/HolidayTab";
 import LeaveTab from "@/components/LeaveTab";
 import ShiftTab from "@/components/ShiftTab";
 import ReportTab from "@/components/ReportTab";
+import PunchUploadTab from "@/components/PunchUploadTab";
 
 const TABS: { key: TabKey; label: string; icon: string }[] = [
   { key: "employees", label: "Employees", icon: "👥" },
@@ -15,6 +16,7 @@ const TABS: { key: TabKey; label: string; icon: string }[] = [
   { key: "holiday", label: "Holidays", icon: "🎉" },
   { key: "leave", label: "Leaves", icon: "🏖️" },
   { key: "shift", label: "Shifts", icon: "⏰" },
+  { key: "punch", label: "Punch Upload", icon: "💼" },
   { key: "report", label: "Report", icon: "📊" },
 ];
 
@@ -64,6 +66,7 @@ export default function Home() {
         {activeTab === "holiday" && <HolidayTab />}
         {activeTab === "leave" && <LeaveTab />}
         {activeTab === "shift" && <ShiftTab />}
+        {activeTab === "punch" && <PunchUploadTab />}
         {activeTab === "report" && <ReportTab />}
       </div>
     </main>

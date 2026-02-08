@@ -8,6 +8,8 @@ import type {
   LeaveRecord,
   ShiftGroup,
   HolidayEntry,
+  PunchRecord,
+  ProcessedPunch,
 } from "./types";
 
 // ============================================================
@@ -23,6 +25,12 @@ function uid(): string {
 // Store interface
 // ============================================================
 interface AppState {
+  // --- Punch Records ---
+  punchRecords: PunchRecord[];
+  processedPunches: ProcessedPunch[];
+  addPunchRecords: (records: PunchRecord[]) => void;
+  clearPunchRecords: () => void;
+
   // --- Employees ---
   employees: Employee[];
   addEmployee: (e: Omit<Employee, "id" | "createdAt">) => void;
@@ -77,6 +85,28 @@ interface AppState {
 export const useAppStore = create<AppState>()(
   persist(
     (set) => ({
+      // ---- Punch Records ----
+      punchRecords: [],
+      processedPunches: [],
+      addPunchRecords: (records) =>
+        set((s) => {
+          // Add new records
+          const newRecords = [...s.punchRecords, ...records];
+          
+          // Process the punches
+          const processed = processPunchRecords(newRecords);
+          
+          return {
+            punchRecords: newRecords,
+            processedPunches: processed,
+          };
+        }),
+      clearPunchRecords: () =>
+        set(() => ({
+          punchRecords: [],
+          processedPunches: [],
+        })),
+
       // ---- Employees ----
       employees: [],
       addEmployee: (e) =>
@@ -239,6 +269,77 @@ const groupKeyMap: Record<
 };
 
 // ============================================================
+// Punch Record Processing
+// ============================================================
+function processPunchRecords(records: PunchRecord[]): ProcessedPunch[] {
+  // Group punches by employeeId and date
+  const grouped: Record<string, PunchRecord[]> = {};
+  
+  records.forEach((record) => {
+    const key = `${record.employeeId}-${record.date}`;
+    if (!grouped[key]) {
+      grouped[key] = [];
+    }
+    grouped[key].push(record);
+  });
+
+  // Process each group
+  return Object.keys(grouped).map((key) => {
+    const [employeeId, date] = key.split('-');
+    const punches = grouped[key];
+    
+    // Sort punches by time
+    const sortedPunches = punches.sort((a, b) => 
+      new Date(a.punchTime).getTime() - new Date(b.punchTime).getTime()
+    );
+
+    // Determine punch in and punch out
+    let punchIn: string | null = null;
+    let punchOut: string | null = null;
+
+    if (sortedPunches.length >= 2) {
+      punchIn = new Date(sortedPunches[0].punchTime).toLocaleTimeString('en-GB', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false,
+      });
+      punchOut = new Date(sortedPunches[sortedPunches.length - 1].punchTime).toLocaleTimeString('en-GB', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false,
+      });
+    } else if (sortedPunches.length === 1) {
+      punchIn = new Date(sortedPunches[0].punchTime).toLocaleTimeString('en-GB', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false,
+      });
+    }
+
+    // Determine status
+    let status: 'present' | 'absent' | 'missed';
+    if (punchIn && punchOut) {
+      status = 'present';
+    } else if (punchIn) {
+      status = 'missed';
+    } else {
+      status = 'absent';
+    }
+
+    return {
+      employeeId,
+      date,
+      punchIn,
+      punchOut,
+      status,
+    };
+  });
+}
+
+// ============================================================
 // Attendance report computation (pure function)
 // ============================================================
 export function computeAttendanceReport(
@@ -248,6 +349,7 @@ export function computeAttendanceReport(
   leaveGroups: LeaveGroup[],
   shiftGroups: ShiftGroup[],
   leaveRecords: LeaveRecord[],
+  processedPunches: ProcessedPunch[],
   year: number,
   month: number, // 0-based
 ) {

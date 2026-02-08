@@ -82,4 +82,23 @@ export type TabKey =
   | "holiday"
   | "leave"
   | "shift"
-  | "report";
+  | "report"
+  | "punch";
+
+// ---- Punch Record Types ----
+
+export interface PunchRecord {
+  id: string;
+  employeeId: string; // From Excel (e.g., "2")
+  employeeName: string; // From Excel
+  punchTime: string; // ISO datetime string
+  date: string; // YYYY-MM-DD (extracted from punchTime)
+}
+
+export interface ProcessedPunch {
+  employeeId: string;
+  date: string; // YYYY-MM-DD
+  punchIn: string | null; // ISO time string (HH:mm:ss)
+  punchOut: string | null; // ISO time string (HH:mm:ss)
+  status: 'present' | 'absent' | 'missed'; // present = both punches, missed = only one punch, absent = no punches
+}
