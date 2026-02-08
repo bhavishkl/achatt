@@ -26,6 +26,7 @@ The app is a single-page Next.js application with a tab-based interface for mana
 - [x] Redesigned Leave tab: daily employee view with date picker, search, mark leave/present per employee
 - [x] Added LeaveRecord type for per-date leave tracking
 - [x] Updated report computation to use actual leave records instead of static monthly count
+- [x] Fixed delete functionality: replaced browser `confirm()` with inline Yes/No confirmation across all tabs (Employees, Week Off, Holiday, Shift)
 
 ## Current Structure
 
