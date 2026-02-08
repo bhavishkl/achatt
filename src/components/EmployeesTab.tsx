@@ -20,6 +20,7 @@ export default function EmployeesTab() {
   const [form, setForm] = useState(emptyForm);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -174,20 +175,41 @@ export default function EmployeesTab() {
                     ₹{emp.basicSalary.toLocaleString()}
                   </td>
                   <td className="py-3 px-3 text-right">
-                    <button
-                      onClick={() => startEdit(emp)}
-                      className="text-blue-400 hover:text-blue-300 mr-3 text-xs font-medium"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => {
-                        if (confirm(`Delete ${emp.name}?`)) deleteEmployee(emp.id);
-                      }}
-                      className="text-red-400 hover:text-red-300 text-xs font-medium"
-                    >
-                      Delete
-                    </button>
+                    {confirmDeleteId === emp.id ? (
+                      <span className="inline-flex items-center gap-2">
+                        <span className="text-xs text-neutral-400">Delete?</span>
+                        <button
+                          onClick={() => {
+                            deleteEmployee(emp.id);
+                            setConfirmDeleteId(null);
+                          }}
+                          className="text-red-400 hover:text-red-300 text-xs font-medium"
+                        >
+                          Yes
+                        </button>
+                        <button
+                          onClick={() => setConfirmDeleteId(null)}
+                          className="text-neutral-400 hover:text-neutral-300 text-xs font-medium"
+                        >
+                          No
+                        </button>
+                      </span>
+                    ) : (
+                      <>
+                        <button
+                          onClick={() => startEdit(emp)}
+                          className="text-blue-400 hover:text-blue-300 mr-3 text-xs font-medium"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => setConfirmDeleteId(emp.id)}
+                          className="text-red-400 hover:text-red-300 text-xs font-medium"
+                        >
+                          Delete
+                        </button>
+                      </>
+                    )}
                   </td>
                 </tr>
               ))}

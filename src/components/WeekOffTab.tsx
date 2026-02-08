@@ -19,6 +19,7 @@ export default function WeekOffTab() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   function toggleDay(day: number) {
     setForm((f) => ({
@@ -157,20 +158,41 @@ export default function WeekOffTab() {
                     </p>
                   </div>
                   <div className="flex gap-2">
-                    <button
-                      onClick={() => startEdit(g)}
-                      className="text-blue-400 hover:text-blue-300 text-xs font-medium"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => {
-                        if (confirm(`Delete "${g.name}"?`)) deleteGroup(g.id);
-                      }}
-                      className="text-red-400 hover:text-red-300 text-xs font-medium"
-                    >
-                      Delete
-                    </button>
+                    {confirmDeleteId === g.id ? (
+                      <>
+                        <span className="text-xs text-neutral-400">Delete?</span>
+                        <button
+                          onClick={() => {
+                            deleteGroup(g.id);
+                            setConfirmDeleteId(null);
+                          }}
+                          className="text-red-400 hover:text-red-300 text-xs font-medium"
+                        >
+                          Yes
+                        </button>
+                        <button
+                          onClick={() => setConfirmDeleteId(null)}
+                          className="text-neutral-400 hover:text-neutral-300 text-xs font-medium"
+                        >
+                          No
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button
+                          onClick={() => startEdit(g)}
+                          className="text-blue-400 hover:text-blue-300 text-xs font-medium"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => setConfirmDeleteId(g.id)}
+                          className="text-red-400 hover:text-red-300 text-xs font-medium"
+                        >
+                          Delete
+                        </button>
+                      </>
+                    )}
                   </div>
                 </div>
 
