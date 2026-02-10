@@ -37,6 +37,22 @@ export default function ReportTab() {
     [employees, weekOffGroups, holidayGroups, leaveGroups, shiftGroups, leaveRecords, processedPunches, year, month],
   );
 
+  // Build days array for the selected month
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
+
+  // Quick lookup map for processed punches within the selected month
+  const punchesMap = useMemo(() => {
+    const m = new Map<string, typeof processedPunches[0]>();
+    processedPunches.forEach((p) => {
+      const d = new Date(p.date);
+      if (d.getFullYear() === year && d.getMonth() === month) {
+        m.set(`${p.employeeId}-${p.date}`, p);
+      }
+    });
+    return m;
+  }, [processedPunches, year, month]);
+
   const totalNetSalary = report.reduce((sum, r) => sum + r.netSalary, 0);
 
   return (
@@ -107,6 +123,19 @@ export default function ReportTab() {
                   <th className="text-left py-3 px-2 font-medium">ID</th>
                   <th className="text-left py-3 px-2 font-medium">Name</th>
                   <th className="text-left py-3 px-2 font-medium">Dept</th>
+
+                  {/* Per-day columns (dates as columns) */}
+                  {days.map((d) => {
+                    const dateObj = new Date(year, month, d);
+                    const dow = dateObj.toLocaleDateString(undefined, { weekday: 'short' });
+                    return (
+                      <th key={d} className="text-center py-2 px-1 font-medium text-xs uppercase">
+                        <div className="text-sm">{d}</div>
+                        <div className="text-xs text-neutral-400">{dow}</div>
+                      </th>
+                    );
+                  })}
+
                   <th className="text-right py-3 px-2 font-medium">Total</th>
                   <th className="text-right py-3 px-2 font-medium">W.Off</th>
                   <th className="text-right py-3 px-2 font-medium">Hol.</th>
@@ -124,26 +153,45 @@ export default function ReportTab() {
                     key={r.employeeId}
                     className="border-b border-neutral-800 hover:bg-neutral-800/50 transition-colors"
                   >
-                    <td className="py-3 px-2 text-neutral-300 font-mono text-xs">
+                    <td className="py-2 px-2 text-neutral-300 font-mono text-xs">
                       {r.employeeId}
                     </td>
-                    <td className="py-3 px-2 text-white">{r.employeeName}</td>
-                    <td className="py-3 px-2 text-neutral-400">{r.department}</td>
-                    <td className="py-3 px-2 text-right text-neutral-300">{r.totalDays}</td>
-                    <td className="py-3 px-2 text-right text-orange-400">{r.weekOffs}</td>
-                    <td className="py-3 px-2 text-right text-purple-400">{r.holidays}</td>
-                    <td className="py-3 px-2 text-right text-yellow-400">{r.leaves}</td>
-                    <td className="py-3 px-2 text-right text-emerald-400 font-medium">
+                    <td className="py-2 px-2 text-white">{r.employeeName}</td>
+                    <td className="py-2 px-2 text-neutral-400">{r.department}</td>
+
+                    {/* Per-day cells */}
+                    {days.map((d) => {
+                      const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                      const p = punchesMap.get(`${r.employeeId}-${dateStr}`);
+                      return (
+                        <td key={d} className="py-1 px-2 text-center align-top text-xs">
+                          {p ? (
+                            <div className="flex flex-col items-center gap-1">
+                              <div className="text-emerald-300 font-medium">{p.punchIn || '-'}</div>
+                              <div className="text-neutral-400">{p.punchOut || '-'}</div>
+                            </div>
+                          ) : (
+                            <div className="text-neutral-500">-</div>
+                          )}
+                        </td>
+                      );
+                    })}
+
+                    <td className="py-2 px-2 text-right text-neutral-300">{r.totalDays}</td>
+                    <td className="py-2 px-2 text-right text-orange-400">{r.weekOffs}</td>
+                    <td className="py-2 px-2 text-right text-purple-400">{r.holidays}</td>
+                    <td className="py-2 px-2 text-right text-yellow-400">{r.leaves}</td>
+                    <td className="py-2 px-2 text-right text-emerald-400 font-medium">
                       {r.workingDays}
                     </td>
-                    <td className="py-3 px-2 text-neutral-400 text-xs">{r.shiftInfo}</td>
-                    <td className="py-3 px-2 text-right text-neutral-300">
+                    <td className="py-2 px-2 text-neutral-400 text-xs">{r.shiftInfo}</td>
+                    <td className="py-2 px-2 text-right text-neutral-300">
                       ₹{r.basicSalary.toLocaleString()}
                     </td>
-                    <td className="py-3 px-2 text-right text-neutral-400">
+                    <td className="py-2 px-2 text-right text-neutral-400">
                       ₹{r.perDaySalary.toLocaleString()}
                     </td>
-                    <td className="py-3 px-2 text-right text-emerald-400 font-semibold">
+                    <td className="py-2 px-2 text-right text-emerald-400 font-semibold">
                       ₹{r.netSalary.toLocaleString()}
                     </td>
                   </tr>

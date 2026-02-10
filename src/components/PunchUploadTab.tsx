@@ -33,9 +33,10 @@ export default function PunchUploadTab() {
 
     try {
       const data = await file.arrayBuffer();
-      const workbook = XLSX.read(data);
+      // Tell XLSX to parse dates as JS Date objects when possible
+      const workbook = XLSX.read(data, { type: "array", cellDates: true });
       const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-      const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+      const jsonData = XLSX.utils.sheet_to_json(firstSheet, { defval: null });
 
       // Parse Excel data to PunchRecords
       const punchRecords: PunchRecord[] = [];
@@ -83,30 +84,78 @@ export default function PunchUploadTab() {
           }
         }
 
+        // Get raw punch time value (could be string, Date, or Excel serial number)
+        let rawPunch: unknown;
         if (row["Punch Time"] !== undefined) {
-          punchTime = String(row["Punch Time"]);
+          rawPunch = row["Punch Time"];
         } else if (row["PunchTime"] !== undefined) {
-          punchTime = String(row["PunchTime"]);
+          rawPunch = row["PunchTime"];
         } else if (row["punch_time"] !== undefined) {
-          punchTime = String(row["punch_time"]);
+          rawPunch = row["punch_time"];
         } else {
           const keys = Object.keys(row);
           if (keys[2]) {
-            punchTime = String(row[keys[2]]);
+            rawPunch = row[keys[2]];
           }
         }
 
-        // Parse punch time
+        // Helper to convert Excel numeric date serial to JS Date
+        const excelSerialToDate = (serial: number) => {
+          // Excel epoch starts at 1899-12-30
+          const excelEpoch = new Date(Date.UTC(1899, 11, 30));
+          const ms = Math.round(serial * 24 * 60 * 60 * 1000);
+          return new Date(excelEpoch.getTime() + ms);
+        };
+
+        // Parse punch time into a Date
         let date: Date;
-        if (/^\d{4}\/\d{1,2}\/\d{1,2} \d{1,2}:\d{1,2}$/.test(punchTime)) {
-          // Format: 2026/1/9 10:03
-          const [datePart, timePart] = punchTime.split(' ');
-          const [year, month, day] = datePart.split('/').map(Number);
-          const [hours, minutes] = timePart.split(':').map(Number);
-          date = new Date(year, month - 1, day, hours, minutes);
+        if (rawPunch instanceof Date) {
+          date = rawPunch;
+        } else if (typeof rawPunch === 'number') {
+          date = excelSerialToDate(rawPunch);
         } else {
-          // Try parsing as Date
-          date = new Date(punchTime);
+          const punchStr = String(rawPunch || '').trim();
+
+          // Try ISO/standard parse first
+          const maybeDate = new Date(punchStr);
+          if (!isNaN(maybeDate.getTime())) {
+            date = maybeDate;
+          } else {
+            // Match formats like "01/09/2026 10:03" or "1/9/2026 10:03"
+            const m = punchStr.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})[ T](\d{1,2}):(\d{2})(?::(\d{2}))?$/);
+            if (m) {
+              const p1 = parseInt(m[1], 10);
+              const p2 = parseInt(m[2], 10);
+              let year = parseInt(m[3], 10);
+              if (year < 100) year += 2000;
+              const hours = parseInt(m[4], 10);
+              const minutes = parseInt(m[5], 10);
+              const seconds = m[6] ? parseInt(m[6], 10) : 0;
+
+              // Decide day/month ordering:
+              // - if p1 > 12 => day/month (DD/MM/YYYY)
+              // - else if p2 > 12 => month/day (MM/DD/YYYY)
+              // - otherwise default to day/month (DD/MM/YYYY)
+              let day = p1;
+              let month = p2;
+              if (p1 <= 12 && p2 > 12) {
+                day = p2;
+                month = p1;
+              } else if (p1 <= 12 && p2 <= 12) {
+                // ambiguous, assume day/month (common outside US)
+                day = p1;
+                month = p2;
+              } else if (p1 > 12) {
+                day = p1;
+                month = p2;
+              }
+
+              date = new Date(year, month - 1, day, hours, minutes, seconds);
+            } else {
+              // final fallback
+              date = new Date(punchStr);
+            }
+          }
         }
 
         // Validate

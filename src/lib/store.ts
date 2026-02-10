@@ -285,7 +285,10 @@ function processPunchRecords(records: PunchRecord[]): ProcessedPunch[] {
 
   // Process each group
   return Object.keys(grouped).map((key) => {
-    const [employeeId, date] = key.split('-');
+    // Split only at the first '-' to preserve the full date (YYYY-MM-DD)
+    const parts = key.split(/-(.+)/);
+    const employeeId = parts[0];
+    const date = parts[1];
     const punches = grouped[key];
     
     // Sort punches by time
