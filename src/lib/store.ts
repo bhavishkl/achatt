@@ -362,29 +362,36 @@ export function computeAttendanceReport(
   const monthPrefix = `${year}-${String(month + 1).padStart(2, "0")}`;
 
   return employees.map((emp) => {
-    // Week-offs for this employee
-    const empWeekOff = weekOffGroups.find((g) =>
-      g.employeeIds.includes(emp.id),
-    );
-    let weekOffs = 0;
+    // Week-offs for this employee — compute exact week-off dates for the month
+    const empWeekOff = weekOffGroups.find((g) => g.employeeIds.includes(emp.id));
+    const weekOffDateSet = new Set<string>();
     if (empWeekOff) {
       for (let d = 1; d <= daysInMonth; d++) {
-        const dayOfWeek = new Date(year, month, d).getDay();
-        if (empWeekOff.daysOff.includes(dayOfWeek)) weekOffs++;
+        const dateObj = new Date(year, month, d);
+        const dayOfWeek = dateObj.getDay();
+        if (empWeekOff.daysOff.includes(dayOfWeek)) {
+          weekOffDateSet.add(
+            `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, "0")}-${String(dateObj.getDate()).padStart(2, "0")}`,
+          );
+        }
       }
     }
+    const weekOffs = weekOffDateSet.size;
+    const weekOffDates = Array.from(weekOffDateSet).sort();
 
-    // Holidays for this employee in the month
-    const empHoliday = holidayGroups.find((g) =>
-      g.employeeIds.includes(emp.id),
-    );
-    let holidays = 0;
-    if (empHoliday) {
-      holidays = empHoliday.holidays.filter((h) => {
+    // Holidays for this employee in the month (aggregate across all holiday groups)
+    const holidayDateSet = new Set<string>();
+    holidayGroups.forEach((g) => {
+      if (!g.employeeIds.includes(emp.id)) return;
+      g.holidays.forEach((h) => {
         const d = new Date(h.date);
-        return d.getFullYear() === year && d.getMonth() === month;
-      }).length;
-    }
+        if (d.getFullYear() === year && d.getMonth() === month) {
+          holidayDateSet.add(h.date);
+        }
+      });
+    });
+    const holidays = holidayDateSet.size;
+    const holidayDates = Array.from(holidayDateSet).sort();
 
     // Leaves – count actual leave records for this employee in the month
     const leaves = leaveRecords.filter(
@@ -398,6 +405,31 @@ export function computeAttendanceReport(
     const _leaveAllowance = empLeaveGroup ? empLeaveGroup.leavesPerMonth : 0;
     void _leaveAllowance; // available for future use
 
+    // Build a set of dates (YYYY-MM-DD) where we have any punch record for this employee
+    const punchDateSet = new Set<string>();
+    processedPunches.forEach((pp) => {
+      if (pp.employeeId === emp.employeeId) {
+        const d = new Date(pp.date);
+        if (d.getFullYear() === year && d.getMonth() === month) {
+          punchDateSet.add(pp.date);
+        }
+      }
+    });
+
+    // Count absences: days that are NOT (holiday | week-off | leave | have a punch)
+    let absences = 0;
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dateObj = new Date(year, month, d);
+      const dateStr = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, "0")}-${String(dateObj.getDate()).padStart(2, "0")}`;
+
+      const isHoliday = holidayDateSet.has(dateStr);
+      const isWeekOff = weekOffDateSet.has(dateStr);
+      const isLeave = leaveRecords.some((lr) => lr.employeeId === emp.id && lr.date === dateStr);
+      const hasPunch = punchDateSet.has(dateStr);
+
+      if (!isHoliday && !isWeekOff && !isLeave && !hasPunch) absences++;
+    }
+
     // Shift
     const empShift = shiftGroups.find((g) =>
       g.employeeIds.includes(emp.id),
@@ -406,7 +438,9 @@ export function computeAttendanceReport(
       ? `${empShift.name} (${empShift.startTime} – ${empShift.endTime})`
       : "—";
 
-    const workingDays = Math.max(0, daysInMonth - weekOffs - holidays - leaves);
+    // Working days now treat week-offs, holidays and recorded leaves as PAID.
+    // Only true absences (calculated above) reduce payable days.
+    const workingDays = Math.max(0, daysInMonth - absences);
     const perDaySalary = emp.basicSalary / daysInMonth;
     const netSalary = perDaySalary * workingDays;
 
@@ -417,8 +451,11 @@ export function computeAttendanceReport(
       basicSalary: emp.basicSalary,
       totalDays: daysInMonth,
       weekOffs,
+      weekOffDates,
       holidays,
+      holidayDates,
       leaves,
+      absences,
       workingDays,
       perDaySalary: Math.round(perDaySalary * 100) / 100,
       netSalary: Math.round(netSalary * 100) / 100,

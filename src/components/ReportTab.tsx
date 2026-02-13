@@ -53,6 +53,13 @@ export default function ReportTab() {
     return m;
   }, [processedPunches, year, month]);
 
+  // Map external employeeId (e.g. "EMP-001") -> internal store id (emp.id)
+  const empIdToInternalId = useMemo(() => {
+    const m = new Map<string, string>();
+    employees.forEach((emp) => m.set(emp.employeeId, emp.id));
+    return m;
+  }, [employees]);
+
   const totalNetSalary = report.reduce((sum, r) => sum + r.netSalary, 0);
 
   return (
@@ -140,6 +147,7 @@ export default function ReportTab() {
                   <th className="text-right py-3 px-2 font-medium">W.Off</th>
                   <th className="text-right py-3 px-2 font-medium">Hol.</th>
                   <th className="text-right py-3 px-2 font-medium">Leave</th>
+                  <th className="text-right py-3 px-2 font-medium">Absent</th>
                   <th className="text-right py-3 px-2 font-medium">Working</th>
                   <th className="text-left py-3 px-2 font-medium">Shift</th>
                   <th className="text-right py-3 px-2 font-medium">Basic</th>
@@ -162,17 +170,61 @@ export default function ReportTab() {
                     {/* Per-day cells */}
                     {days.map((d) => {
                       const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+
+                      // Use holidayDates/weekOffDates provided by the report row (keeps counts and markers in sync)
+                      const isHoliday = r.holidayDates?.includes(dateStr);
+                      if (isHoliday) {
+                        return (
+                          <td key={d} className="py-1 px-2 text-center align-top text-xs">
+                            <div className="text-purple-300 font-medium">🎉</div>
+                            <div className="text-xs text-neutral-400">Hol.</div>
+                          </td>
+                        );
+                      }
+
+                      const isWeekOff = r.weekOffDates?.includes(dateStr);
+                      if (isWeekOff) {
+                        return (
+                          <td key={d} className="py-1 px-2 text-center align-top text-xs">
+                            <div className="text-orange-300 font-medium">🟧</div>
+                            <div className="text-xs text-neutral-400">W.Off</div>
+                          </td>
+                        );
+                      }
+
+                      // Check explicit leave records for the employee/date
+                      const internalEmpId = empIdToInternalId.get(r.employeeId);
+                      const isLeave = internalEmpId
+                        ? leaveRecords.some((lr) => lr.employeeId === internalEmpId && lr.date === dateStr)
+                        : false;
+
+                      if (isLeave) {
+                        return (
+                          <td key={d} className="py-1 px-2 text-center align-top text-xs">
+                            <div className="text-yellow-300 font-medium">🟡</div>
+                            <div className="text-xs text-neutral-400">Leave</div>
+                          </td>
+                        );
+                      }
+
+                      // Otherwise show punches if any — if none, mark absent
                       const p = punchesMap.get(`${r.employeeId}-${dateStr}`);
-                      return (
-                        <td key={d} className="py-1 px-2 text-center align-top text-xs">
-                          {p ? (
+                      if (p) {
+                        return (
+                          <td key={d} className="py-1 px-2 text-center align-top text-xs">
                             <div className="flex flex-col items-center gap-1">
                               <div className="text-emerald-300 font-medium">{p.punchIn || '-'}</div>
                               <div className="text-neutral-400">{p.punchOut || '-'}</div>
                             </div>
-                          ) : (
-                            <div className="text-neutral-500">-</div>
-                          )}
+                          </td>
+                        );
+                      }
+
+                      // No punch + not holiday/week-off/leave → mark Absent
+                      return (
+                        <td key={d} className="py-1 px-2 text-center align-top text-xs">
+                          <div className="text-red-400 font-medium">✖</div>
+                          <div className="text-xs text-neutral-400">Abs.</div>
                         </td>
                       );
                     })}
@@ -181,6 +233,7 @@ export default function ReportTab() {
                     <td className="py-2 px-2 text-right text-orange-400">{r.weekOffs}</td>
                     <td className="py-2 px-2 text-right text-purple-400">{r.holidays}</td>
                     <td className="py-2 px-2 text-right text-yellow-400">{r.leaves}</td>
+                    <td className="py-2 px-2 text-right text-red-400">{r.absences}</td>
                     <td className="py-2 px-2 text-right text-emerald-400 font-medium">
                       {r.workingDays}
                     </td>

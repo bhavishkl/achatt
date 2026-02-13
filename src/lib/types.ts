@@ -66,8 +66,11 @@ export interface AttendanceRow {
   basicSalary: number;
   totalDays: number;
   weekOffs: number;
-  holidays: number;
+  weekOffDates: string[]; // list of YYYY-MM-DD strings for week-off dates applicable to the employee
+  holidays: number; // count of holiday dates in the month
+  holidayDates: string[]; // list of YYYY-MM-DD strings for holiday dates applicable to the employee
   leaves: number;
+  absences: number; // days with no punch and not holiday/week-off/leave
   workingDays: number;
   perDaySalary: number;
   netSalary: number;
