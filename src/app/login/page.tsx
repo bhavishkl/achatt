@@ -35,9 +35,13 @@ export default function LoginPage() {
     });
     const data = await response.json();
     if (response.ok) {
+      const result = await data; // wait, data is already awaited above: const data = await response.json();
       setMessage('Sign in successful!');
       sessionStorage.setItem('isAuthenticated', 'true');
       sessionStorage.setItem('userEmail', email);
+      if (data.userId) {
+        sessionStorage.setItem('userId', data.userId);
+      }
       router.push('/');
     } else {
       setMessage(data.message || `Sign in failed: ${data.error || 'Unknown error'}`);

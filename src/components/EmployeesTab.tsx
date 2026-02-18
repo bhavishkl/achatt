@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAppStore } from "@/lib/store";
 import type { Employee } from "@/lib/types";
 
@@ -12,38 +12,135 @@ const emptyForm = {
 };
 
 export default function EmployeesTab() {
+  const companyId = useAppStore((s) => s.companyId);
   const employees = useAppStore((s) => s.employees);
-  const addEmployee = useAppStore((s) => s.addEmployee);
-  const updateEmployee = useAppStore((s) => s.updateEmployee);
-  const deleteEmployee = useAppStore((s) => s.deleteEmployee);
+  const setEmployees = useAppStore((s) => s.setEmployees);
+  const updateEmployeeStore = useAppStore((s) => s.updateEmployee);
+  const deleteEmployeeStore = useAppStore((s) => s.deleteEmployee);
 
   const [form, setForm] = useState(emptyForm);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!form.employeeId || !form.name || !form.basicSalary || !form.department) return;
-
-    if (editingId) {
-      updateEmployee(editingId, {
-        employeeId: form.employeeId,
-        name: form.name,
-        basicSalary: Number(form.basicSalary),
-        department: form.department,
-      });
-      setEditingId(null);
-    } else {
-      addEmployee({
-        employeeId: form.employeeId,
-        name: form.name,
-        basicSalary: Number(form.basicSalary),
-        department: form.department,
-      });
+  // Fetch employees
+  useEffect(() => {
+    if (companyId) {
+      setLoading(true);
+      fetch(`/api/employees?companyId=${companyId}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.employees) {
+            // Map DB snake_case to Frontend camelCase
+            const mapped = data.employees.map((e: any) => ({
+              id: e.id,
+              employeeId: e.employee_id,
+              name: e.name,
+              basicSalary: Number(e.basic_salary),
+              department: e.department,
+              createdAt: e.created_at,
+            }));
+            setEmployees(mapped);
+          }
+        })
+        .catch((err) => console.error("Error fetching employees:", err))
+        .finally(() => setLoading(false));
     }
-    setForm(emptyForm);
-    setShowForm(false);
+  }, [companyId, setEmployees]);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!form.employeeId || !form.name || !form.basicSalary || !form.department || !companyId) return;
+
+    setLoading(true);
+    try {
+      if (editingId) {
+        // Update
+        const res = await fetch(`/api/employees/${editingId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            employeeId: form.employeeId,
+            name: form.name,
+            basicSalary: Number(form.basicSalary),
+            department: form.department,
+          }),
+        });
+        const data = await res.json();
+        if (res.ok) {
+           // Update store
+           updateEmployeeStore(editingId, {
+             employeeId: form.employeeId,
+             name: form.name,
+             basicSalary: Number(form.basicSalary),
+             department: form.department,
+           });
+           setEditingId(null);
+           setShowForm(false);
+           setForm(emptyForm);
+        } else {
+            console.error("Failed to update:", data);
+            alert("Failed to update employee");
+        }
+      } else {
+        // Create
+        const res = await fetch(`/api/employees`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            companyId,
+            employeeId: form.employeeId,
+            name: form.name,
+            basicSalary: Number(form.basicSalary),
+            department: form.department,
+          }),
+        });
+        const data = await res.json();
+        if (res.ok) {
+            const newEmp = data.employee;
+             const mappedNewEmp: Employee = {
+              id: newEmp.id,
+              employeeId: newEmp.employee_id,
+              name: newEmp.name,
+              basicSalary: Number(newEmp.basic_salary),
+              department: newEmp.department,
+              createdAt: newEmp.created_at,
+            };
+            setEmployees([mappedNewEmp, ...employees]);
+            setShowForm(false);
+            setForm(emptyForm);
+        } else {
+             console.error("Failed to create:", data);
+             alert("Failed to create employee");
+        }
+      }
+    } catch (err) {
+      console.error(err);
+      alert("An error occurred");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleDelete(id: string) {
+      setLoading(true);
+      try {
+          const res = await fetch(`/api/employees/${id}`, {
+              method: 'DELETE'
+          });
+          if (res.ok) {
+              deleteEmployeeStore(id); 
+              setConfirmDeleteId(null);
+          } else {
+              alert("Failed to delete");
+          }
+      } catch (err) {
+          console.error(err);
+          alert("An error occurred");
+      } finally {
+          setLoading(false);
+      }
   }
 
   function startEdit(emp: Employee) {
@@ -130,9 +227,10 @@ export default function EmployeesTab() {
           <div className="flex gap-3">
             <button
               type="submit"
-              className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg text-sm font-medium transition-colors"
+              disabled={loading}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
             >
-              {editingId ? "Update" : "Add"}
+              {loading ? "Saving..." : (editingId ? "Update" : "Add")}
             </button>
             <button
               type="button"
@@ -145,7 +243,9 @@ export default function EmployeesTab() {
         </form>
       )}
 
-      {employees.length === 0 ? (
+      {loading && !employees.length ? (
+          <div className="text-center py-12 text-neutral-500">Loading...</div>
+      ) : employees.length === 0 ? (
         <div className="text-center py-12 text-neutral-500">
           <p className="text-lg mb-1">No employees yet</p>
           <p className="text-sm">Add your first employee to get started.</p>
@@ -179,10 +279,7 @@ export default function EmployeesTab() {
                       <span className="inline-flex items-center gap-2">
                         <span className="text-xs text-neutral-400">Delete?</span>
                         <button
-                          onClick={() => {
-                            deleteEmployee(emp.id);
-                            setConfirmDeleteId(null);
-                          }}
+                          onClick={() => handleDelete(emp.id)}
                           className="text-red-400 hover:text-red-300 text-xs font-medium"
                         >
                           Yes

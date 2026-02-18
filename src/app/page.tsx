@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import type { TabKey } from "@/lib/types";
+import type { TabKey, Company } from "@/lib/types";
+import { useAppStore } from "@/lib/store";
 import EmployeesTab from "@/components/EmployeesTab";
 import WeekOffTab from "@/components/WeekOffTab";
 import HolidayTab from "@/components/HolidayTab";
@@ -10,6 +11,7 @@ import LeaveTab from "@/components/LeaveTab";
 import ShiftTab from "@/components/ShiftTab";
 import ReportTab from "@/components/ReportTab";
 import PunchUploadTab from "@/components/PunchUploadTab";
+import CreateCompanyModal from "@/components/CreateCompanyModal";
 
 const TABS: { key: TabKey; label: string; icon: string }[] = [
   { key: "employees", label: "Employees", icon: "👥" },
@@ -25,23 +27,53 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState<TabKey>("employees");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [company, setCompany] = useState<Company | null>(null);
+  const [isCompanyModalOpen, setIsCompanyModalOpen] = useState(false);
   const router = useRouter();
+  const setCompanyId = useAppStore((s) => s.setCompanyId);
 
   useEffect(() => {
     const session = sessionStorage.getItem('isAuthenticated');
     const email = sessionStorage.getItem('userEmail');
+    const uid = sessionStorage.getItem('userId');
+
     if (session !== 'true') {
       router.push('/login');
     } else {
+      // eslint-disable-next-line
       setIsAuthenticated(true);
       setUserEmail(email);
+      setUserId(uid);
+
+      if (uid) {
+        fetch(`/api/user/company?userId=${uid}`)
+          .then((res) => res.json())
+          .then((data) => {
+            if (data.company) {
+              setCompany(data.company);
+              setCompanyId(data.company.id);
+            } else {
+              setIsCompanyModalOpen(true);
+            }
+          })
+          .catch((err) => console.error("Error fetching company:", err));
+      }
     }
-  }, [router]);
+  }, [router, setCompanyId]);
 
   const handleSignOut = () => {
     sessionStorage.removeItem('isAuthenticated');
     sessionStorage.removeItem('userEmail');
+    sessionStorage.removeItem('userId');
+    setCompanyId(null);
     router.push('/login');
+  };
+
+  const handleCompanyCreated = (newCompany: Company) => {
+    setCompany(newCompany);
+    setCompanyId(newCompany.id);
+    setIsCompanyModalOpen(false);
   };
 
   if (!isAuthenticated) {
@@ -56,12 +88,18 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-neutral-950">
+      <CreateCompanyModal
+        isOpen={isCompanyModalOpen}
+        userId={userId}
+        onCompanyCreated={handleCompanyCreated}
+      />
+      
       {/* Header */}
       <header className="bg-neutral-900 border-b border-neutral-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
           <div>
             <h1 className="text-xl sm:text-2xl font-bold text-white">
-              📋 PRESENTLY
+              {company ? `📋 ${company.name}` : "📋 PRESENTLY"}
             </h1>
             <p className="text-sm text-neutral-400 mt-1">
               Manage employees, groups, and generate monthly reports

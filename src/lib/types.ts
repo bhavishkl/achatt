@@ -2,6 +2,21 @@
 // Core Types for Attendance & Salary Management App
 // ============================================================
 
+export interface Company {
+  id: string;
+  name: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface User {
+  id: string;
+  email: string;
+  companyId: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Employee {
   id: string;
   employeeId: string; // e.g. "EMP-001"

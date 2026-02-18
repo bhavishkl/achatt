@@ -33,9 +33,14 @@ interface AppState {
 
   // --- Employees ---
   employees: Employee[];
+  setEmployees: (employees: Employee[]) => void;
   addEmployee: (e: Omit<Employee, "id" | "createdAt">) => void;
   updateEmployee: (id: string, e: Partial<Omit<Employee, "id" | "createdAt">>) => void;
   deleteEmployee: (id: string) => void;
+
+  // --- Company Context ---
+  companyId: string | null;
+  setCompanyId: (id: string | null) => void;
 
   // --- Week-Off Groups ---
   weekOffGroups: WeekOffGroup[];
@@ -109,6 +114,7 @@ export const useAppStore = create<AppState>()(
 
       // ---- Employees ----
       employees: [],
+      setEmployees: (employees) => set({ employees }),
       addEmployee: (e) =>
         set((s) => ({
           employees: [
@@ -144,6 +150,10 @@ export const useAppStore = create<AppState>()(
           })),
           leaveRecords: s.leaveRecords.filter((r) => r.employeeId !== id),
         })),
+
+      // ---- Company Context ----
+      companyId: null,
+      setCompanyId: (id) => set({ companyId: id }),
 
       // ---- Week-Off Groups ----
       weekOffGroups: [],

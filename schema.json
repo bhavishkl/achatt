@@ -1,0 +1,659 @@
+[
+  {
+    "table_name": "companies",
+    "ordinal_position": 1,
+    "column_name": "id",
+    "data_type": "uuid",
+    "character_maximum_length": "",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()"
+  },
+  {
+    "table_name": "companies",
+    "ordinal_position": 2,
+    "column_name": "name",
+    "data_type": "text",
+    "character_maximum_length": "",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "companies",
+    "ordinal_position": 3,
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "character_maximum_length": "",
+    "is_nullable": "YES",
+    "column_default": "CURRENT_TIMESTAMP"
+  },
+  {
+    "table_name": "companies",
+    "ordinal_position": 4,
+    "column_name": "updated_at",
+    "data_type": "timestamp with time zone",
+    "character_maximum_length": "",
+    "is_nullable": "YES",
+    "column_default": "CURRENT_TIMESTAMP"
+  },
+  {
+    "table_name": "employees",
+    "ordinal_position": 1,
+    "column_name": "id",
+    "data_type": "uuid",
+    "character_maximum_length": "",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()"
+  },
+  {
+    "table_name": "employees",
+    "ordinal_position": 2,
+    "column_name": "company_id",
+    "data_type": "uuid",
+    "character_maximum_length": "",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "employees",
+    "ordinal_position": 3,
+    "column_name": "employee_id",
+    "data_type": "text",
+    "character_maximum_length": "",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "employees",
+    "ordinal_position": 4,
+    "column_name": "name",
+    "data_type": "text",
+    "character_maximum_length": "",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "employees",
+    "ordinal_position": 5,
+    "column_name": "basic_salary",
+    "data_type": "numeric",
+    "character_maximum_length": "",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "employees",
+    "ordinal_position": 6,
+    "column_name": "department",
+    "data_type": "text",
+    "character_maximum_length": "",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "employees",
+    "ordinal_position": 7,
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "character_maximum_length": "",
+    "is_nullable": "YES",
+    "column_default": "CURRENT_TIMESTAMP"
+  },
+  {
+    "table_name": "employees",
+    "ordinal_position": 8,
+    "column_name": "updated_at",
+    "data_type": "timestamp with time zone",
+    "character_maximum_length": "",
+    "is_nullable": "YES",
+    "column_default": "CURRENT_TIMESTAMP"
+  },
+  {
+    "table_name": "holiday_entries",
+    "ordinal_position": 1,
+    "column_name": "id",
+    "data_type": "uuid",
+    "character_maximum_length": "",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()"
+  },
+  {
+    "table_name": "holiday_entries",
+    "ordinal_position": 2,
+    "column_name": "holiday_group_id",
+    "data_type": "uuid",
+    "character_maximum_length": "",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "holiday_entries",
+    "ordinal_position": 3,
+    "column_name": "date",
+    "data_type": "date",
+    "character_maximum_length": "",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "holiday_entries",
+    "ordinal_position": 4,
+    "column_name": "label",
+    "data_type": "text",
+    "character_maximum_length": "",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "holiday_entries",
+    "ordinal_position": 5,
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "character_maximum_length": "",
+    "is_nullable": "YES",
+    "column_default": "CURRENT_TIMESTAMP"
+  },
+  {
+    "table_name": "holiday_group_employees",
+    "ordinal_position": 1,
+    "column_name": "id",
+    "data_type": "uuid",
+    "character_maximum_length": "",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()"
+  },
+  {
+    "table_name": "holiday_group_employees",
+    "ordinal_position": 2,
+    "column_name": "holiday_group_id",
+    "data_type": "uuid",
+    "character_maximum_length": "",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "holiday_group_employees",
+    "ordinal_position": 3,
+    "column_name": "employee_id",
+    "data_type": "uuid",
+    "character_maximum_length": "",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "holiday_group_employees",
+    "ordinal_position": 4,
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "character_maximum_length": "",
+    "is_nullable": "YES",
+    "column_default": "CURRENT_TIMESTAMP"
+  },
+  {
+    "table_name": "holiday_groups",
+    "ordinal_position": 1,
+    "column_name": "id",
+    "data_type": "uuid",
+    "character_maximum_length": "",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()"
+  },
+  {
+    "table_name": "holiday_groups",
+    "ordinal_position": 2,
+    "column_name": "company_id",
+    "data_type": "uuid",
+    "character_maximum_length": "",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "holiday_groups",
+    "ordinal_position": 3,
+    "column_name": "name",
+    "data_type": "text",
+    "character_maximum_length": "",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "holiday_groups",
+    "ordinal_position": 4,
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "character_maximum_length": "",
+    "is_nullable": "YES",
+    "column_default": "CURRENT_TIMESTAMP"
+  },
+  {
+    "table_name": "holiday_groups",
+    "ordinal_position": 5,
+    "column_name": "updated_at",
+    "data_type": "timestamp with time zone",
+    "character_maximum_length": "",
+    "is_nullable": "YES",
+    "column_default": "CURRENT_TIMESTAMP"
+  },
+  {
+    "table_name": "leave_group_employees",
+    "ordinal_position": 1,
+    "column_name": "id",
+    "data_type": "uuid",
+    "character_maximum_length": "",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()"
+  },
+  {
+    "table_name": "leave_group_employees",
+    "ordinal_position": 2,
+    "column_name": "leave_group_id",
+    "data_type": "uuid",
+    "character_maximum_length": "",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "leave_group_employees",
+    "ordinal_position": 3,
+    "column_name": "employee_id",
+    "data_type": "uuid",
+    "character_maximum_length": "",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "leave_group_employees",
+    "ordinal_position": 4,
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "character_maximum_length": "",
+    "is_nullable": "YES",
+    "column_default": "CURRENT_TIMESTAMP"
+  },
+  {
+    "table_name": "leave_groups",
+    "ordinal_position": 1,
+    "column_name": "id",
+    "data_type": "uuid",
+    "character_maximum_length": "",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()"
+  },
+  {
+    "table_name": "leave_groups",
+    "ordinal_position": 2,
+    "column_name": "company_id",
+    "data_type": "uuid",
+    "character_maximum_length": "",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "leave_groups",
+    "ordinal_position": 3,
+    "column_name": "name",
+    "data_type": "text",
+    "character_maximum_length": "",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "leave_groups",
+    "ordinal_position": 4,
+    "column_name": "leaves_per_month",
+    "data_type": "integer",
+    "character_maximum_length": "",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "leave_groups",
+    "ordinal_position": 5,
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "character_maximum_length": "",
+    "is_nullable": "YES",
+    "column_default": "CURRENT_TIMESTAMP"
+  },
+  {
+    "table_name": "leave_groups",
+    "ordinal_position": 6,
+    "column_name": "updated_at",
+    "data_type": "timestamp with time zone",
+    "character_maximum_length": "",
+    "is_nullable": "YES",
+    "column_default": "CURRENT_TIMESTAMP"
+  },
+  {
+    "table_name": "leave_records",
+    "ordinal_position": 1,
+    "column_name": "id",
+    "data_type": "uuid",
+    "character_maximum_length": "",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()"
+  },
+  {
+    "table_name": "leave_records",
+    "ordinal_position": 2,
+    "column_name": "employee_id",
+    "data_type": "uuid",
+    "character_maximum_length": "",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "leave_records",
+    "ordinal_position": 3,
+    "column_name": "date",
+    "data_type": "date",
+    "character_maximum_length": "",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "leave_records",
+    "ordinal_position": 4,
+    "column_name": "reason",
+    "data_type": "text",
+    "character_maximum_length": "",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "leave_records",
+    "ordinal_position": 5,
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "character_maximum_length": "",
+    "is_nullable": "YES",
+    "column_default": "CURRENT_TIMESTAMP"
+  },
+  {
+    "table_name": "punch_records",
+    "ordinal_position": 1,
+    "column_name": "id",
+    "data_type": "uuid",
+    "character_maximum_length": "",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()"
+  },
+  {
+    "table_name": "punch_records",
+    "ordinal_position": 2,
+    "column_name": "employee_id",
+    "data_type": "uuid",
+    "character_maximum_length": "",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "punch_records",
+    "ordinal_position": 3,
+    "column_name": "punch_time",
+    "data_type": "timestamp with time zone",
+    "character_maximum_length": "",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "punch_records",
+    "ordinal_position": 4,
+    "column_name": "date",
+    "data_type": "date",
+    "character_maximum_length": "",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "punch_records",
+    "ordinal_position": 5,
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "character_maximum_length": "",
+    "is_nullable": "YES",
+    "column_default": "CURRENT_TIMESTAMP"
+  },
+  {
+    "table_name": "shift_group_employees",
+    "ordinal_position": 1,
+    "column_name": "id",
+    "data_type": "uuid",
+    "character_maximum_length": "",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()"
+  },
+  {
+    "table_name": "shift_group_employees",
+    "ordinal_position": 2,
+    "column_name": "shift_group_id",
+    "data_type": "uuid",
+    "character_maximum_length": "",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "shift_group_employees",
+    "ordinal_position": 3,
+    "column_name": "employee_id",
+    "data_type": "uuid",
+    "character_maximum_length": "",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "shift_group_employees",
+    "ordinal_position": 4,
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "character_maximum_length": "",
+    "is_nullable": "YES",
+    "column_default": "CURRENT_TIMESTAMP"
+  },
+  {
+    "table_name": "shift_groups",
+    "ordinal_position": 1,
+    "column_name": "id",
+    "data_type": "uuid",
+    "character_maximum_length": "",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()"
+  },
+  {
+    "table_name": "shift_groups",
+    "ordinal_position": 2,
+    "column_name": "company_id",
+    "data_type": "uuid",
+    "character_maximum_length": "",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "shift_groups",
+    "ordinal_position": 3,
+    "column_name": "name",
+    "data_type": "text",
+    "character_maximum_length": "",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "shift_groups",
+    "ordinal_position": 4,
+    "column_name": "start_time",
+    "data_type": "time without time zone",
+    "character_maximum_length": "",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "shift_groups",
+    "ordinal_position": 5,
+    "column_name": "end_time",
+    "data_type": "time without time zone",
+    "character_maximum_length": "",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "shift_groups",
+    "ordinal_position": 6,
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "character_maximum_length": "",
+    "is_nullable": "YES",
+    "column_default": "CURRENT_TIMESTAMP"
+  },
+  {
+    "table_name": "shift_groups",
+    "ordinal_position": 7,
+    "column_name": "updated_at",
+    "data_type": "timestamp with time zone",
+    "character_maximum_length": "",
+    "is_nullable": "YES",
+    "column_default": "CURRENT_TIMESTAMP"
+  },
+  {
+    "table_name": "users",
+    "ordinal_position": 1,
+    "column_name": "id",
+    "data_type": "uuid",
+    "character_maximum_length": "",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()"
+  },
+  {
+    "table_name": "users",
+    "ordinal_position": 2,
+    "column_name": "email",
+    "data_type": "text",
+    "character_maximum_length": "",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "users",
+    "ordinal_position": 3,
+    "column_name": "password",
+    "data_type": "text",
+    "character_maximum_length": "",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "users",
+    "ordinal_position": 4,
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "character_maximum_length": "",
+    "is_nullable": "YES",
+    "column_default": "CURRENT_TIMESTAMP"
+  },
+  {
+    "table_name": "users",
+    "ordinal_position": 5,
+    "column_name": "company_id",
+    "data_type": "uuid",
+    "character_maximum_length": "",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "users",
+    "ordinal_position": 6,
+    "column_name": "updated_at",
+    "data_type": "timestamp with time zone",
+    "character_maximum_length": "",
+    "is_nullable": "YES",
+    "column_default": "CURRENT_TIMESTAMP"
+  },
+  {
+    "table_name": "week_off_group_employees",
+    "ordinal_position": 1,
+    "column_name": "id",
+    "data_type": "uuid",
+    "character_maximum_length": "",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()"
+  },
+  {
+    "table_name": "week_off_group_employees",
+    "ordinal_position": 2,
+    "column_name": "week_off_group_id",
+    "data_type": "uuid",
+    "character_maximum_length": "",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "week_off_group_employees",
+    "ordinal_position": 3,
+    "column_name": "employee_id",
+    "data_type": "uuid",
+    "character_maximum_length": "",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "week_off_group_employees",
+    "ordinal_position": 4,
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "character_maximum_length": "",
+    "is_nullable": "YES",
+    "column_default": "CURRENT_TIMESTAMP"
+  },
+  {
+    "table_name": "week_off_groups",
+    "ordinal_position": 1,
+    "column_name": "id",
+    "data_type": "uuid",
+    "character_maximum_length": "",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()"
+  },
+  {
+    "table_name": "week_off_groups",
+    "ordinal_position": 2,
+    "column_name": "company_id",
+    "data_type": "uuid",
+    "character_maximum_length": "",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "week_off_groups",
+    "ordinal_position": 3,
+    "column_name": "name",
+    "data_type": "text",
+    "character_maximum_length": "",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "week_off_groups",
+    "ordinal_position": 4,
+    "column_name": "days_off",
+    "data_type": "ARRAY",
+    "character_maximum_length": "",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "week_off_groups",
+    "ordinal_position": 5,
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "character_maximum_length": "",
+    "is_nullable": "YES",
+    "column_default": "CURRENT_TIMESTAMP"
+  },
+  {
+    "table_name": "week_off_groups",
+    "ordinal_position": 6,
+    "column_name": "updated_at",
+    "data_type": "timestamp with time zone",
+    "character_maximum_length": "",
+    "is_nullable": "YES",
+    "column_default": "CURRENT_TIMESTAMP"
+  }
+]
