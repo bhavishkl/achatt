@@ -44,18 +44,21 @@ interface AppState {
 
   // --- Week-Off Groups ---
   weekOffGroups: WeekOffGroup[];
+  setWeekOffGroups: (groups: WeekOffGroup[]) => void;
   addWeekOffGroup: (g: Omit<WeekOffGroup, "id" | "employeeIds">) => void;
   updateWeekOffGroup: (id: string, g: Partial<Omit<WeekOffGroup, "id">>) => void;
   deleteWeekOffGroup: (id: string) => void;
 
   // --- Holiday Groups ---
   holidayGroups: HolidayGroup[];
+  setHolidayGroups: (groups: HolidayGroup[]) => void;
   addHolidayGroup: (g: Omit<HolidayGroup, "id" | "employeeIds">) => void;
   updateHolidayGroup: (id: string, g: Partial<Omit<HolidayGroup, "id">>) => void;
   deleteHolidayGroup: (id: string) => void;
 
   // --- Leave Groups ---
   leaveGroups: LeaveGroup[];
+  setLeaveGroups: (groups: LeaveGroup[]) => void;
   addLeaveGroup: (g: Omit<LeaveGroup, "id" | "employeeIds">) => void;
   updateLeaveGroup: (id: string, g: Partial<Omit<LeaveGroup, "id">>) => void;
   deleteLeaveGroup: (id: string) => void;
@@ -69,6 +72,7 @@ interface AppState {
 
   // --- Leave Records (per-date) ---
   leaveRecords: LeaveRecord[];
+  setLeaveRecords: (records: LeaveRecord[]) => void;
   addLeaveRecord: (employeeId: string, date: string, reason: string) => void;
   removeLeaveRecord: (id: string) => void;
 
@@ -158,6 +162,7 @@ export const useAppStore = create<AppState>()(
 
       // ---- Week-Off Groups ----
       weekOffGroups: [],
+      setWeekOffGroups: (groups) => set({ weekOffGroups: groups }),
       addWeekOffGroup: (g) =>
         set((s) => ({
           weekOffGroups: [...s.weekOffGroups, { ...g, id: uid(), employeeIds: [] }],
@@ -175,6 +180,7 @@ export const useAppStore = create<AppState>()(
 
       // ---- Holiday Groups ----
       holidayGroups: [],
+      setHolidayGroups: (groups) => set({ holidayGroups: groups }),
       addHolidayGroup: (g) =>
         set((s) => ({
           holidayGroups: [...s.holidayGroups, { ...g, id: uid(), employeeIds: [] }],
@@ -192,6 +198,7 @@ export const useAppStore = create<AppState>()(
 
       // ---- Leave Groups ----
       leaveGroups: [],
+      setLeaveGroups: (groups) => set({ leaveGroups: groups }),
       addLeaveGroup: (g) =>
         set((s) => ({
           leaveGroups: [...s.leaveGroups, { ...g, id: uid(), employeeIds: [] }],
@@ -227,6 +234,7 @@ export const useAppStore = create<AppState>()(
 
       // ---- Leave Records (per-date) ----
       leaveRecords: [],
+      setLeaveRecords: (records) => set({ leaveRecords: records }),
       addLeaveRecord: (employeeId, date, reason) =>
         set((s) => ({
           leaveRecords: [

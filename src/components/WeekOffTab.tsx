@@ -1,17 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAppStore } from "@/lib/store";
 import type { WeekOffGroup } from "@/lib/types";
 
 const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 export default function WeekOffTab() {
+  const companyId = useAppStore((s) => s.companyId);
   const groups = useAppStore((s) => s.weekOffGroups);
   const employees = useAppStore((s) => s.employees);
-  const addGroup = useAppStore((s) => s.addWeekOffGroup);
-  const updateGroup = useAppStore((s) => s.updateWeekOffGroup);
-  const deleteGroup = useAppStore((s) => s.deleteWeekOffGroup);
+  const setGroups = useAppStore((s) => s.setWeekOffGroups);
   const addEmpToGroup = useAppStore((s) => s.addEmployeeToGroup);
   const removeEmpFromGroup = useAppStore((s) => s.removeEmployeeFromGroup);
 
@@ -20,6 +19,22 @@ export default function WeekOffTab() {
   const [showForm, setShowForm] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (companyId) {
+      setLoading(true);
+      fetch(`/api/week-off-groups?companyId=${companyId}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.groups) {
+            setGroups(data.groups);
+          }
+        })
+        .catch((err) => console.error("Error fetching week-off groups:", err))
+        .finally(() => setLoading(false));
+    }
+  }, [companyId, setGroups]);
 
   function toggleDay(day: number) {
     setForm((f) => ({
@@ -30,18 +45,120 @@ export default function WeekOffTab() {
     }));
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!form.name || form.daysOff.length === 0) return;
+    if (!form.name || form.daysOff.length === 0 || !companyId) return;
 
-    if (editingId) {
-      updateGroup(editingId, { name: form.name, daysOff: form.daysOff });
-      setEditingId(null);
-    } else {
-      addGroup({ name: form.name, daysOff: form.daysOff });
+    setLoading(true);
+    try {
+      if (editingId) {
+        // Update
+        const res = await fetch(`/api/week-off-groups/${editingId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: form.name,
+            daysOff: form.daysOff,
+          }),
+        });
+        const data = await res.json();
+        if (res.ok) {
+            // Update store manually
+            const updatedGroups = groups.map((g) =>
+                g.id === editingId ? { ...g, name: form.name, daysOff: form.daysOff } : g
+            );
+            setGroups(updatedGroups);
+            setEditingId(null);
+            setShowForm(false);
+            setForm({ name: "", daysOff: [] });
+        } else {
+            console.error("Failed to update:", data);
+            alert("Failed to update group");
+        }
+      } else {
+        // Create
+        const res = await fetch(`/api/week-off-groups`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            companyId,
+            name: form.name,
+            daysOff: form.daysOff,
+          }),
+        });
+        const data = await res.json();
+        if (res.ok) {
+            const newGroup = data.group;
+            setGroups([...groups, newGroup]);
+            setShowForm(false);
+            setForm({ name: "", daysOff: [] });
+        } else {
+            console.error("Failed to create:", data);
+            alert("Failed to create group");
+        }
+      }
+    } catch (err) {
+      console.error(err);
+      alert("An error occurred");
+    } finally {
+      setLoading(false);
     }
-    setForm({ name: "", daysOff: [] });
-    setShowForm(false);
+  }
+
+  async function handleDelete(id: string) {
+    setLoading(true);
+    try {
+        const res = await fetch(`/api/week-off-groups/${id}`, {
+            method: 'DELETE'
+        });
+        if (res.ok) {
+            setGroups(groups.filter((g) => g.id !== id));
+            setConfirmDeleteId(null);
+        } else {
+            alert("Failed to delete");
+        }
+    } catch (err) {
+        console.error(err);
+        alert("An error occurred");
+    } finally {
+        setLoading(false);
+    }
+  }
+
+  async function handleAddEmployee(groupId: string, employeeId: string) {
+      try {
+          const res = await fetch(`/api/week-off-groups/${groupId}/employees`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ employeeId })
+          });
+          if (res.ok) {
+              addEmpToGroup("weekoff", groupId, employeeId);
+          } else {
+              const data = await res.json();
+              alert(data.message || "Failed to add employee");
+          }
+      } catch (err) {
+          console.error(err);
+          alert("An error occurred");
+      }
+  }
+
+  async function handleRemoveEmployee(groupId: string, employeeId: string) {
+      try {
+          const res = await fetch(`/api/week-off-groups/${groupId}/employees?employeeId=${employeeId}`, {
+              method: 'DELETE'
+          });
+          if (res.ok) {
+              removeEmpFromGroup("weekoff", groupId, employeeId);
+          } else {
+              const data = await res.json();
+              alert(data.message || "Failed to remove employee");
+          }
+      } catch (err) {
+          console.error(err);
+          alert("An error occurred");
+      }
   }
 
   function startEdit(g: WeekOffGroup) {
@@ -110,9 +227,10 @@ export default function WeekOffTab() {
           <div className="flex gap-3">
             <button
               type="submit"
-              className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg text-sm font-medium transition-colors"
+              disabled={loading}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
             >
-              {editingId ? "Update" : "Add"}
+              {loading ? "Saving..." : (editingId ? "Update" : "Add")}
             </button>
             <button
               type="button"
@@ -125,7 +243,9 @@ export default function WeekOffTab() {
         </form>
       )}
 
-      {groups.length === 0 ? (
+      {loading && !groups.length ? (
+        <div className="text-center py-12 text-neutral-500">Loading...</div>
+      ) : groups.length === 0 ? (
         <div className="text-center py-12 text-neutral-500">
           <p className="text-lg mb-1">No week-off groups yet</p>
           <p className="text-sm">Create a group and assign employees to it.</p>
@@ -162,10 +282,7 @@ export default function WeekOffTab() {
                       <>
                         <span className="text-xs text-neutral-400">Delete?</span>
                         <button
-                          onClick={() => {
-                            deleteGroup(g.id);
-                            setConfirmDeleteId(null);
-                          }}
+                          onClick={() => handleDelete(g.id)}
                           className="text-red-400 hover:text-red-300 text-xs font-medium"
                         >
                           Yes
@@ -211,7 +328,7 @@ export default function WeekOffTab() {
                             {emp.name}
                             <button
                               onClick={() =>
-                                removeEmpFromGroup("weekoff", g.id, emp.id)
+                                handleRemoveEmployee(g.id, emp.id)
                               }
                               className="ml-1 hover:text-red-300"
                             >
@@ -232,7 +349,7 @@ export default function WeekOffTab() {
                             <button
                               key={emp.id}
                               onClick={() =>
-                                addEmpToGroup("weekoff", g.id, emp.id)
+                                handleAddEmployee(g.id, emp.id)
                               }
                               className="bg-neutral-700 hover:bg-neutral-600 text-neutral-300 px-3 py-1 rounded-full text-xs transition-colors"
                             >

@@ -87,110 +87,132 @@ export default function ReportTab() {
     const title = `${reportType === 'attendance' ? 'Attendance' : 'Late Entry'} Report - ${MONTH_NAMES[month]} ${year}`;
     doc.text(title, 14, 15);
 
-    // Prepare headers
-    const headers = [
-      "ID", "Name", "Dept",
-      ...days.map(String),
-      "Total", "W.Off", "Hol", "Leave", "Abs", "Work", "Shift",
-      ...(reportType === 'attendance' ? ["Basic", "Per Day", "Net Salary"] : ["Late Days"])
-    ];
-
-    // Prepare body
-    const body = report.map((r) => {
-      let totalLateDays = 0;
-      const internalEmpId = empIdToInternalId.get(r.employeeId);
-      const shiftStart = internalEmpId ? getShiftStart(internalEmpId) : null;
-
-      // Calculate row cells for days
-      const dayCells = days.map((d) => {
-        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-
-        if (r.holidayDates?.includes(dateStr)) return "H";
-        if (r.weekOffDates?.includes(dateStr)) return "WO";
-
-        const isLeave = internalEmpId
-          ? leaveRecords.some((lr) => lr.employeeId === internalEmpId && lr.date === dateStr)
-          : false;
-        if (isLeave) return "L";
-
-        const p = punchesMap.get(`${r.employeeId}-${dateStr}`);
-        if (p) {
-          // Check late
-          if (reportType === 'late' && p.punchIn && shiftStart) {
-             const punchMins = timeToMinutes(p.punchIn);
-             const shiftMins = timeToMinutes(shiftStart);
-             if (punchMins > shiftMins + 5) {
-               totalLateDays++; // for summary column
-               return { content: p.punchIn, styles: { textColor: [220, 38, 38], fontStyle: 'bold' } };
-             }
-          }
-          return p.punchIn || "P";
-        }
-
-        return "A";
-      });
-
-      // Summary columns
-      const summaryCells = [
-        r.totalDays,
-        r.weekOffs,
-        r.holidays,
-        r.leaves,
-        r.absences,
-        r.workingDays,
-        r.shiftInfo,
+    if (reportType === 'attendance') {
+      const headers = [
+        "ID", "Name", "Dept",
+        ...days.map(String),
+        "Total", "W.Off", "Hol", "Leave", "Abs", "Work", "Shift",
+        "Basic", "Per Day", "Net Salary"
       ];
 
-      if (reportType === 'attendance') {
-        summaryCells.push(
+      const body = report.map((r) => {
+        const internalEmpId = empIdToInternalId.get(r.employeeId);
+
+        // Calculate row cells for days
+        const dayCells = days.map((d) => {
+          const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+
+          if (r.holidayDates?.includes(dateStr)) return "H";
+          if (r.weekOffDates?.includes(dateStr)) return "WO";
+
+          const isLeave = internalEmpId
+            ? leaveRecords.some((lr) => lr.employeeId === internalEmpId && lr.date === dateStr)
+            : false;
+          if (isLeave) return "L";
+
+          const p = punchesMap.get(`${r.employeeId}-${dateStr}`);
+          if (p) {
+            return p.punchIn || "P";
+          }
+
+          return "A";
+        });
+
+        return [
+          r.employeeId,
+          r.employeeName,
+          r.department,
+          ...dayCells,
+          r.totalDays,
+          r.weekOffs,
+          r.holidays,
+          r.leaves,
+          r.absences,
+          r.workingDays,
+          r.shiftInfo,
           r.basicSalary.toLocaleString(),
           r.perDaySalary.toLocaleString(),
           r.netSalary.toLocaleString()
-        );
-      } else {
-        summaryCells.push(totalLateDays);
-      }
+        ];
+      });
 
-      return [
-        r.employeeId,
-        r.employeeName,
-        r.department,
-        ...dayCells,
-        ...summaryCells
-      ];
-    });
-
-    autoTable(doc, {
-      head: [headers],
-      body: body as any[], // Casting to avoid complex type errors with styles object
-      startY: 20,
-      styles: { fontSize: 6, cellPadding: 1 },
-      headStyles: { fillColor: [23, 23, 23] },
-      columnStyles: {
-        // ID
-        0: { cellWidth: 15 },
-        // Name
-        1: { cellWidth: 20 },
-        // Dept
-        2: { cellWidth: 15 },
-        // Days columns (dynamic index)
-        // We let autoTable handle width, but force fontSize small
-      },
-      didParseCell: function(data) {
-          // Highlight absent days in red text for PDF too?
+      autoTable(doc, {
+        head: [headers],
+        body: body as any[],
+        startY: 20,
+        styles: { fontSize: 6, cellPadding: 1 },
+        headStyles: { fillColor: [23, 23, 23] },
+        columnStyles: {
+          0: { cellWidth: 15 }, // ID
+          1: { cellWidth: 20 }, // Name
+          2: { cellWidth: 15 }, // Dept
+        },
+        didParseCell: function(data) {
           if (data.section === 'body' && data.column.index >= 3 && data.column.index < 3 + days.length) {
-              if (data.cell.raw === 'A') {
-                  data.cell.styles.textColor = [220, 38, 38]; // Red
-              } else if (data.cell.raw === 'H') {
-                  data.cell.styles.textColor = [124, 58, 237]; // Purple
-              } else if (data.cell.raw === 'WO') {
-                  data.cell.styles.textColor = [217, 119, 6]; // Orange
-              } else if (data.cell.raw === 'L') {
-                  data.cell.styles.textColor = [202, 138, 4]; // Yellow
-              }
+            if (data.cell.raw === 'A') {
+              data.cell.styles.textColor = [220, 38, 38]; // Red
+            } else if (data.cell.raw === 'H') {
+              data.cell.styles.textColor = [124, 58, 237]; // Purple
+            } else if (data.cell.raw === 'WO') {
+              data.cell.styles.textColor = [217, 119, 6]; // Orange
+            } else if (data.cell.raw === 'L') {
+              data.cell.styles.textColor = [202, 138, 4]; // Yellow
+            }
           }
-      }
-    });
+        }
+      });
+    } else {
+      // Late Entry Report - Concise
+      const headers = [
+        "ID", "Name",
+        "Total", "W.Off", "Hol", "Leave", "Abs", "Work", "Shift",
+        "Late Days"
+      ];
+
+      const body = report.map((r) => {
+        let totalLateDays = 0;
+        const internalEmpId = empIdToInternalId.get(r.employeeId);
+        const shiftStart = internalEmpId ? getShiftStart(internalEmpId) : null;
+
+        // Calculate late days
+        days.forEach((d) => {
+          const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+          const p = punchesMap.get(`${r.employeeId}-${dateStr}`);
+          if (p && p.punchIn && shiftStart) {
+            const punchMins = timeToMinutes(p.punchIn);
+            const shiftMins = timeToMinutes(shiftStart);
+            if (punchMins > shiftMins + 5) {
+              totalLateDays++;
+            }
+          }
+        });
+
+        return [
+          r.employeeId,
+          r.employeeName,
+          r.totalDays,
+          r.weekOffs,
+          r.holidays,
+          r.leaves,
+          r.absences,
+          r.workingDays,
+          r.shiftInfo,
+          totalLateDays
+        ];
+      });
+
+      autoTable(doc, {
+        head: [headers],
+        body: body as any[],
+        startY: 20,
+        styles: { fontSize: 8, cellPadding: 2 }, // Slightly larger font for concise report
+        headStyles: { fillColor: [23, 23, 23] },
+        columnStyles: {
+          0: { cellWidth: 20 }, // ID
+          1: { cellWidth: 40 }, // Name
+        }
+      });
+    }
 
     doc.save(`${reportType}_report_${year}-${String(month + 1).padStart(2, '0')}.pdf`);
   };

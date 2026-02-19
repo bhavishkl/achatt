@@ -1,15 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAppStore } from "@/lib/store";
 import type { HolidayGroup, HolidayEntry } from "@/lib/types";
 
 export default function HolidayTab() {
+  const companyId = useAppStore((s) => s.companyId);
   const groups = useAppStore((s) => s.holidayGroups);
   const employees = useAppStore((s) => s.employees);
-  const addGroup = useAppStore((s) => s.addHolidayGroup);
-  const updateGroup = useAppStore((s) => s.updateHolidayGroup);
-  const deleteGroup = useAppStore((s) => s.deleteHolidayGroup);
+  const setGroups = useAppStore((s) => s.setHolidayGroups);
   const addEmpToGroup = useAppStore((s) => s.addEmployeeToGroup);
   const removeEmpFromGroup = useAppStore((s) => s.removeEmployeeFromGroup);
 
@@ -20,6 +19,22 @@ export default function HolidayTab() {
   const [showForm, setShowForm] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (companyId) {
+      setLoading(true);
+      fetch(`/api/holiday-groups?companyId=${companyId}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.groups) {
+            setGroups(data.groups);
+          }
+        })
+        .catch((err) => console.error("Error fetching holiday groups:", err))
+        .finally(() => setLoading(false));
+    }
+  }, [companyId, setGroups]);
 
   function addHolidayEntry() {
     if (!holidayDate || !holidayLabel) return;
@@ -38,18 +53,122 @@ export default function HolidayTab() {
     }));
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!form.name) return;
+    if (!form.name || !companyId) return;
 
-    if (editingId) {
-      updateGroup(editingId, { name: form.name, holidays: form.holidays });
-      setEditingId(null);
-    } else {
-      addGroup({ name: form.name, holidays: form.holidays });
+    setLoading(true);
+    try {
+      if (editingId) {
+        // Update
+        const res = await fetch(`/api/holiday-groups/${editingId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: form.name,
+            holidays: form.holidays,
+          }),
+        });
+        const data = await res.json();
+        if (res.ok) {
+           // Update store manually or refetch. 
+           // Since we have the data, let's update store manually to save a fetch.
+           // Note: Backend replaces all holidays, so we should trust our form state for holidays if success.
+           const updatedGroups = groups.map((g) =>
+             g.id === editingId ? { ...g, name: form.name, holidays: form.holidays } : g
+           );
+           setGroups(updatedGroups);
+           setEditingId(null);
+           setShowForm(false);
+           setForm({ name: "", holidays: [] });
+        } else {
+            console.error("Failed to update:", data);
+            alert("Failed to update holiday group");
+        }
+      } else {
+        // Create
+        const res = await fetch(`/api/holiday-groups`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            companyId,
+            name: form.name,
+            holidays: form.holidays,
+          }),
+        });
+        const data = await res.json();
+        if (res.ok) {
+            const newGroup = data.group;
+            setGroups([newGroup, ...groups]);
+            setShowForm(false);
+            setForm({ name: "", holidays: [] });
+        } else {
+            console.error("Failed to create:", data);
+            alert("Failed to create holiday group");
+        }
+      }
+    } catch (err) {
+      console.error(err);
+      alert("An error occurred");
+    } finally {
+      setLoading(false);
     }
-    setForm({ name: "", holidays: [] });
-    setShowForm(false);
+  }
+
+  async function handleDelete(id: string) {
+      setLoading(true);
+      try {
+          const res = await fetch(`/api/holiday-groups/${id}`, {
+              method: 'DELETE'
+          });
+          if (res.ok) {
+              setGroups(groups.filter((g) => g.id !== id));
+              setConfirmDeleteId(null);
+          } else {
+              alert("Failed to delete");
+          }
+      } catch (err) {
+          console.error(err);
+          alert("An error occurred");
+      } finally {
+          setLoading(false);
+      }
+  }
+
+  async function handleAddEmployee(groupId: string, employeeId: string) {
+      try {
+          const res = await fetch(`/api/holiday-groups/${groupId}/employees`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ employeeId })
+          });
+          if (res.ok) {
+              addEmpToGroup("holiday", groupId, employeeId);
+          } else {
+              const data = await res.json();
+              alert(data.message || "Failed to add employee");
+          }
+      } catch (err) {
+          console.error(err);
+          alert("An error occurred");
+      }
+  }
+
+  async function handleRemoveEmployee(groupId: string, employeeId: string) {
+      try {
+          const res = await fetch(`/api/holiday-groups/${groupId}/employees?employeeId=${employeeId}`, {
+              method: 'DELETE'
+          });
+          if (res.ok) {
+              removeEmpFromGroup("holiday", groupId, employeeId);
+          } else {
+              const data = await res.json();
+              alert(data.message || "Failed to remove employee");
+          }
+      } catch (err) {
+          console.error(err);
+          alert("An error occurred");
+      }
   }
 
   function startEdit(g: HolidayGroup) {
@@ -148,9 +267,10 @@ export default function HolidayTab() {
           <div className="flex gap-3">
             <button
               type="submit"
-              className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg text-sm font-medium transition-colors"
+              disabled={loading}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
             >
-              {editingId ? "Update" : "Create Group"}
+              {loading ? "Saving..." : (editingId ? "Update" : "Create Group")}
             </button>
             <button
               type="button"
@@ -163,7 +283,9 @@ export default function HolidayTab() {
         </form>
       )}
 
-      {groups.length === 0 ? (
+      {loading && !groups.length ? (
+        <div className="text-center py-12 text-neutral-500">Loading...</div>
+      ) : groups.length === 0 ? (
         <div className="text-center py-12 text-neutral-500">
           <p className="text-lg mb-1">No holiday groups yet</p>
           <p className="text-sm">Create a group with holiday dates and assign employees.</p>
@@ -199,10 +321,7 @@ export default function HolidayTab() {
                       <>
                         <span className="text-xs text-neutral-400">Delete?</span>
                         <button
-                          onClick={() => {
-                            deleteGroup(g.id);
-                            setConfirmDeleteId(null);
-                          }}
+                          onClick={() => handleDelete(g.id)}
                           className="text-red-400 hover:text-red-300 text-xs font-medium"
                         >
                           Yes
@@ -262,7 +381,7 @@ export default function HolidayTab() {
                             {emp.name}
                             <button
                               onClick={() =>
-                                removeEmpFromGroup("holiday", g.id, emp.id)
+                                handleRemoveEmployee(g.id, emp.id)
                               }
                               className="ml-1 hover:text-red-300"
                             >
@@ -283,7 +402,7 @@ export default function HolidayTab() {
                             <button
                               key={emp.id}
                               onClick={() =>
-                                addEmpToGroup("holiday", g.id, emp.id)
+                                handleAddEmployee(g.id, emp.id)
                               }
                               className="bg-neutral-700 hover:bg-neutral-600 text-neutral-300 px-3 py-1 rounded-full text-xs transition-colors"
                             >
