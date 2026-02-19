@@ -62,6 +62,7 @@ interface AppState {
 
   // --- Shift Groups ---
   shiftGroups: ShiftGroup[];
+  setShiftGroups: (groups: ShiftGroup[]) => void;
   addShiftGroup: (g: Omit<ShiftGroup, "id" | "employeeIds">) => void;
   updateShiftGroup: (id: string, g: Partial<Omit<ShiftGroup, "id">>) => void;
   deleteShiftGroup: (id: string) => void;
@@ -208,6 +209,7 @@ export const useAppStore = create<AppState>()(
 
       // ---- Shift Groups ----
       shiftGroups: [],
+      setShiftGroups: (groups) => set({ shiftGroups: groups }),
       addShiftGroup: (g) =>
         set((s) => ({
           shiftGroups: [...s.shiftGroups, { ...g, id: uid(), employeeIds: [] }],

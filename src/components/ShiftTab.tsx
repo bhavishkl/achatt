@@ -1,44 +1,180 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAppStore } from "@/lib/store";
 import type { ShiftGroup } from "@/lib/types";
 
 export default function ShiftTab() {
+  const companyId = useAppStore((s) => s.companyId);
   const groups = useAppStore((s) => s.shiftGroups);
+  const setGroups = useAppStore((s) => s.setShiftGroups);
   const employees = useAppStore((s) => s.employees);
-  const addGroup = useAppStore((s) => s.addShiftGroup);
-  const updateGroup = useAppStore((s) => s.updateShiftGroup);
-  const deleteGroup = useAppStore((s) => s.deleteShiftGroup);
-  const addEmpToGroup = useAppStore((s) => s.addEmployeeToGroup);
-  const removeEmpFromGroup = useAppStore((s) => s.removeEmployeeFromGroup);
+  const addGroupStore = useAppStore((s) => s.addShiftGroup);
+  const updateGroupStore = useAppStore((s) => s.updateShiftGroup);
+  const deleteGroupStore = useAppStore((s) => s.deleteShiftGroup);
+  const addEmpToGroupStore = useAppStore((s) => s.addEmployeeToGroup);
+  const removeEmpFromGroupStore = useAppStore((s) => s.removeEmployeeFromGroup);
 
   const [form, setForm] = useState({ name: "", startTime: "", endTime: "" });
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!form.name || !form.startTime || !form.endTime) return;
-
-    if (editingId) {
-      updateGroup(editingId, {
-        name: form.name,
-        startTime: form.startTime,
-        endTime: form.endTime,
-      });
-      setEditingId(null);
-    } else {
-      addGroup({
-        name: form.name,
-        startTime: form.startTime,
-        endTime: form.endTime,
-      });
+  // Fetch groups
+  useEffect(() => {
+    if (companyId) {
+      setLoading(true);
+      fetch(`/api/shifts?companyId=${companyId}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.groups) {
+            setGroups(data.groups);
+          }
+        })
+        .catch((err) => console.error("Error fetching shift groups:", err))
+        .finally(() => setLoading(false));
     }
-    setForm({ name: "", startTime: "", endTime: "" });
-    setShowForm(false);
+  }, [companyId, setGroups]);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!form.name || !form.startTime || !form.endTime || !companyId) return;
+
+    setLoading(true);
+    try {
+      if (editingId) {
+        // Update
+        const res = await fetch(`/api/shifts/${editingId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: form.name,
+            startTime: form.startTime,
+            endTime: form.endTime,
+          }),
+        });
+        
+        if (res.ok) {
+          updateGroupStore(editingId, {
+            name: form.name,
+            startTime: form.startTime,
+            endTime: form.endTime,
+          });
+          setEditingId(null);
+          setShowForm(false);
+          setForm({ name: "", startTime: "", endTime: "" });
+        } else {
+            alert("Failed to update shift group");
+        }
+      } else {
+        // Create
+        const res = await fetch(`/api/shifts`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            companyId,
+            name: form.name,
+            startTime: form.startTime,
+            endTime: form.endTime,
+          }),
+        });
+        const data = await res.json();
+        
+        if (res.ok) {
+           addGroupStore({
+             name: data.group.name,
+             startTime: data.group.startTime,
+             endTime: data.group.endTime,
+             // The store usually adds a local ID, but we want the server ID.
+             // The addShiftGroup implementation in store generates a new ID.
+             // We should probably update the store to accept an ID or just refetch.
+             // For now, let's just refetch or manually update state if possible.
+             // Since store logic generates ID, let's just reload the list or modify store to accept ID.
+             // Modifying store is better but I'll stick to reloading for simplicity or just let the store generate a temp ID and then reload?
+             // Actually, the `addShiftGroup` implementation in `store.ts` ignores the ID passed and generates a new one: `id: uid()`.
+             // This is a problem for persistence. Ideally `setGroups` handles the server state.
+             // Since I fetch on mount, a reload would fix it.
+             // But for immediate UI update with correct ID, I should update the store.
+             // I'll manually append to the list using setGroups if I want consistency, or just rely on fetch.
+             // Let's just re-fetch for now to be safe and simple.
+           });
+           
+           // Re-fetch to get the correct ID from server
+           fetch(`/api/shifts?companyId=${companyId}`)
+            .then((res) => res.json())
+            .then((d) => {
+              if (d.groups) setGroups(d.groups);
+            });
+
+           setShowForm(false);
+           setForm({ name: "", startTime: "", endTime: "" });
+        } else {
+             alert("Failed to create shift group");
+        }
+      }
+    } catch (err) {
+      console.error(err);
+      alert("An error occurred");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleDelete(id: string) {
+      setLoading(true);
+      try {
+          const res = await fetch(`/api/shifts/${id}`, {
+              method: 'DELETE'
+          });
+          if (res.ok) {
+              deleteGroupStore(id); 
+              setConfirmDeleteId(null);
+          } else {
+              alert("Failed to delete shift group");
+          }
+      } catch (err) {
+          console.error(err);
+          alert("An error occurred");
+      } finally {
+          setLoading(false);
+      }
+  }
+
+  async function handleAddEmployee(groupId: string, employeeId: string) {
+      // Optimistic update? No, let's wait.
+      try {
+          const res = await fetch(`/api/shifts/${groupId}/employees`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ employeeId })
+          });
+          if (res.ok) {
+              addEmpToGroupStore("shift", groupId, employeeId);
+          } else {
+              alert("Failed to add employee to shift");
+          }
+      } catch (err) {
+          console.error(err);
+          alert("An error occurred");
+      }
+  }
+
+  async function handleRemoveEmployee(groupId: string, employeeId: string) {
+      try {
+          const res = await fetch(`/api/shifts/${groupId}/employees?employeeId=${employeeId}`, {
+              method: 'DELETE'
+          });
+          if (res.ok) {
+              removeEmpFromGroupStore("shift", groupId, employeeId);
+          } else {
+              alert("Failed to remove employee from shift");
+          }
+      } catch (err) {
+          console.error(err);
+          alert("An error occurred");
+      }
   }
 
   function startEdit(g: ShiftGroup) {
@@ -108,9 +244,10 @@ export default function ShiftTab() {
           <div className="flex gap-3">
             <button
               type="submit"
-              className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg text-sm font-medium transition-colors"
+              disabled={loading}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
             >
-              {editingId ? "Update" : "Add"}
+              {loading ? "Saving..." : (editingId ? "Update" : "Add")}
             </button>
             <button
               type="button"
@@ -123,7 +260,9 @@ export default function ShiftTab() {
         </form>
       )}
 
-      {groups.length === 0 ? (
+      {loading && !groups.length ? (
+        <div className="text-center py-12 text-neutral-500">Loading...</div>
+      ) : groups.length === 0 ? (
         <div className="text-center py-12 text-neutral-500">
           <p className="text-lg mb-1">No shift groups yet</p>
           <p className="text-sm">Create shifts and assign employees to them.</p>
@@ -159,10 +298,7 @@ export default function ShiftTab() {
                       <>
                         <span className="text-xs text-neutral-400">Delete?</span>
                         <button
-                          onClick={() => {
-                            deleteGroup(g.id);
-                            setConfirmDeleteId(null);
-                          }}
+                          onClick={() => handleDelete(g.id)}
                           className="text-red-400 hover:text-red-300 text-xs font-medium"
                         >
                           Yes
@@ -207,9 +343,7 @@ export default function ShiftTab() {
                           >
                             {emp.name}
                             <button
-                              onClick={() =>
-                                removeEmpFromGroup("shift", g.id, emp.id)
-                              }
+                              onClick={() => handleRemoveEmployee(g.id, emp.id)}
                               className="ml-1 hover:text-red-300"
                             >
                               ×
@@ -228,9 +362,7 @@ export default function ShiftTab() {
                           {unassignedEmps.map((emp) => (
                             <button
                               key={emp.id}
-                              onClick={() =>
-                                addEmpToGroup("shift", g.id, emp.id)
-                              }
+                              onClick={() => handleAddEmployee(g.id, emp.id)}
                               className="bg-neutral-700 hover:bg-neutral-600 text-neutral-300 px-3 py-1 rounded-full text-xs transition-colors"
                             >
                               + {emp.name}
