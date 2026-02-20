@@ -73,8 +73,8 @@ export default function ReportTab() {
   };
 
   const getShiftStart = (internalEmpId: string) => {
-      const g = shiftGroups.find(g => g.employeeIds.includes(internalEmpId));
-      return g ? g.startTime : null;
+    const g = shiftGroups.find(g => g.employeeIds.includes(internalEmpId));
+    return g ? g.startTime : null;
   };
 
   const handlePrint = () => {
@@ -91,7 +91,7 @@ export default function ReportTab() {
       const headers = [
         "ID", "Name", "Dept",
         ...days.map(String),
-        "Total", "W.Off", "Hol", "Leave", "Abs", "Work", "Shift",
+        "Total", "W.Off", "Hol", "Leave", "Abs", "Work", "DD",
         "Basic", "Per Day", "Net Salary"
       ];
 
@@ -118,6 +118,14 @@ export default function ReportTab() {
           return "A";
         });
 
+        // Count double duty for this employee
+        const internalId = empIdToInternalId.get(r.employeeId);
+        const ddCount = internalId
+          ? leaveRecords.filter(
+            (lr) => lr.substituteEmployeeId === internalId && lr.date.startsWith(`${year}-${String(month + 1).padStart(2, '0')}`)
+          ).length
+          : 0;
+
         return [
           r.employeeId,
           r.employeeName,
@@ -129,7 +137,7 @@ export default function ReportTab() {
           r.leaves,
           r.absences,
           r.workingDays,
-          r.shiftInfo,
+          ddCount,
           r.basicSalary.toLocaleString(),
           r.perDaySalary.toLocaleString(),
           r.netSalary.toLocaleString()
@@ -147,7 +155,7 @@ export default function ReportTab() {
           1: { cellWidth: 20 }, // Name
           2: { cellWidth: 15 }, // Dept
         },
-        didParseCell: function(data) {
+        didParseCell: function (data) {
           if (data.section === 'body' && data.column.index >= 3 && data.column.index < 3 + days.length) {
             if (data.cell.raw === 'A') {
               data.cell.styles.textColor = [220, 38, 38]; // Red
@@ -222,7 +230,7 @@ export default function ReportTab() {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
         <h2 className="text-xl font-semibold text-white">Monthly Reports</h2>
         <div className="flex flex-wrap gap-2">
-           <button
+          <button
             onClick={handlePrint}
             className="bg-neutral-700 hover:bg-neutral-600 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors no-print"
           >
@@ -234,7 +242,7 @@ export default function ReportTab() {
           >
             ⬇️ Export PDF
           </button>
-          
+
           <div className="h-6 w-px bg-neutral-700 mx-1 self-center hidden sm:block no-print"></div>
 
           <select
@@ -294,7 +302,7 @@ export default function ReportTab() {
                 </p>
               </div>
             ) : (
-               <div className="bg-neutral-800 border border-neutral-700 rounded-xl p-4">
+              <div className="bg-neutral-800 border border-neutral-700 rounded-xl p-4">
                 <p className="text-xs text-neutral-400 uppercase tracking-wide">Report Type</p>
                 <p className="text-2xl font-bold text-orange-400 mt-1">Late Entry</p>
               </div>
@@ -335,11 +343,12 @@ export default function ReportTab() {
                   <th className="text-right py-3 px-2 font-medium">Absent</th>
                   <th className="text-right py-3 px-2 font-medium">Working</th>
                   <th className="text-left py-3 px-2 font-medium">Shift</th>
+                  <th className="text-right py-3 px-2 font-medium text-blue-400">DD</th>
                   {reportType === 'attendance' ? (
                     <>
-                        <th className="text-right py-3 px-2 font-medium">Basic</th>
-                        <th className="text-right py-3 px-2 font-medium">Per Day</th>
-                        <th className="text-right py-3 px-2 font-medium">Net Salary</th>
+                      <th className="text-right py-3 px-2 font-medium">Basic</th>
+                      <th className="text-right py-3 px-2 font-medium">Per Day</th>
+                      <th className="text-right py-3 px-2 font-medium">Net Salary</th>
                     </>
                   ) : (
                     <th className="text-right py-3 px-2 font-medium text-orange-400">Late Days</th>
@@ -348,145 +357,155 @@ export default function ReportTab() {
               </thead>
               <tbody>
                 {report.map((r) => {
-                    let totalLateDays = 0;
-                    
-                    // Pre-calculate late days if needed for summary
-                    // We also need it for rendering the cell if reportType is 'late'
-                    // To avoid double loop, we can just calculate on the fly or memoize, 
-                    // but the loop inside map is cheap enough.
-                    if (reportType === 'late') {
-                        const internalId = empIdToInternalId.get(r.employeeId);
-                        const shiftStart = internalId ? getShiftStart(internalId) : null;
-                        
-                        days.forEach(d => {
-                            const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-                            const p = punchesMap.get(`${r.employeeId}-${dateStr}`);
-                            if (p && p.punchIn && shiftStart) {
-                                const punchMins = timeToMinutes(p.punchIn);
-                                const shiftMins = timeToMinutes(shiftStart);
-                                if (punchMins > shiftMins + 5) { // 5 mins grace
-                                    totalLateDays++;
-                                }
-                            }
-                        });
-                    }
+                  let totalLateDays = 0;
+
+                  // Pre-calculate late days if needed for summary
+                  // We also need it for rendering the cell if reportType is 'late'
+                  // To avoid double loop, we can just calculate on the fly or memoize, 
+                  // but the loop inside map is cheap enough.
+                  if (reportType === 'late') {
+                    const internalId = empIdToInternalId.get(r.employeeId);
+                    const shiftStart = internalId ? getShiftStart(internalId) : null;
+
+                    days.forEach(d => {
+                      const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                      const p = punchesMap.get(`${r.employeeId}-${dateStr}`);
+                      if (p && p.punchIn && shiftStart) {
+                        const punchMins = timeToMinutes(p.punchIn);
+                        const shiftMins = timeToMinutes(shiftStart);
+                        if (punchMins > shiftMins + 5) { // 5 mins grace
+                          totalLateDays++;
+                        }
+                      }
+                    });
+                  }
 
                   return (
-                  <tr
-                    key={r.employeeId}
-                    className="border-b border-neutral-800 hover:bg-neutral-800/50 transition-colors"
-                  >
-                    <td className="py-2 px-2 text-neutral-300 font-mono text-xs">
-                      {r.employeeId}
-                    </td>
-                    <td className="py-2 px-2 text-white">{r.employeeName}</td>
-                    <td className="py-2 px-2 text-neutral-400">{r.department}</td>
+                    <tr
+                      key={r.employeeId}
+                      className="border-b border-neutral-800 hover:bg-neutral-800/50 transition-colors"
+                    >
+                      <td className="py-2 px-2 text-neutral-300 font-mono text-xs">
+                        {r.employeeId}
+                      </td>
+                      <td className="py-2 px-2 text-white">{r.employeeName}</td>
+                      <td className="py-2 px-2 text-neutral-400">{r.department}</td>
 
-                    {/* Per-day cells */}
-                    {days.map((d) => {
-                      const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                      {/* Per-day cells */}
+                      {days.map((d) => {
+                        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
 
-                      // Use holidayDates/weekOffDates provided by the report row
-                      const isHoliday = r.holidayDates?.includes(dateStr);
-                      if (isHoliday) {
-                        return (
-                          <td key={d} className="py-1 px-2 text-center align-top text-xs">
-                            <div className="text-purple-300 font-medium">🎉</div>
-                            <div className="text-xs text-neutral-400">Hol.</div>
-                          </td>
-                        );
-                      }
-
-                      const isWeekOff = r.weekOffDates?.includes(dateStr);
-                      if (isWeekOff) {
-                        return (
-                          <td key={d} className="py-1 px-2 text-center align-top text-xs">
-                            <div className="text-orange-300 font-medium">🟧</div>
-                            <div className="text-xs text-neutral-400">W.Off</div>
-                          </td>
-                        );
-                      }
-
-                      // Check explicit leave records for the employee/date
-                      const internalEmpId = empIdToInternalId.get(r.employeeId);
-                      const isLeave = internalEmpId
-                        ? leaveRecords.some((lr) => lr.employeeId === internalEmpId && lr.date === dateStr)
-                        : false;
-
-                      if (isLeave) {
-                        return (
-                          <td key={d} className="py-1 px-2 text-center align-top text-xs">
-                            <div className="text-yellow-300 font-medium">🟡</div>
-                            <div className="text-xs text-neutral-400">Leave</div>
-                          </td>
-                        );
-                      }
-
-                      // Otherwise show punches
-                      const p = punchesMap.get(`${r.employeeId}-${dateStr}`);
-                      if (p) {
-                        let isLateEntry = false;
-                        if (reportType === 'late' && p.punchIn && internalEmpId) {
-                            const shiftStart = getShiftStart(internalEmpId);
-                            if (shiftStart) {
-                                const punchMins = timeToMinutes(p.punchIn);
-                                const shiftMins = timeToMinutes(shiftStart);
-                                if (punchMins > shiftMins + 5) {
-                                    isLateEntry = true;
-                                }
-                            }
+                        // Use holidayDates/weekOffDates provided by the report row
+                        const isHoliday = r.holidayDates?.includes(dateStr);
+                        if (isHoliday) {
+                          return (
+                            <td key={d} className="py-1 px-2 text-center align-top text-xs">
+                              <div className="text-purple-300 font-medium">🎉</div>
+                              <div className="text-xs text-neutral-400">Hol.</div>
+                            </td>
+                          );
                         }
 
-                        return (
-                          <td key={d} className={`py-1 px-2 text-center align-top text-xs ${isLateEntry ? 'bg-red-500/10' : ''}`}>
-                            <div className="flex flex-col items-center gap-1">
-                              <div className={`font-medium ${isLateEntry ? 'text-red-400' : 'text-emerald-300'}`}>
-                                {p.punchIn || '-'}
+                        const isWeekOff = r.weekOffDates?.includes(dateStr);
+                        if (isWeekOff) {
+                          return (
+                            <td key={d} className="py-1 px-2 text-center align-top text-xs">
+                              <div className="text-orange-300 font-medium">🟧</div>
+                              <div className="text-xs text-neutral-400">W.Off</div>
+                            </td>
+                          );
+                        }
+
+                        // Check explicit leave records for the employee/date
+                        const internalEmpId = empIdToInternalId.get(r.employeeId);
+                        const isLeave = internalEmpId
+                          ? leaveRecords.some((lr) => lr.employeeId === internalEmpId && lr.date === dateStr)
+                          : false;
+
+                        if (isLeave) {
+                          return (
+                            <td key={d} className="py-1 px-2 text-center align-top text-xs">
+                              <div className="text-yellow-300 font-medium">🟡</div>
+                              <div className="text-xs text-neutral-400">Leave</div>
+                            </td>
+                          );
+                        }
+
+                        // Otherwise show punches
+                        const p = punchesMap.get(`${r.employeeId}-${dateStr}`);
+                        if (p) {
+                          let isLateEntry = false;
+                          if (reportType === 'late' && p.punchIn && internalEmpId) {
+                            const shiftStart = getShiftStart(internalEmpId);
+                            if (shiftStart) {
+                              const punchMins = timeToMinutes(p.punchIn);
+                              const shiftMins = timeToMinutes(shiftStart);
+                              if (punchMins > shiftMins + 5) {
+                                isLateEntry = true;
+                              }
+                            }
+                          }
+
+                          return (
+                            <td key={d} className={`py-1 px-2 text-center align-top text-xs ${isLateEntry ? 'bg-red-500/10' : ''}`}>
+                              <div className="flex flex-col items-center gap-1">
+                                <div className={`font-medium ${isLateEntry ? 'text-red-400' : 'text-emerald-300'}`}>
+                                  {p.punchIn || '-'}
+                                </div>
+                                <div className="text-neutral-400">{p.punchOut || '-'}</div>
                               </div>
-                              <div className="text-neutral-400">{p.punchOut || '-'}</div>
-                            </div>
+                            </td>
+                          );
+                        }
+
+                        // No punch + not holiday/week-off/leave → mark Absent
+                        return (
+                          <td key={d} className="py-1 px-2 text-center align-top text-xs">
+                            <div className="text-red-400 font-medium">✖</div>
+                            <div className="text-xs text-neutral-400">Abs.</div>
                           </td>
                         );
-                      }
+                      })}
 
-                      // No punch + not holiday/week-off/leave → mark Absent
-                      return (
-                        <td key={d} className="py-1 px-2 text-center align-top text-xs">
-                          <div className="text-red-400 font-medium">✖</div>
-                          <div className="text-xs text-neutral-400">Abs.</div>
-                        </td>
-                      );
-                    })}
+                      <td className="py-2 px-2 text-right text-neutral-300">{r.totalDays}</td>
+                      <td className="py-2 px-2 text-right text-orange-400">{r.weekOffs}</td>
+                      <td className="py-2 px-2 text-right text-purple-400">{r.holidays}</td>
+                      <td className="py-2 px-2 text-right text-yellow-400">{r.leaves}</td>
+                      <td className="py-2 px-2 text-right text-red-400">{r.absences}</td>
+                      <td className="py-2 px-2 text-right text-emerald-400 font-medium">
+                        {r.workingDays}
+                      </td>
+                      <td className="py-2 px-2 text-neutral-400 text-xs">{r.shiftInfo}</td>
+                      <td className="py-2 px-2 text-right text-blue-400 font-medium">
+                        {(() => {
+                          const intId = empIdToInternalId.get(r.employeeId);
+                          const monthPrefix = `${year}-${String(month + 1).padStart(2, '0')}`;
+                          const ddCount = intId
+                            ? leaveRecords.filter((lr) => lr.substituteEmployeeId === intId && lr.date.startsWith(monthPrefix)).length
+                            : 0;
+                          return ddCount;
+                        })()}
+                      </td>
 
-                    <td className="py-2 px-2 text-right text-neutral-300">{r.totalDays}</td>
-                    <td className="py-2 px-2 text-right text-orange-400">{r.weekOffs}</td>
-                    <td className="py-2 px-2 text-right text-purple-400">{r.holidays}</td>
-                    <td className="py-2 px-2 text-right text-yellow-400">{r.leaves}</td>
-                    <td className="py-2 px-2 text-right text-red-400">{r.absences}</td>
-                    <td className="py-2 px-2 text-right text-emerald-400 font-medium">
-                      {r.workingDays}
-                    </td>
-                    <td className="py-2 px-2 text-neutral-400 text-xs">{r.shiftInfo}</td>
-                    
-                    {reportType === 'attendance' ? (
+                      {reportType === 'attendance' ? (
                         <>
-                            <td className="py-2 px-2 text-right text-neutral-300">
+                          <td className="py-2 px-2 text-right text-neutral-300">
                             ₹{r.basicSalary.toLocaleString()}
-                            </td>
-                            <td className="py-2 px-2 text-right text-neutral-400">
+                          </td>
+                          <td className="py-2 px-2 text-right text-neutral-400">
                             ₹{r.perDaySalary.toLocaleString()}
-                            </td>
-                            <td className="py-2 px-2 text-right text-emerald-400 font-semibold">
+                          </td>
+                          <td className="py-2 px-2 text-right text-emerald-400 font-semibold">
                             ₹{r.netSalary.toLocaleString()}
-                            </td>
+                          </td>
                         </>
-                    ) : (
+                      ) : (
                         <td className="py-2 px-2 text-right text-orange-400 font-bold">
-                            {totalLateDays}
+                          {totalLateDays}
                         </td>
-                    )}
-                  </tr>
-                );
+                      )}
+                    </tr>
+                  );
                 })}
               </tbody>
               <tfoot>
@@ -495,13 +514,13 @@ export default function ReportTab() {
                     {reportType === 'attendance' ? 'Total Net Salary' : 'Summary'}
                   </td>
                   {reportType === 'attendance' ? (
-                      <td className="py-3 px-2 text-right text-emerald-400 font-bold text-base">
-                        ₹{Math.round(totalNetSalary).toLocaleString()}
-                      </td>
+                    <td className="py-3 px-2 text-right text-emerald-400 font-bold text-base">
+                      ₹{Math.round(totalNetSalary).toLocaleString()}
+                    </td>
                   ) : (
-                      <td className="py-3 px-2 text-right text-neutral-400 italic">
-                          -
-                      </td>
+                    <td className="py-3 px-2 text-right text-neutral-400 italic">
+                      -
+                    </td>
                   )}
                 </tr>
               </tfoot>

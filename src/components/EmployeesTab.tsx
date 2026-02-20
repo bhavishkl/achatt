@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useAppStore } from "@/lib/store";
 import type { Employee } from "@/lib/types";
+import { DEPARTMENTS } from "@/lib/constants";
 
 const emptyForm = {
   employeeId: "",
@@ -69,19 +70,19 @@ export default function EmployeesTab() {
         });
         const data = await res.json();
         if (res.ok) {
-           // Update store
-           updateEmployeeStore(editingId, {
-             employeeId: form.employeeId,
-             name: form.name,
-             basicSalary: Number(form.basicSalary),
-             department: form.department,
-           });
-           setEditingId(null);
-           setShowForm(false);
-           setForm(emptyForm);
+          // Update store
+          updateEmployeeStore(editingId, {
+            employeeId: form.employeeId,
+            name: form.name,
+            basicSalary: Number(form.basicSalary),
+            department: form.department,
+          });
+          setEditingId(null);
+          setShowForm(false);
+          setForm(emptyForm);
         } else {
-            console.error("Failed to update:", data);
-            alert("Failed to update employee");
+          console.error("Failed to update:", data);
+          alert("Failed to update employee");
         }
       } else {
         // Create
@@ -98,21 +99,21 @@ export default function EmployeesTab() {
         });
         const data = await res.json();
         if (res.ok) {
-            const newEmp = data.employee;
-             const mappedNewEmp: Employee = {
-              id: newEmp.id,
-              employeeId: newEmp.employee_id,
-              name: newEmp.name,
-              basicSalary: Number(newEmp.basic_salary),
-              department: newEmp.department,
-              createdAt: newEmp.created_at,
-            };
-            setEmployees([mappedNewEmp, ...employees]);
-            setShowForm(false);
-            setForm(emptyForm);
+          const newEmp = data.employee;
+          const mappedNewEmp: Employee = {
+            id: newEmp.id,
+            employeeId: newEmp.employee_id,
+            name: newEmp.name,
+            basicSalary: Number(newEmp.basic_salary),
+            department: newEmp.department,
+            createdAt: newEmp.created_at,
+          };
+          setEmployees([mappedNewEmp, ...employees]);
+          setShowForm(false);
+          setForm(emptyForm);
         } else {
-             console.error("Failed to create:", data);
-             alert("Failed to create employee");
+          console.error("Failed to create:", data);
+          alert("Failed to create employee");
         }
       }
     } catch (err) {
@@ -124,23 +125,23 @@ export default function EmployeesTab() {
   }
 
   async function handleDelete(id: string) {
-      setLoading(true);
-      try {
-          const res = await fetch(`/api/employees/${id}`, {
-              method: 'DELETE'
-          });
-          if (res.ok) {
-              deleteEmployeeStore(id); 
-              setConfirmDeleteId(null);
-          } else {
-              alert("Failed to delete");
-          }
-      } catch (err) {
-          console.error(err);
-          alert("An error occurred");
-      } finally {
-          setLoading(false);
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/employees/${id}`, {
+        method: 'DELETE'
+      });
+      if (res.ok) {
+        deleteEmployeeStore(id);
+        setConfirmDeleteId(null);
+      } else {
+        alert("Failed to delete");
       }
+    } catch (err) {
+      console.error(err);
+      alert("An error occurred");
+    } finally {
+      setLoading(false);
+    }
   }
 
   function startEdit(emp: Employee) {
@@ -215,13 +216,20 @@ export default function EmployeesTab() {
             </div>
             <div>
               <label className="block text-sm text-neutral-400 mb-1">Department</label>
-              <input
-                type="text"
+              <select
                 value={form.department}
                 onChange={(e) => setForm({ ...form, department: e.target.value })}
-                placeholder="Engineering"
                 className="w-full bg-neutral-900 border border-neutral-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
+              >
+                <option value="" disabled>
+                  Select department
+                </option>
+                {DEPARTMENTS.map((dept) => (
+                  <option key={dept} value={dept}>
+                    {dept}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
           <div className="flex gap-3">
@@ -244,7 +252,7 @@ export default function EmployeesTab() {
       )}
 
       {loading && !employees.length ? (
-          <div className="text-center py-12 text-neutral-500">Loading...</div>
+        <div className="text-center py-12 text-neutral-500">Loading...</div>
       ) : employees.length === 0 ? (
         <div className="text-center py-12 text-neutral-500">
           <p className="text-lg mb-1">No employees yet</p>

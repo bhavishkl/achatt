@@ -27,7 +27,7 @@ export async function GET(request: Request) {
       const endDate = new Date(year, m, 0).toISOString().split('T')[0]; // Last day of month
       query = query.gte('date', startDate).lte('date', endDate);
     }
-      
+
     const { data: records, error } = await query.order('date', { ascending: false });
 
     if (error) {
@@ -40,6 +40,7 @@ export async function GET(request: Request) {
       employeeId: r.employee_id,
       date: r.date,
       reason: r.reason,
+      substituteEmployeeId: r.substitute_employee_id || undefined,
       createdAt: r.created_at,
     }));
 
@@ -53,7 +54,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { employeeId, date, reason } = body;
+    const { employeeId, date, reason, substituteEmployeeId } = body;
 
     if (!employeeId || !date) {
       return NextResponse.json({ message: 'Missing required fields' }, { status: 400 });
@@ -66,6 +67,7 @@ export async function POST(request: Request) {
           employee_id: employeeId,
           date,
           reason,
+          substitute_employee_id: substituteEmployeeId || null,
         },
       ])
       .select()
@@ -81,6 +83,7 @@ export async function POST(request: Request) {
       employeeId: record.employee_id,
       date: record.date,
       reason: record.reason,
+      substituteEmployeeId: record.substitute_employee_id || undefined,
       createdAt: record.created_at,
     };
 

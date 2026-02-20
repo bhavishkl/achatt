@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { useAppStore } from "@/lib/store";
 import type { LeaveGroup, Employee } from "@/lib/types";
+import { DEPARTMENTS } from "@/lib/constants";
 
 function formatDate(d: Date): string {
   return d.toISOString().slice(0, 10); // YYYY-MM-DD
@@ -33,11 +34,15 @@ export default function LeaveTab() {
 
   // UI State
   const [activeSubTab, setActiveSubTab] = useState<"daily" | "groups">("daily");
-  
+
   // Daily Leave Management State
   const [selectedDate, setSelectedDate] = useState(formatDate(new Date()));
   const [search, setSearch] = useState("");
-  const [reasonInput, setReasonInput] = useState<Record<string, string>>({});
+  const [departmentFilter, setDepartmentFilter] = useState("");
+  // Leave Modal State
+  const [leaveModalEmpId, setLeaveModalEmpId] = useState<string | null>(null);
+  const [leaveModalReason, setLeaveModalReason] = useState("");
+  const [leaveModalSubstitute, setLeaveModalSubstitute] = useState("");
 
   // Group Management State
   const [groupForm, setGroupForm] = useState({ name: "", leavesPerMonth: "" });
@@ -89,57 +94,81 @@ export default function LeaveTab() {
 
   // Filter employees by search query
   const filteredEmployees = useMemo(() => {
-    if (!search.trim()) return employees;
-    const q = search.toLowerCase();
-    return employees.filter(
-      (emp) =>
-        emp.name.toLowerCase().includes(q) ||
-        emp.employeeId.toLowerCase().includes(q) ||
-        emp.department.toLowerCase().includes(q),
-    );
-  }, [employees, search]);
+    let result = employees;
+    if (departmentFilter) {
+      result = result.filter((emp) => emp.department === departmentFilter);
+    }
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      result = result.filter(
+        (emp) =>
+          emp.name.toLowerCase().includes(q) ||
+          emp.employeeId.toLowerCase().includes(q) ||
+          emp.department.toLowerCase().includes(q),
+      );
+    }
+    return result;
+  }, [employees, search, departmentFilter]);
 
-  async function toggleLeave(employeeId: string) {
+  async function removeLeave(employeeId: string) {
     const existing = todayRecords.find((r) => r.employeeId === employeeId);
-    if (existing) {
-      // Remove
-      try {
-        const res = await fetch(`/api/leave-records/${existing.id}`, { method: 'DELETE' });
-        if (res.ok) {
-            removeLeaveRecordStore(existing.id);
-        } else {
-            alert("Failed to remove leave record");
-        }
-      } catch (err) {
-          console.error(err);
+    if (!existing) return;
+    try {
+      const res = await fetch(`/api/leave-records/${existing.id}`, { method: 'DELETE' });
+      if (res.ok) {
+        removeLeaveRecordStore(existing.id);
+      } else {
+        alert("Failed to remove leave record");
       }
-    } else {
-      // Add
-      const reason = reasonInput[employeeId] || "";
-      try {
-          const res = await fetch(`/api/leave-records`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ employeeId, date: selectedDate, reason })
-          });
-          const data = await res.json();
-          if (res.ok) {
-              // We need to add it to store. The store addLeaveRecord generates a UID, 
-              // but we want to use the one from DB.
-              // So we might need to manually update the array or refetch. 
-              // Let's manually update assuming store structure matches API response roughly
-              // Actually store `addLeaveRecord` generates ID. We should use `setLeaveRecords` to add one 
-              // or just use `addLeaveRecord` but then we have wrong ID.
-              // Better to refetch or manually append with correct ID.
-              const newRecord = data.record;
-              setLeaveRecords([...leaveRecords, newRecord]);
-              setReasonInput((prev) => ({ ...prev, [employeeId]: "" }));
-          } else {
-              alert("Failed to add leave record");
-          }
-      } catch (err) {
-          console.error(err);
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  function openLeaveModal(empId: string) {
+    setLeaveModalEmpId(empId);
+    setLeaveModalReason("");
+    setLeaveModalSubstitute("");
+  }
+
+  function closeLeaveModal() {
+    setLeaveModalEmpId(null);
+    setLeaveModalReason("");
+    setLeaveModalSubstitute("");
+  }
+
+  // Employees from same department for substitute dropdown
+  const substituteOptions = useMemo(() => {
+    if (!leaveModalEmpId) return [];
+    const emp = employees.find((e) => e.id === leaveModalEmpId);
+    if (!emp) return [];
+    return employees.filter(
+      (e) => e.id !== leaveModalEmpId && e.department === emp.department,
+    );
+  }, [employees, leaveModalEmpId]);
+
+  async function handleMarkLeave() {
+    if (!leaveModalEmpId) return;
+    try {
+      const res = await fetch(`/api/leave-records`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          employeeId: leaveModalEmpId,
+          date: selectedDate,
+          reason: leaveModalReason,
+          substituteEmployeeId: leaveModalSubstitute || undefined,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setLeaveRecords([...leaveRecords, data.record]);
+        closeLeaveModal();
+      } else {
+        alert("Failed to add leave record");
       }
+    } catch (err) {
+      console.error(err);
     }
   }
 
@@ -162,15 +191,15 @@ export default function LeaveTab() {
           }),
         });
         if (res.ok) {
-           const updatedGroups = leaveGroups.map((g) =>
-             g.id === editingGroupId ? { ...g, name: groupForm.name, leavesPerMonth: Number(groupForm.leavesPerMonth) } : g
-           );
-           setLeaveGroups(updatedGroups);
-           setEditingGroupId(null);
-           setShowGroupForm(false);
-           setGroupForm({ name: "", leavesPerMonth: "" });
+          const updatedGroups = leaveGroups.map((g) =>
+            g.id === editingGroupId ? { ...g, name: groupForm.name, leavesPerMonth: Number(groupForm.leavesPerMonth) } : g
+          );
+          setLeaveGroups(updatedGroups);
+          setEditingGroupId(null);
+          setShowGroupForm(false);
+          setGroupForm({ name: "", leavesPerMonth: "" });
         } else {
-            alert("Failed to update leave group");
+          alert("Failed to update leave group");
         }
       } else {
         // Create
@@ -185,11 +214,11 @@ export default function LeaveTab() {
         });
         const data = await res.json();
         if (res.ok) {
-            setLeaveGroups([...leaveGroups, data.group]);
-            setShowGroupForm(false);
-            setGroupForm({ name: "", leavesPerMonth: "" });
+          setLeaveGroups([...leaveGroups, data.group]);
+          setShowGroupForm(false);
+          setGroupForm({ name: "", leavesPerMonth: "" });
         } else {
-            alert("Failed to create leave group");
+          alert("Failed to create leave group");
         }
       }
     } catch (err) {
@@ -201,55 +230,55 @@ export default function LeaveTab() {
   }
 
   async function handleDeleteGroup(id: string) {
-      setLoading(true);
-      try {
-          const res = await fetch(`/api/leave-groups/${id}`, {
-              method: 'DELETE'
-          });
-          if (res.ok) {
-              setLeaveGroups(leaveGroups.filter((g) => g.id !== id));
-              setConfirmDeleteGroupId(null);
-          } else {
-              alert("Failed to delete group");
-          }
-      } catch (err) {
-          console.error(err);
-      } finally {
-          setLoading(false);
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/leave-groups/${id}`, {
+        method: 'DELETE'
+      });
+      if (res.ok) {
+        setLeaveGroups(leaveGroups.filter((g) => g.id !== id));
+        setConfirmDeleteGroupId(null);
+      } else {
+        alert("Failed to delete group");
       }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function handleAddEmpToGroup(groupId: string, employeeId: string) {
-      try {
-          const res = await fetch(`/api/leave-groups/${groupId}/employees`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ employeeId })
-          });
-          if (res.ok) {
-              addEmpToGroup("leave", groupId, employeeId);
-          } else {
-              const data = await res.json();
-              alert(data.message || "Failed to add employee");
-          }
-      } catch (err) {
-          console.error(err);
+    try {
+      const res = await fetch(`/api/leave-groups/${groupId}/employees`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ employeeId })
+      });
+      if (res.ok) {
+        addEmpToGroup("leave", groupId, employeeId);
+      } else {
+        const data = await res.json();
+        alert(data.message || "Failed to add employee");
       }
+    } catch (err) {
+      console.error(err);
+    }
   }
 
   async function handleRemoveEmpFromGroup(groupId: string, employeeId: string) {
-      try {
-          const res = await fetch(`/api/leave-groups/${groupId}/employees?employeeId=${employeeId}`, {
-              method: 'DELETE'
-          });
-          if (res.ok) {
-              removeEmpFromGroup("leave", groupId, employeeId);
-          } else {
-              alert("Failed to remove employee");
-          }
-      } catch (err) {
-          console.error(err);
+    try {
+      const res = await fetch(`/api/leave-groups/${groupId}/employees?employeeId=${employeeId}`, {
+        method: 'DELETE'
+      });
+      if (res.ok) {
+        removeEmpFromGroup("leave", groupId, employeeId);
+      } else {
+        alert("Failed to remove employee");
       }
+    } catch (err) {
+      console.error(err);
+    }
   }
 
   function startEditGroup(g: LeaveGroup) {
@@ -273,21 +302,19 @@ export default function LeaveTab() {
       <div className="flex gap-4 mb-6 border-b border-neutral-700">
         <button
           onClick={() => setActiveSubTab("daily")}
-          className={`pb-2 px-1 text-sm font-medium transition-colors ${
-            activeSubTab === "daily"
-              ? "text-blue-400 border-b-2 border-blue-400"
-              : "text-neutral-400 hover:text-neutral-200"
-          }`}
+          className={`pb-2 px-1 text-sm font-medium transition-colors ${activeSubTab === "daily"
+            ? "text-blue-400 border-b-2 border-blue-400"
+            : "text-neutral-400 hover:text-neutral-200"
+            }`}
         >
           Daily Leave Management
         </button>
         <button
           onClick={() => setActiveSubTab("groups")}
-          className={`pb-2 px-1 text-sm font-medium transition-colors ${
-            activeSubTab === "groups"
-              ? "text-blue-400 border-b-2 border-blue-400"
-              : "text-neutral-400 hover:text-neutral-200"
-          }`}
+          className={`pb-2 px-1 text-sm font-medium transition-colors ${activeSubTab === "groups"
+            ? "text-blue-400 border-b-2 border-blue-400"
+            : "text-neutral-400 hover:text-neutral-200"
+            }`}
         >
           Leave Groups & Policies
         </button>
@@ -327,15 +354,27 @@ export default function LeaveTab() {
             </div>
           </div>
 
-          {/* Search */}
-          <div className="mb-4">
+          {/* Search & Department Filter */}
+          <div className="flex flex-col sm:flex-row gap-3 mb-4">
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="🔍 Search employees by name, ID, or department..."
-              className="w-full bg-neutral-800 border border-neutral-700 rounded-lg px-4 py-2.5 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-neutral-500"
+              className="flex-1 bg-neutral-800 border border-neutral-700 rounded-lg px-4 py-2.5 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-neutral-500"
             />
+            <select
+              value={departmentFilter}
+              onChange={(e) => setDepartmentFilter(e.target.value)}
+              className="bg-neutral-800 border border-neutral-700 rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 sm:w-48"
+            >
+              <option value="">All Departments</option>
+              {DEPARTMENTS.map((dept) => (
+                <option key={dept} value={dept}>
+                  {dept}
+                </option>
+              ))}
+            </select>
           </div>
 
           {/* Employee list */}
@@ -360,17 +399,15 @@ export default function LeaveTab() {
                 return (
                   <div
                     key={emp.id}
-                    className={`flex items-center gap-4 p-4 rounded-xl border transition-colors ${
-                      isOnLeave
-                        ? "bg-orange-500/10 border-orange-500/30"
-                        : "bg-neutral-800 border-neutral-700"
-                    }`}
+                    className={`flex items-center gap-4 p-4 rounded-xl border transition-colors ${isOnLeave
+                      ? "bg-orange-500/10 border-orange-500/30"
+                      : "bg-neutral-800 border-neutral-700"
+                      }`}
                   >
                     {/* Status indicator */}
                     <div
-                      className={`w-3 h-3 rounded-full flex-shrink-0 ${
-                        isOnLeave ? "bg-orange-400" : "bg-emerald-400"
-                      }`}
+                      className={`w-3 h-3 rounded-full flex-shrink-0 ${isOnLeave ? "bg-orange-400" : "bg-emerald-400"
+                        }`}
                     />
 
                     {/* Employee info */}
@@ -389,40 +426,101 @@ export default function LeaveTab() {
                           Reason: {leaveRecord.reason}
                         </p>
                       )}
+                      {isOnLeave && leaveRecord?.substituteEmployeeId && (() => {
+                        const sub = employees.find((e) => e.id === leaveRecord.substituteEmployeeId);
+                        return sub ? (
+                          <p className="text-xs text-blue-300 mt-0.5">
+                            Substitute: {sub.name}
+                          </p>
+                        ) : null;
+                      })()}
                     </div>
 
-                    {/* Reason input (only when not on leave) */}
-                    {!isOnLeave && (
-                      <input
-                        type="text"
-                        value={reasonInput[emp.id] || ""}
-                        onChange={(e) =>
-                          setReasonInput((prev) => ({
-                            ...prev,
-                            [emp.id]: e.target.value,
-                          }))
-                        }
-                        placeholder="Reason (optional)"
-                        className="hidden sm:block w-40 bg-neutral-900 border border-neutral-700 rounded-lg px-2 py-1.5 text-white text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-neutral-600"
-                      />
-                    )}
-
                     {/* Toggle button */}
-                    <button
-                      onClick={() => toggleLeave(emp.id)}
-                      className={`flex-shrink-0 px-4 py-2 rounded-lg text-xs font-medium transition-colors ${
-                        isOnLeave
-                          ? "bg-emerald-600 hover:bg-emerald-700 text-white"
-                          : "bg-orange-600 hover:bg-orange-700 text-white"
-                      }`}
-                    >
-                      {isOnLeave ? "Mark Present" : "Mark Leave"}
-                    </button>
+                    {isOnLeave ? (
+                      <button
+                        onClick={() => removeLeave(emp.id)}
+                        className="flex-shrink-0 px-4 py-2 rounded-lg text-xs font-medium transition-colors bg-emerald-600 hover:bg-emerald-700 text-white"
+                      >
+                        Mark Present
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => openLeaveModal(emp.id)}
+                        className="flex-shrink-0 px-4 py-2 rounded-lg text-xs font-medium transition-colors bg-orange-600 hover:bg-orange-700 text-white"
+                      >
+                        Mark Leave
+                      </button>
+                    )}
                   </div>
                 );
               })}
             </div>
           )}
+
+          {/* Leave Modal */}
+          {leaveModalEmpId && (() => {
+            const modalEmp = employees.find((e) => e.id === leaveModalEmpId);
+            if (!modalEmp) return null;
+            return (
+              <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                <div className="bg-neutral-800 border border-neutral-700 rounded-2xl p-6 w-full max-w-md space-y-5">
+                  <h3 className="text-lg font-semibold text-white">Mark Leave</h3>
+
+                  <div>
+                    <p className="text-sm text-neutral-400">Employee</p>
+                    <p className="text-white font-medium">{modalEmp.name} <span className="text-xs text-neutral-500 font-mono">{modalEmp.employeeId}</span></p>
+                    <p className="text-xs text-neutral-400 mt-0.5">{modalEmp.department} · {selectedDate}</p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm text-neutral-400 mb-1">Reason (optional)</label>
+                    <input
+                      type="text"
+                      value={leaveModalReason}
+                      onChange={(e) => setLeaveModalReason(e.target.value)}
+                      placeholder="e.g. Sick leave, personal"
+                      className="w-full bg-neutral-900 border border-neutral-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm text-neutral-400 mb-1">Substitute Employee (Double Duty)</label>
+                    <select
+                      value={leaveModalSubstitute}
+                      onChange={(e) => setLeaveModalSubstitute(e.target.value)}
+                      className="w-full bg-neutral-900 border border-neutral-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">No substitute</option>
+                      {substituteOptions.map((sub) => (
+                        <option key={sub.id} value={sub.id}>
+                          {sub.name} ({sub.employeeId})
+                        </option>
+                      ))}
+                    </select>
+                    {substituteOptions.length === 0 && (
+                      <p className="text-xs text-neutral-500 mt-1">No other employees in the same department.</p>
+                    )}
+                  </div>
+
+                  <div className="flex gap-3 pt-2">
+                    <button
+                      onClick={handleMarkLeave}
+                      className="flex-1 bg-orange-600 hover:bg-orange-700 text-white px-4 py-2.5 rounded-lg text-sm font-medium transition-colors"
+                    >
+                      Mark Leave
+                    </button>
+                    <button
+                      onClick={closeLeaveModal}
+                      className="flex-1 bg-neutral-700 hover:bg-neutral-600 text-white px-4 py-2.5 rounded-lg text-sm font-medium transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
 
           {/* On-leave summary for the date */}
           {todayRecords.length > 0 && (
@@ -444,7 +542,7 @@ export default function LeaveTab() {
                         <span className="text-orange-400/60">({record.reason})</span>
                       )}
                       <button
-                        onClick={() => toggleLeave(emp.id)} // toggleLeave handles remove if exists
+                        onClick={() => removeLeave(emp.id)}
                         className="ml-1 hover:text-red-300"
                       >
                         ×
@@ -518,10 +616,10 @@ export default function LeaveTab() {
           )}
 
           {leaveGroups.length === 0 ? (
-             <div className="text-center py-12 text-neutral-500">
-               <p className="text-lg mb-1">No leave groups yet</p>
-               <p className="text-sm">Create a group to define leave policies.</p>
-             </div>
+            <div className="text-center py-12 text-neutral-500">
+              <p className="text-lg mb-1">No leave groups yet</p>
+              <p className="text-sm">Create a group to define leave policies.</p>
+            </div>
           ) : (
             <div className="space-y-3">
               {leaveGroups.map((g) => {
