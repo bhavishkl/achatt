@@ -42,7 +42,7 @@ export default function LoginPage() {
       if (data.userId) {
         sessionStorage.setItem('userId', data.userId);
       }
-      router.push('/');
+      router.push('/attendance');
     } else {
       setMessage(data.message || `Sign in failed: ${data.error || 'Unknown error'}`);
     }

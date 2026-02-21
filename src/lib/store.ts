@@ -7,6 +7,7 @@ import type {
   LeaveGroup,
   LeaveRecord,
   ShiftGroup,
+  ShiftRotation,
   HolidayEntry,
   PunchRecord,
   ProcessedPunch,
@@ -69,6 +70,12 @@ interface AppState {
   addShiftGroup: (g: Omit<ShiftGroup, "id" | "employeeIds">) => void;
   updateShiftGroup: (id: string, g: Partial<Omit<ShiftGroup, "id">>) => void;
   deleteShiftGroup: (id: string) => void;
+
+  // --- Shift Rotations ---
+  shiftRotations: ShiftRotation[];
+  setShiftRotations: (rotations: ShiftRotation[]) => void;
+  addShiftRotation: (r: ShiftRotation) => void;
+  deleteShiftRotation: (id: string) => void;
 
   // --- Leave Records (per-date) ---
   leaveRecords: LeaveRecord[];
@@ -153,6 +160,7 @@ export const useAppStore = create<AppState>()(
             ...g,
             employeeIds: g.employeeIds.filter((eid) => eid !== id),
           })),
+          shiftRotations: s.shiftRotations.filter((r) => r.employeeId !== id),
           leaveRecords: s.leaveRecords.filter((r) => r.employeeId !== id),
         })),
 
@@ -230,6 +238,18 @@ export const useAppStore = create<AppState>()(
       deleteShiftGroup: (id) =>
         set((s) => ({
           shiftGroups: s.shiftGroups.filter((g) => g.id !== id),
+        })),
+
+      // ---- Shift Rotations ----
+      shiftRotations: [],
+      setShiftRotations: (rotations) => set({ shiftRotations: rotations }),
+      addShiftRotation: (r) =>
+        set((s) => ({
+          shiftRotations: [...s.shiftRotations, r],
+        })),
+      deleteShiftRotation: (id) =>
+        set((s) => ({
+          shiftRotations: s.shiftRotations.filter((r) => r.id !== id),
         })),
 
       // ---- Leave Records (per-date) ----

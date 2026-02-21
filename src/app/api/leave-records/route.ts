@@ -13,10 +13,11 @@ export async function GET(request: Request) {
 
   try {
     // Join with employees to filter by company_id, as leave_records doesn't have company_id directly
+    // Use the explicit foreign key to resolve ambiguity since there are multiple FKs to employees
     let query = supabaseAdmin
       .from('leave_records')
-      .select('*, employees!inner(company_id)')
-      .eq('employees.company_id', companyId);
+      .select('*, employee_details:employees!leave_records_employee_id_fkey!inner(company_id)')
+      .eq('employee_details.company_id', companyId);
 
     if (month) {
       // Filter by month prefix e.g. '2026-02'
