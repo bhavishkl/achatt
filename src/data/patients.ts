@@ -1,0 +1,49 @@
+import { Patient } from "@/types/patient";
+
+export const DUMMY_PATIENTS: Patient[] = [
+    {
+        id: '1',
+        regNo: '0001',
+        prefix: 'Mr.',
+        name: 'Rajesh Kumar',
+        gender: 'Male',
+        age: 45,
+        pincode: '560001',
+        admissionDate: '2023-10-25',
+        admissionTime: '10:30',
+        hospitalName: 'City General Hospital',
+        doctorName: 'Dr. A. Sharma',
+        wardName: 'General Ward',
+        bedNo: 'G-12',
+        attenderName: 'Suresh Kumar',
+        attenderAddress: '123 MG Road, Bangalore',
+        attenderMobile: '9876543210',
+        attenderRelation: 'Brother',
+        diagnosis: 'Viral Fever',
+        status: 'admitted',
+        bills: []
+    },
+    {
+        id: '2',
+        regNo: '0002',
+        prefix: 'Mrs.',
+        name: 'Priya Singh',
+        gender: 'Female',
+        age: 32,
+        pincode: '110001',
+        admissionDate: '2023-10-20',
+        admissionTime: '14:15',
+        hospitalName: 'City General Hospital',
+        doctorName: 'Dr. B. Gupta',
+        wardName: 'Semi-Private',
+        bedNo: 'SP-05',
+        attenderName: 'Amit Singh',
+        attenderAddress: '45 Lajpat Nagar, Delhi',
+        attenderMobile: '9988776655',
+        attenderRelation: 'Husband',
+        diagnosis: 'Migraine',
+        status: 'discharged',
+        dischargeDate: '2023-10-24',
+        bills: []
+    }
+];
