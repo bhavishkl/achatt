@@ -15,10 +15,6 @@ export default function WardPackageSection({
   onChangeQty,
   onAddPackage,
 }: WardPackageSectionProps) {
-  if (WARD_BILL_PACKAGES.length === 0) {
-    return null;
-  }
-
   return (
     <div className="bg-neutral-950/50 border border-neutral-800 rounded-lg p-2.5">
       <div className="flex gap-2 items-end">
