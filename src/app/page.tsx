@@ -2,11 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { Patient, Bill } from "@/types/patient";
-import { DUMMY_PATIENTS } from "@/data/patients";
 import AdmittedPatientsTable from "@/components/AdmittedPatientsTable";
 import DischargedPatientsTable from "@/components/DischargedPatientsTable";
 import AddPatientModal from "@/components/AddPatientModal";
 import AddBillModal from "@/components/AddBillModal";
+import { useAppStore } from "@/lib/store";
 
 const normalizePatient = (p: Patient): Patient => ({
   ...p,
@@ -22,8 +22,11 @@ const normalizePatient = (p: Patient): Patient => ({
 });
 
 export default function Home() {
+  const companyId = useAppStore((s) => s.companyId);
   const [activeTab, setActiveTab] = useState<'admission' | 'discharged'>('admission');
   const [patients, setPatients] = useState<Patient[]>([]);
+  const [isLoadingPatients, setIsLoadingPatients] = useState(false);
+  const [patientsError, setPatientsError] = useState("");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingPatient, setEditingPatient] = useState<Patient | null>(null);
 
@@ -35,30 +38,75 @@ export default function Home() {
   const [advanceInput, setAdvanceInput] = useState<number | string>('');
 
   useEffect(() => {
-    const stored = localStorage.getItem('patients');
-    if (stored) {
-      const parsed = JSON.parse(stored) as Patient[];
-      const normalized = parsed.map(normalizePatient);
-      setPatients(normalized);
-      localStorage.setItem('patients', JSON.stringify(normalized));
-    } else {
-      const normalized = DUMMY_PATIENTS.map(normalizePatient);
-      setPatients(normalized);
-      localStorage.setItem('patients', JSON.stringify(normalized));
+    if (!companyId) {
+      setPatients([]);
+      return;
     }
-  }, []);
 
-  const handleSavePatient = (patient: Patient) => {
-    let updatedPatients;
-    const existingIndex = patients.findIndex(p => p.id === patient.id);
-    if (existingIndex >= 0) {
-      updatedPatients = [...patients];
-      updatedPatients[existingIndex] = patient;
-    } else {
-      updatedPatients = [...patients, patient];
+    const loadPatients = async () => {
+      setIsLoadingPatients(true);
+      setPatientsError("");
+      try {
+        const response = await fetch(`/api/patients?companyId=${companyId}`);
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.message || "Failed to load patients");
+        }
+        setPatients((data.patients as Patient[]).map(normalizePatient));
+      } catch (error: any) {
+        setPatientsError(error.message || "Failed to load patients");
+      } finally {
+        setIsLoadingPatients(false);
+      }
+    };
+
+    void loadPatients();
+  }, [companyId]);
+
+  const savePatientToServer = async (patient: Patient): Promise<Patient> => {
+    const response = await fetch(`/api/patients/${patient.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ patient }),
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.message || "Failed to update patient");
     }
-    setPatients(updatedPatients);
-    localStorage.setItem('patients', JSON.stringify(updatedPatients));
+    return normalizePatient(data.patient);
+  };
+
+  const handleSavePatient = async (patient: Patient) => {
+    setPatientsError("");
+    if (!companyId) {
+      setPatientsError("Company profile is required to manage admissions.");
+      return;
+    }
+
+    try {
+      const existingIndex = patients.findIndex((p) => p.id === patient.id);
+      if (existingIndex >= 0) {
+        const saved = await savePatientToServer(patient);
+        const updatedPatients = [...patients];
+        updatedPatients[existingIndex] = saved;
+        setPatients(updatedPatients);
+      } else {
+        const response = await fetch("/api/patients", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ companyId, patient }),
+        });
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.message || "Failed to create patient");
+        }
+        setPatients((prev) => [normalizePatient(data.patient), ...prev]);
+      }
+    } catch (error: any) {
+      setPatientsError(error.message || "Failed to save patient");
+      return;
+    }
+
     setEditingPatient(null);
   };
 
@@ -73,19 +121,20 @@ export default function Home() {
     setEditingPatient(null);
   };
 
-  const handleDischarge = (id: string) => {
-    const updatedPatients = patients.map(p => {
-      if (p.id === id) {
-        return {
-          ...p,
-          status: 'discharged' as const,
-          dischargeDate: new Date().toISOString().split('T')[0]
-        };
-      }
-      return p;
-    });
-    setPatients(updatedPatients);
-    localStorage.setItem('patients', JSON.stringify(updatedPatients));
+  const handleDischarge = async (id: string) => {
+    const current = patients.find((p) => p.id === id);
+    if (!current) return;
+
+    try {
+      const saved = await savePatientToServer({
+        ...current,
+        status: "discharged",
+        dischargeDate: new Date().toISOString().split("T")[0],
+      });
+      setPatients((prev) => prev.map((p) => (p.id === id ? saved : p)));
+    } catch (error: any) {
+      setPatientsError(error.message || "Failed to discharge patient");
+    }
   };
 
   const openBillModal = (patientId: string) => {
@@ -102,32 +151,24 @@ export default function Home() {
     setIsBillModalOpen(true);
   };
 
-  const handleSaveBill = (patientId: string, bill: Bill) => {
-    const updatedPatients = patients.map(p => {
-      if (p.id === patientId) {
-        const existingIndex = p.bills?.findIndex(b => b.id === bill.id) ?? -1;
-        const previousAdvanceUsed = existingIndex >= 0 ? (p.bills?.[existingIndex]?.advanceUsed ?? 0) : 0;
-        const nextAdvanceUsed = bill.advanceUsed ?? 0;
-        const nextAdvanceBalance = Math.max(
-          0,
-          (p.advanceBalance ?? 0) + previousAdvanceUsed - nextAdvanceUsed
-        );
-
-        if (existingIndex >= 0) {
-          // Update existing bill
-          const updatedBills = [...(p.bills || [])];
-          updatedBills[existingIndex] = bill;
-          return { ...p, bills: updatedBills, advanceBalance: nextAdvanceBalance };
-        } else {
-          // Add new bill
-          return { ...p, bills: [...(p.bills || []), bill], advanceBalance: nextAdvanceBalance };
-        }
+  const handleSaveBill = async (patientId: string, bill: Bill) => {
+    setPatientsError("");
+    try {
+      const response = await fetch(`/api/patients/${patientId}/bills`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bill }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to save bill");
       }
-      return p;
-    });
+      setPatients((prev) => prev.map((p) => (p.id === patientId ? normalizePatient(data.patient) : p)));
+    } catch (error: any) {
+      setPatientsError(error.message || "Failed to save bill");
+      throw error;
+    }
 
-    setPatients(updatedPatients);
-    localStorage.setItem('patients', JSON.stringify(updatedPatients));
     setEditingBill(null);
   };
 
@@ -146,20 +187,26 @@ export default function Home() {
     setAdvanceInput('');
   };
 
-  const handleSaveAdvance = () => {
+  const handleSaveAdvance = async () => {
     if (!advancePatientId) return;
     const amount = Number(advanceInput);
     if (!amount || amount <= 0) return;
 
-    const updatedPatients = patients.map((p) =>
-      p.id === advancePatientId
-        ? { ...p, advanceBalance: (p.advanceBalance ?? 0) + amount }
-        : p
-    );
-
-    setPatients(updatedPatients);
-    localStorage.setItem('patients', JSON.stringify(updatedPatients));
-    closeAdvanceModal();
+    try {
+      const response = await fetch(`/api/patients/${advancePatientId}/advances`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amount }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to save advance amount");
+      }
+      setPatients((prev) => prev.map((p) => (p.id === advancePatientId ? normalizePatient(data.patient) : p)));
+      closeAdvanceModal();
+    } catch (error: any) {
+      setPatientsError(error.message || "Failed to save advance amount");
+    }
   };
 
   const admittedPatients = patients.filter(p => p.status === 'admitted');
@@ -179,6 +226,12 @@ export default function Home() {
       <div className="max-w-7xl mx-auto">
         
         {/* Tabs */}
+        {patientsError && (
+          <div className="mb-4 rounded-lg border border-red-700/40 bg-red-900/20 px-4 py-3 text-sm text-red-300">
+            {patientsError}
+          </div>
+        )}
+
         <div className="flex border-b border-neutral-800 mb-6">
           <button
             onClick={() => setActiveTab('admission')}
@@ -201,6 +254,10 @@ export default function Home() {
         </div>
 
         {/* Content */}
+        {isLoadingPatients && (
+          <div className="mb-4 text-sm text-neutral-400">Loading patients...</div>
+        )}
+
         {activeTab === 'admission' && (
           <AdmittedPatientsTable
             patients={admittedPatients}
@@ -224,7 +281,9 @@ export default function Home() {
         existingPatient={editingPatient}
         nextRegNo={getNextRegNo()}
         onClose={closePatientModal}
-        onAddPatient={handleSavePatient}
+        onAddPatient={(patient) => {
+          void handleSavePatient(patient);
+        }}
       />
 
       <AddBillModal

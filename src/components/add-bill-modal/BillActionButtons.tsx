@@ -7,6 +7,7 @@ interface BillActionButtonsProps {
 export default function BillActionButtons({ isEditing, onCancel, onPrint }: BillActionButtonsProps) {
   return (
     <div className="flex justify-end gap-2 mt-3">
+      
       <button
         type="button"
         onClick={onCancel}

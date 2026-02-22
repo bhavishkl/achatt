@@ -761,5 +761,340 @@
         "column_default": "CURRENT_TIMESTAMP"
       }
     ]
+  },
+  {
+    "table_name": "patients",
+    "columns": [
+      {
+        "ordinal_position": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "max_length": null,
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "ordinal_position": 2,
+        "column_name": "company_id",
+        "data_type": "uuid",
+        "max_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "ordinal_position": 3,
+        "column_name": "reg_no",
+        "data_type": "text",
+        "max_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "ordinal_position": 4,
+        "column_name": "prefix",
+        "data_type": "text",
+        "max_length": null,
+        "is_nullable": "NO",
+        "column_default": "'Mr.'::text"
+      },
+      {
+        "ordinal_position": 5,
+        "column_name": "name",
+        "data_type": "text",
+        "max_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "ordinal_position": 6,
+        "column_name": "gender",
+        "data_type": "text",
+        "max_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "ordinal_position": 7,
+        "column_name": "age",
+        "data_type": "integer",
+        "max_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "ordinal_position": 8,
+        "column_name": "pincode",
+        "data_type": "text",
+        "max_length": null,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "ordinal_position": 9,
+        "column_name": "admission_date",
+        "data_type": "date",
+        "max_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "ordinal_position": 10,
+        "column_name": "admission_time",
+        "data_type": "time without time zone",
+        "max_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "ordinal_position": 11,
+        "column_name": "ward_name",
+        "data_type": "text",
+        "max_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "ordinal_position": 12,
+        "column_name": "bed_no",
+        "data_type": "text",
+        "max_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "ordinal_position": 13,
+        "column_name": "attender_name",
+        "data_type": "text",
+        "max_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "ordinal_position": 14,
+        "column_name": "attender_address",
+        "data_type": "text",
+        "max_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "ordinal_position": 15,
+        "column_name": "attender_mobile",
+        "data_type": "text",
+        "max_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "ordinal_position": 16,
+        "column_name": "attender_relation",
+        "data_type": "text",
+        "max_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "ordinal_position": 17,
+        "column_name": "status",
+        "data_type": "text",
+        "max_length": null,
+        "is_nullable": "NO",
+        "column_default": "'admitted'::text"
+      },
+      {
+        "ordinal_position": 18,
+        "column_name": "discharge_date",
+        "data_type": "date",
+        "max_length": null,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "ordinal_position": 19,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "max_length": null,
+        "is_nullable": "YES",
+        "column_default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "ordinal_position": 20,
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "max_length": null,
+        "is_nullable": "YES",
+        "column_default": "CURRENT_TIMESTAMP"
+      }
+    ]
+  },
+  {
+    "table_name": "patient_bills",
+    "columns": [
+      {
+        "ordinal_position": 1,
+        "column_name": "id",
+        "data_type": "text",
+        "max_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "ordinal_position": 2,
+        "column_name": "patient_id",
+        "data_type": "uuid",
+        "max_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "ordinal_position": 3,
+        "column_name": "bill_date",
+        "data_type": "date",
+        "max_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "ordinal_position": 4,
+        "column_name": "discharge_date",
+        "data_type": "date",
+        "max_length": null,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "ordinal_position": 5,
+        "column_name": "ip_bill_type",
+        "data_type": "text",
+        "max_length": null,
+        "is_nullable": "NO",
+        "column_default": "'draft'::text"
+      },
+      {
+        "ordinal_position": 6,
+        "column_name": "gross_amount",
+        "data_type": "numeric",
+        "max_length": null,
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "ordinal_position": 7,
+        "column_name": "advance_used",
+        "data_type": "numeric",
+        "max_length": null,
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "ordinal_position": 8,
+        "column_name": "concession",
+        "data_type": "numeric",
+        "max_length": null,
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "ordinal_position": 9,
+        "column_name": "total_amount",
+        "data_type": "numeric",
+        "max_length": null,
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "ordinal_position": 10,
+        "column_name": "items_json",
+        "data_type": "jsonb",
+        "max_length": null,
+        "is_nullable": "NO",
+        "column_default": "'[]'::jsonb"
+      },
+      {
+        "ordinal_position": 11,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "max_length": null,
+        "is_nullable": "YES",
+        "column_default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "ordinal_position": 12,
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "max_length": null,
+        "is_nullable": "YES",
+        "column_default": "CURRENT_TIMESTAMP"
+      }
+    ]
+  },
+  {
+    "table_name": "patient_advances",
+    "columns": [
+      {
+        "ordinal_position": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "max_length": null,
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "ordinal_position": 2,
+        "column_name": "patient_id",
+        "data_type": "uuid",
+        "max_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "ordinal_position": 3,
+        "column_name": "entry_type",
+        "data_type": "text",
+        "max_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "ordinal_position": 4,
+        "column_name": "amount",
+        "data_type": "numeric",
+        "max_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "ordinal_position": 5,
+        "column_name": "source",
+        "data_type": "text",
+        "max_length": null,
+        "is_nullable": "NO",
+        "column_default": "'manual'::text"
+      },
+      {
+        "ordinal_position": 6,
+        "column_name": "reference_bill_id",
+        "data_type": "text",
+        "max_length": null,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "ordinal_position": 7,
+        "column_name": "note",
+        "data_type": "text",
+        "max_length": null,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "ordinal_position": 8,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "max_length": null,
+        "is_nullable": "YES",
+        "column_default": "CURRENT_TIMESTAMP"
+      }
+    ]
   }
 ]

@@ -1,9 +1,9 @@
 import { WARD_BILL_PACKAGES } from "@/lib/constants";
 
 interface WardPackageSectionProps {
-  selectedPackageId: string;
+  selectedPackageId: number | "";
   packageQty: number | string;
-  onSelectPackage: (value: string) => void;
+  onSelectPackage: (value: number | "") => void;
   onChangeQty: (value: number | string) => void;
   onAddPackage: () => void;
 }
@@ -22,7 +22,7 @@ export default function WardPackageSection({
           <label className="block text-xs text-neutral-500 mb-1">Ward Package</label>
           <select
             value={selectedPackageId}
-            onChange={(e) => onSelectPackage(e.target.value)}
+            onChange={(e) => onSelectPackage(e.target.value === "" ? "" : Number(e.target.value))}
             className="w-full bg-neutral-950 border border-neutral-800 rounded px-2 py-1.5 text-sm focus:ring-2 focus:ring-blue-600 outline-none"
           >
             {WARD_BILL_PACKAGES.map((pkg) => (
@@ -50,9 +50,6 @@ export default function WardPackageSection({
           Add Package
         </button>
       </div>
-      <p className="text-xs text-neutral-600 mt-1.5">
-        Adds all package charges in one action. You can still add line items individually below.
-      </p>
     </div>
   );
 }

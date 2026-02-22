@@ -36,11 +36,11 @@ export function buildBillPrintHtml({
     .map(
       (item, i) => `
             <tr>
-                <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;text-align:center">${i + 1}</td>
-                <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb">${item.description}</td>
-                <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;text-align:right">Rs ${item.rate.toFixed(2)}</td>
-                <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;text-align:center">${item.quantity}</td>
-                <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;text-align:right;font-weight:600">Rs ${(item.rate * item.quantity).toFixed(2)}</td>
+                <td style="padding:8px 12px;text-align:center">${i + 1}</td>
+                <td style="padding:8px 12px">${item.description}</td>
+                <td style="padding:8px 12px;text-align:right">Rs ${item.rate.toFixed(2)}</td>
+                <td style="padding:8px 12px;text-align:center">${item.quantity}</td>
+                <td style="padding:8px 12px;text-align:right;font-weight:700;color:#000">Rs ${(item.rate * item.quantity).toFixed(2)}</td>
             </tr>
         `
     )
@@ -54,24 +54,28 @@ export function buildBillPrintHtml({
             <style>
                 * { margin: 0; padding: 0; box-sizing: border-box; }
                 body { font-family: 'Segoe UI', Arial, sans-serif; color: #1a1a1a; padding: 32px; max-width: 800px; margin: 0 auto; }
-                .header { text-align: center; border-bottom: 2px solid #1a1a1a; padding-bottom: 16px; margin-bottom: 20px; }
+                .header { text-align: center; padding-top: 88px; padding-bottom: 10px; margin-bottom: 10px; }
                 .header h1 { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
-                .header p { font-size: 12px; color: #666; }
+                .header p { font-size: 12px; color: #000; }
+                .bill-type-banner { width: 100%; background: #f3f4f6; color: #000; border: 1px solid #000; text-align: center; font-size: 12px; font-weight: 700; letter-spacing: 0.7px; text-transform: uppercase; padding: 7px 10px; margin-bottom: 16px; }
                 .bill-meta { display: flex; justify-content: space-between; margin-bottom: 20px; font-size: 13px; }
                 .bill-meta div { line-height: 1.6; }
-                .bill-meta .label { color: #888; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
-                .bill-meta .value { font-weight: 600; }
-                .contact-row { display: flex; justify-content: center; gap: 16px; font-size: 12px; color: #666; margin-top: 2px; }
+                .bill-meta .label { color: #000; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
+                .bill-meta .value { color: #000; font-weight: 700; }
+                .contact-row { display: flex; justify-content: space-between; align-items: center; width: 100%; font-size: 12px; color: #000; margin-top: 2px; }
                 .meta-row { display: flex; align-items: center; gap: 8px; }
-                .meta-row .label-inline { color: #888; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; min-width: 70px; }
-                .meta-row .value-inline { font-weight: 600; }
-                table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 13px; }
-                thead th { background: #f3f4f6; padding: 10px 12px; text-align: left; font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: #555; border-bottom: 2px solid #d1d5db; }
+                .meta-row .label-inline { color: #000; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; min-width: 70px; font-weight: 600; }
+                .meta-row .value-inline { color: #000; font-weight: 700; }
+                table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 13px; border: 1px solid #000; }
+                thead th { background: #f3f4f6; padding: 10px 12px; text-align: left; font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: #000; border: 1px solid #000; }
+                tbody td { color: #000; border: 1px solid #000; }
                 thead th:first-child { text-align: center; }
                 thead th:nth-child(3), thead th:nth-child(5) { text-align: right; }
                 thead th:nth-child(4) { text-align: center; }
-                .total-row td { border-top: 2px solid #1a1a1a; padding: 12px; font-size: 15px; font-weight: 700; }
-                .footer { text-align: center; margin-top: 40px; padding-top: 16px; border-top: 1px solid #e5e7eb; font-size: 11px; color: #999; }
+                .summary-row td { padding: 6px 12px; font-size: 13px; line-height: 1.2; }
+                .summary-row td:last-child { font-weight: 700; color: #000; }
+                .summary-total td { padding: 8px 12px; font-size: 14px; font-weight: 700; color: #000; }
+                .footer { text-align: center; margin-top: 40px; padding-top: 16px; border-top: 1px solid #000; font-size: 11px; color: #000; }
                 @media print {
                     body { padding: 16px; }
                     @page { margin: 12mm; }
@@ -81,40 +85,32 @@ export function buildBillPrintHtml({
         <body>
             <div class="header">
                 <h1>${companyName}</h1>
-                <p>Patient Bill / Invoice</p>
                 ${companyAddress ? `<p>${companyAddress}</p>` : ""}
                 ${(companyEmail || companyMobile1 || companyMobile2) ? `<div class="contact-row"><span>${companyEmail ? `Email: ${companyEmail}` : ""}</span><span>${(companyMobile1 || companyMobile2) ? `Mobile: ${[companyMobile1, companyMobile2].filter(Boolean).join(", ")}` : ""}</span></div>` : ""}
             </div>
+            <div class="bill-type-banner">${ipBillType === "final" ? "IP FINAL BILL" : "IP DRAFT BILL"}</div>
 
             <div class="bill-meta">
                 <div>
                     <div class="meta-row"><span class="label-inline">Patient</span><span class="value-inline">${patient.prefix} ${patient.name}</span></div>
-                    <div class="meta-row"><span class="label-inline">Gender/Age</span><span>${patient.gender}, ${patient.age} Yrs</span></div>
-                    <div class="meta-row"><span class="label-inline">Reg No</span><span>${patient.regNo}</span></div>
+                    <div class="meta-row"><span class="label-inline">Gender/Age</span><span class="value-inline">${patient.gender}, ${patient.age} Yrs</span></div>
+                    <div class="meta-row"><span class="label-inline">Reg No</span><span class="value-inline">${patient.regNo}</span></div>
                 </div>
                 <div>
-                    <div class="label">Ward / Bed</div>
-                    <div class="value">${patient.wardName} - Bed ${patient.bedNo}</div>
-                    <div class="label" style="margin-top:8px">Doctor</div>
-                    <div class="value">${patient.doctorName}</div>
-                    ${companyOwner ? `<div class="meta-row"><span class="label-inline">Owner</span><span>${companyOwner}</span></div>` : ""}
+                    <div class="meta-row"><span class="label-inline">Ward / Bed</span><span class="value-inline">${patient.wardName} - Bed ${patient.bedNo}</span></div>
+                    ${companyOwner ? `<div class="meta-row"><span class="label-inline">Ref Doctor</span><span class="value-inline">${companyOwner}</span></div>` : ""}
                 </div>
                 <div style="text-align:right">
-                    <div class="label">Bill Type</div>
-                    <div class="value">${ipBillType === "final" ? "IP Final Bill" : "IP Draft Bill"}</div>
-                    <div class="label">Bill Date</div>
-                    <div class="value">${billDate}</div>
-                    <div class="label" style="margin-top:8px">Discharge</div>
-                    <div class="value">${dischargeDate || "-"}</div>
-                    <div class="label" style="margin-top:8px">Admission</div>
-                    <div class="value">${patient.admissionDate}</div>
+                    <div class="meta-row" style="justify-content:flex-end"><span class="label-inline">Bill Date</span><span class="value-inline">${billDate}</span></div>
+                    <div class="meta-row" style="justify-content:flex-end"><span class="label-inline">Discharge</span><span class="value-inline">${dischargeDate || "-"}</span></div>
+                    <div class="meta-row" style="justify-content:flex-end"><span class="label-inline">Admission</span><span class="value-inline">${patient.admissionDate}</span></div>
                 </div>
             </div>
 
             <table>
                 <thead>
                     <tr>
-                        <th style="width:40px">#</th>
+                        <th style="width:40px">Sl No.</th>
                         <th>Description</th>
                         <th style="width:100px;text-align:right">Rate</th>
                         <th style="width:60px;text-align:center">Qty</th>
@@ -123,21 +119,21 @@ export function buildBillPrintHtml({
                 </thead>
                 <tbody>
                     ${itemsRows}
-                    <tr class="total-row">
+                    <tr class="summary-total">
                         <td colspan="4" style="text-align:right">Gross Amount</td>
                         <td style="text-align:right">Rs ${grossAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                     </tr>
                     ${
                       advanceUsed > 0
-                        ? `<tr><td colspan="4" style="text-align:right;padding:10px 12px;">Advance Deducted</td><td style="text-align:right;padding:10px 12px;">- Rs ${advanceUsed.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td></tr>`
+                        ? `<tr class="summary-row"><td colspan="4" style="text-align:right">Advance Deducted</td><td style="text-align:right">- Rs ${advanceUsed.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td></tr>`
                         : ""
                     }
                     ${
                       concession > 0
-                        ? `<tr><td colspan="4" style="text-align:right;padding:10px 12px;">Concession</td><td style="text-align:right;padding:10px 12px;">- Rs ${concession.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td></tr>`
+                        ? `<tr class="summary-row"><td colspan="4" style="text-align:right">Concession</td><td style="text-align:right">- Rs ${concession.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td></tr>`
                         : ""
                     }
-                    <tr class="total-row">
+                    <tr class="summary-total">
                         <td colspan="4" style="text-align:right">Net Payable</td>
                         <td style="text-align:right">Rs ${netAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                     </tr>

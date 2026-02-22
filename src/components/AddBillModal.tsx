@@ -33,7 +33,7 @@ export default function AddBillModal({
   const [dischargeDate, setDischargeDate] = useState("");
   const [isIpFinalBill, setIsIpFinalBill] = useState(false);
 
-  const [selectedPackageId, setSelectedPackageId] = useState<string>(WARD_BILL_PACKAGES[0]?.id ?? "");
+  const [selectedPackageId, setSelectedPackageId] = useState<number | "">(WARD_BILL_PACKAGES[0]?.id ?? "");
   const [packageQty, setPackageQty] = useState<number | string>(1);
 
   const [inputDesc, setInputDesc] = useState("");
@@ -186,7 +186,7 @@ export default function AddBillModal({
     openBillPrintWindow(html);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!patient || billItems.length === 0) return;
 
@@ -205,8 +205,12 @@ export default function AddBillModal({
       })),
     };
 
-    onSaveBill(patient.id, bill);
-    onClose();
+    try {
+      await onSaveBill(patient.id, bill);
+      onClose();
+    } catch {
+      // Error state is displayed by the parent page.
+    }
   };
 
   const isEditing = !!existingBill;
@@ -245,12 +249,9 @@ export default function AddBillModal({
               />
 
               {availableAdvance > 0 && (
-                <div className="bg-emerald-950/20 border border-emerald-900/40 rounded-lg p-2.5 mb-2">
+                <div className="bg-emerald-950/20 border border-emerald-900/40 rounded-lg p-2.5 mb-2 mt-2">
                   <div className="text-sm text-emerald-300">
                     Advance Available: <span className="font-semibold">Rs {availableAdvance.toFixed(2)}</span>
-                  </div>
-                  <div className="text-xs text-emerald-300/70 mt-1">
-                    Advance is auto-deducted fully up to gross bill amount.
                   </div>
                 </div>
               )}
@@ -286,9 +287,6 @@ export default function AddBillModal({
                   />
                   IP Final Bill
                 </label>
-                <p className="text-xs text-neutral-500 mt-1">
-                  Unchecked means IP Draft Bill.
-                </p>
               </div>
             </div>
 

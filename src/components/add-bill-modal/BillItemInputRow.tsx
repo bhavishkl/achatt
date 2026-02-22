@@ -79,13 +79,6 @@ export default function BillItemInputRow({
           Rs {(Number(inputRate) * Number(inputQty) || 0).toFixed(2)}
         </div>
       </div>
-      <p className="text-xs text-neutral-600 mt-1.5">
-        Fill all fields and press{" "}
-        <kbd className="px-1.5 py-0.5 bg-neutral-800 rounded text-neutral-400 text-xs border border-neutral-700">
-          Enter
-        </kbd>{" "}
-        to add item or package.
-      </p>
     </div>
   );
 }

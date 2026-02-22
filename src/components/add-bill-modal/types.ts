@@ -5,7 +5,7 @@ export interface AddBillModalProps {
   patient: Patient | null;
   existingBill?: Bill | null;
   onClose: () => void;
-  onSaveBill: (patientId: string, bill: Bill) => void;
+  onSaveBill: (patientId: string, bill: Bill) => Promise<void>;
 }
 
 export type BillDraftItem = Omit<BillItem, "amount">;
