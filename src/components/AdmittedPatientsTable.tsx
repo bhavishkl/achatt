@@ -37,7 +37,7 @@ export default function AdmittedPatientsTable({
                             <tr>
                                 <th className="p-4 min-w-[120px]">Reg No</th>
                                 <th className="p-4 min-w-[200px]">Patient Details</th>
-                                <th className="p-4 min-w-[150px]">Doctor / Ward</th>
+                                <th className="p-4 min-w-[150px]">Ward</th>
                                 <th className="p-4 min-w-[150px]">Admission Info</th>
                                 <th className="p-4 min-w-[150px]">Attender</th>
                                 <th className="p-4 min-w-[120px]">Bills</th>
@@ -62,23 +62,16 @@ export default function AdmittedPatientsTable({
                                             <div className="text-neutral-500 text-xs mt-1">
                                                 {patient.gender}, {patient.age} Yrs
                                             </div>
-                                            <div className="text-neutral-500 text-xs">
-                                                PIN: {patient.pincode}
-                                            </div>
                                         </td>
                                         <td className="p-4">
-                                            <div className="text-neutral-300">{patient.doctorName}</div>
+                                            <div className="text-neutral-300"> {patient.wardName}</div>
                                             <div className="text-neutral-500 text-xs mt-1">
-                                                {patient.wardName} (Bed: {patient.bedNo})
-                                            </div>
-                                            <div className="text-neutral-500 text-xs">
-                                                {patient.hospitalName}
+                                                (Bed: {patient.bedNo})
                                             </div>
                                         </td>
                                         <td className="p-4">
                                             <div className="text-neutral-300">{patient.admissionDate}</div>
                                             <div className="text-neutral-500 text-xs">{patient.admissionTime}</div>
-                                            <div className="text-blue-400 text-xs mt-1">{patient.diagnosis}</div>
                                         </td>
                                         <td className="p-4">
                                             <div className="text-neutral-300">{patient.attenderName}</div>

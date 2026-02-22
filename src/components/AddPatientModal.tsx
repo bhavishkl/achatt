@@ -16,18 +16,14 @@ const INITIAL_FORM_DATA = {
     name: '',
     gender: 'Male',
     age: '',
-    pincode: '',
     admissionDate: '',
     admissionTime: '',
-    hospitalName: 'City General Hospital',
-    doctorName: '',
     wardName: '',
     bedNo: '',
     attenderName: '',
     attenderAddress: '',
     attenderMobile: '',
     attenderRelation: '',
-    diagnosis: ''
 };
 
 export default function AddPatientModal({
@@ -50,18 +46,14 @@ export default function AddPatientModal({
                     name: existingPatient.name,
                     gender: existingPatient.gender,
                     age: String(existingPatient.age),
-                    pincode: existingPatient.pincode,
                     admissionDate: existingPatient.admissionDate,
                     admissionTime: existingPatient.admissionTime,
-                    hospitalName: existingPatient.hospitalName,
-                    doctorName: existingPatient.doctorName,
                     wardName: existingPatient.wardName,
                     bedNo: existingPatient.bedNo,
                     attenderName: existingPatient.attenderName,
                     attenderAddress: existingPatient.attenderAddress,
                     attenderMobile: existingPatient.attenderMobile,
                     attenderRelation: existingPatient.attenderRelation,
-                    diagnosis: existingPatient.diagnosis,
                 });
             } else {
                 const now = new Date();
@@ -91,18 +83,18 @@ export default function AddPatientModal({
             name: formData.name,
             gender: formData.gender,
             age: Number(formData.age),
-            pincode: formData.pincode,
+            pincode: existingPatient?.pincode ?? '',
             admissionDate: formData.admissionDate,
             admissionTime: formData.admissionTime,
-            hospitalName: formData.hospitalName,
-            doctorName: formData.doctorName,
+            hospitalName: existingPatient?.hospitalName ?? 'City General Hospital',
+            doctorName: existingPatient?.doctorName ?? '',
             wardName: formData.wardName,
             bedNo: formData.bedNo,
             attenderName: formData.attenderName,
             attenderAddress: formData.attenderAddress,
             attenderMobile: formData.attenderMobile,
             attenderRelation: formData.attenderRelation,
-            diagnosis: formData.diagnosis,
+            diagnosis: existingPatient?.diagnosis ?? '',
             status: existingPatient?.status || 'admitted',
             dischargeDate: existingPatient?.dischargeDate,
             bills: existingPatient?.bills || [],
@@ -154,7 +146,7 @@ export default function AddPatientModal({
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-xs text-neutral-400 mb-1">Gender</label>
                                 <select
@@ -178,18 +170,6 @@ export default function AddPatientModal({
                                     onChange={handleInputChange}
                                     className="w-full bg-neutral-950 border border-neutral-800 rounded-lg p-2 focus:ring-2 focus:ring-blue-600 outline-none text-sm"
                                     placeholder="e.g. 30"
-                                />
-                            </div>
-                            <div className="md:col-span-2">
-                                <label className="block text-xs text-neutral-400 mb-1">Pincode</label>
-                                <input
-                                    required
-                                    name="pincode"
-                                    type="text"
-                                    value={formData.pincode}
-                                    onChange={handleInputChange}
-                                    className="w-full bg-neutral-950 border border-neutral-800 rounded-lg p-2 focus:ring-2 focus:ring-blue-600 outline-none text-sm"
-                                    placeholder="e.g. 560001"
                                 />
                             </div>
                         </div>
@@ -224,32 +204,6 @@ export default function AddPatientModal({
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-xs text-neutral-400 mb-1">Hospital Name</label>
-                                <input
-                                    required
-                                    name="hospitalName"
-                                    type="text"
-                                    value={formData.hospitalName}
-                                    onChange={handleInputChange}
-                                    className="w-full bg-neutral-950 border border-neutral-800 rounded-lg p-2 focus:ring-2 focus:ring-blue-600 outline-none text-sm"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-xs text-neutral-400 mb-1">Doctor Name</label>
-                                <input
-                                    required
-                                    name="doctorName"
-                                    type="text"
-                                    value={formData.doctorName}
-                                    onChange={handleInputChange}
-                                    className="w-full bg-neutral-950 border border-neutral-800 rounded-lg p-2 focus:ring-2 focus:ring-blue-600 outline-none text-sm"
-                                    placeholder="e.g. Dr. A. Sharma"
-                                />
-                            </div>
-                        </div>
-
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-xs text-neutral-400 mb-1">Ward Name</label>
@@ -277,18 +231,6 @@ export default function AddPatientModal({
                             </div>
                         </div>
 
-                        <div>
-                            <label className="block text-xs text-neutral-400 mb-1">Initial Diagnosis / Complaint</label>
-                            <input
-                                required
-                                name="diagnosis"
-                                type="text"
-                                value={formData.diagnosis}
-                                onChange={handleInputChange}
-                                className="w-full bg-neutral-950 border border-neutral-800 rounded-lg p-2 focus:ring-2 focus:ring-blue-600 outline-none text-sm"
-                                placeholder="e.g. Viral Fever, Accidental Injury"
-                            />
-                        </div>
                     </div>
 
                     {/* Section 3: Attender Details */}

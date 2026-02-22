@@ -38,7 +38,7 @@ export default function AppHeader() {
               setCompanyId(data.company.id);
             } else {
               // Only open modal if we are securely logged in and not on a public page (though all are protected except login)
-              if (pathname !== '/login') {
+              if (pathname !== '/login' && pathname !== '/company-profile') {
                 setIsCompanyModalOpen(true);
               }
             }
@@ -106,12 +106,18 @@ export default function AppHeader() {
                 {company ? `📋 ${company.name}` : "📋 PRESENTLY"}
               </h1>
               <p className="text-sm text-neutral-400 mt-1">
-                Manage employees, groups, and generate monthly reports
+                Manage hospital, employees, patients, and generate monthly reports
               </p>
             </div>
           </Link>
           <div className="flex items-center gap-4">
             {userEmail && <p className="text-sm text-neutral-300">{userEmail}</p>}
+            <Link
+              href="/company-profile"
+              className="px-4 py-2 text-sm font-medium text-white bg-neutral-800 rounded-lg hover:bg-neutral-700"
+            >
+              Company Profile
+            </Link>
             <button
               onClick={handleSignOut}
               className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700"

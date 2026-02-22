@@ -33,6 +33,46 @@
         "max_length": null,
         "is_nullable": "YES",
         "column_default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "ordinal_position": 5,
+        "column_name": "address",
+        "data_type": "text",
+        "max_length": null,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "ordinal_position": 6,
+        "column_name": "email_id",
+        "data_type": "text",
+        "max_length": null,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "ordinal_position": 7,
+        "column_name": "mobile_number_1",
+        "data_type": "text",
+        "max_length": null,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "ordinal_position": 8,
+        "column_name": "mobile_number_2",
+        "data_type": "text",
+        "max_length": null,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "ordinal_position": 9,
+        "column_name": "owner_name",
+        "data_type": "text",
+        "max_length": null,
+        "is_nullable": "YES",
+        "column_default": null
       }
     ]
   },

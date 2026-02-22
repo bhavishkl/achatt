@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Patient, Bill, BillItem } from "@/types/patient";
-import { BILLABLE_ITEMS } from "@/lib/constants";
+import { BILLABLE_ITEMS, WARD_BILL_PACKAGES } from "@/lib/constants";
+import type { Company } from "@/lib/types";
 
 interface AddBillModalProps {
     isOpen: boolean;
@@ -12,6 +13,21 @@ interface AddBillModalProps {
     onSaveBill: (patientId: string, bill: Bill) => void;
 }
 
+function createItemId() {
+    return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function getPackageByWard(wardName: string) {
+    const normalizedWard = wardName.toLowerCase();
+    return WARD_BILL_PACKAGES.find((pkg) =>
+        pkg.wardKeywords.some((keyword) => normalizedWard.includes(keyword))
+    );
+}
+
+function getStoredUserId() {
+    return sessionStorage.getItem("userId") ?? localStorage.getItem("userId") ?? null;
+}
+
 export default function AddBillModal({
     isOpen,
     patient,
@@ -19,45 +35,88 @@ export default function AddBillModal({
     onClose,
     onSaveBill,
 }: AddBillModalProps) {
-    const [billItems, setBillItems] = useState<Omit<BillItem, 'amount'>[]>([]);
+    const [billItems, setBillItems] = useState<Omit<BillItem, "amount">[]>([]);
+    const [companyProfile, setCompanyProfile] = useState<Company | null>(null);
 
-    // Single input row state
-    const [inputDesc, setInputDesc] = useState('');
-    const [inputRate, setInputRate] = useState<number | string>('');
+    const [selectedPackageId, setSelectedPackageId] = useState<string>(WARD_BILL_PACKAGES[0]?.id ?? "");
+    const [packageQty, setPackageQty] = useState<number | string>(1);
+
+    const [inputDesc, setInputDesc] = useState("");
+    const [inputRate, setInputRate] = useState<number | string>("");
     const [inputQty, setInputQty] = useState<number | string>(1);
     const descRef = useRef<HTMLInputElement>(null);
 
-    // Populate when opening
+    const addItemLine = (description: string, rate: number, quantity: number) => {
+        const newItem: Omit<BillItem, "amount"> = {
+            id: createItemId(),
+            description,
+            rate,
+            quantity,
+        };
+        setBillItems((prev) => [...prev, newItem]);
+    };
+
     useEffect(() => {
         if (isOpen) {
             if (existingBill && existingBill.items.length > 0) {
-                setBillItems(existingBill.items.map(item => ({
-                    id: item.id,
-                    description: item.description,
-                    rate: item.rate,
-                    quantity: item.quantity,
-                })));
+                setBillItems(
+                    existingBill.items.map((item) => ({
+                        id: item.id,
+                        description: item.description,
+                        rate: item.rate,
+                        quantity: item.quantity,
+                    }))
+                );
             } else {
                 setBillItems([]);
             }
-            setInputDesc('');
-            setInputRate('');
-            setInputQty(1);
-        }
-    }, [isOpen, existingBill]);
 
-    // Auto-fill rate when description matches a known billable item
+            setInputDesc("");
+            setInputRate("");
+            setInputQty(1);
+            setPackageQty(1);
+
+            const packageFromWard = patient ? getPackageByWard(patient.wardName) : null;
+            setSelectedPackageId(packageFromWard?.id ?? WARD_BILL_PACKAGES[0]?.id ?? "");
+        }
+    }, [isOpen, existingBill, patient]);
+
+    useEffect(() => {
+        if (!isOpen) return;
+
+        const userId = getStoredUserId();
+        if (!userId) {
+            setCompanyProfile(null);
+            return;
+        }
+
+        const loadCompanyProfile = async () => {
+            try {
+                const response = await fetch(`/api/user/company?userId=${userId}`);
+                const data = await response.json();
+                if (!response.ok) {
+                    setCompanyProfile(null);
+                    return;
+                }
+                setCompanyProfile(data.company ?? null);
+            } catch {
+                setCompanyProfile(null);
+            }
+        };
+
+        loadCompanyProfile();
+    }, [isOpen]);
+
     const handleDescChange = (value: string) => {
         setInputDesc(value);
-        const found = BILLABLE_ITEMS.find(b => b.name === value);
+        const found = BILLABLE_ITEMS.find((b) => b.name === value);
         if (found) {
             setInputRate(found.rate);
         }
     };
 
-    // Add item on Enter
     const handleInputKeyDown = (e: React.KeyboardEvent) => {
-        if (e.key === 'Enter') {
+        if (e.key === "Enter") {
             e.preventDefault();
             addCurrentItem();
         }
@@ -65,49 +124,79 @@ export default function AddBillModal({
 
     const addCurrentItem = () => {
         const desc = inputDesc.trim();
-        const rate = Number(inputRate);
         const qty = Number(inputQty);
-        if (!desc || !rate || !qty) return;
+        if (!desc || !qty) return;
 
-        const newItem: Omit<BillItem, 'amount'> = {
-            id: Date.now().toString(),
-            description: desc,
-            rate,
-            quantity: qty,
-        };
-        setBillItems(prev => [...prev, newItem]);
+        // If a package name is entered, add all package lines in one go.
+        const matchedPackage = WARD_BILL_PACKAGES.find(
+            (pkg) => pkg.name.toLowerCase() === desc.toLowerCase()
+        );
+        if (matchedPackage) {
+            matchedPackage.items.forEach((item) => {
+                addItemLine(item.name, item.rate, qty);
+            });
+            setInputDesc("");
+            setInputRate("");
+            setInputQty(1);
+            descRef.current?.focus();
+            return;
+        }
 
-        // Reset input
-        setInputDesc('');
-        setInputRate('');
+        const rate = Number(inputRate);
+        if (!rate) return;
+
+        addItemLine(desc, rate, qty);
+        setInputDesc("");
+        setInputRate("");
         setInputQty(1);
         descRef.current?.focus();
     };
 
+    const addSelectedPackage = () => {
+        const qty = Number(packageQty);
+        if (!selectedPackageId || !qty) return;
+
+        const selectedPackage = WARD_BILL_PACKAGES.find((pkg) => pkg.id === selectedPackageId);
+        if (!selectedPackage) return;
+
+        selectedPackage.items.forEach((item) => {
+            addItemLine(item.name, item.rate, qty);
+        });
+    };
+
     const removeItem = (id: string) => {
-        setBillItems(prev => prev.filter(item => item.id !== id));
+        setBillItems((prev) => prev.filter((item) => item.id !== id));
     };
 
     const calculateTotal = () => {
-        return billItems.reduce((sum, item) => sum + (item.rate * item.quantity), 0);
+        return billItems.reduce((sum, item) => sum + item.rate * item.quantity, 0);
     };
 
     const handlePrintBill = () => {
-        if (!patient) return;
-        if (billItems.length === 0) return;
+        if (!patient || billItems.length === 0) return;
 
         const total = calculateTotal();
-        const billDate = existingBill?.date || new Date().toISOString().split('T')[0];
+        const billDate = existingBill?.date || new Date().toISOString().split("T")[0];
+        const companyName = companyProfile?.name || patient.hospitalName || "Hospital";
+        const companyAddress = companyProfile?.address || "";
+        const companyEmail = companyProfile?.emailId || "";
+        const companyMobile1 = companyProfile?.mobileNumber1 || "";
+        const companyMobile2 = companyProfile?.mobileNumber2 || "";
+        const companyOwner = companyProfile?.ownerName || "";
 
-        const itemsRows = billItems.map((item, i) => `
+        const itemsRows = billItems
+            .map(
+                (item, i) => `
             <tr>
                 <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;text-align:center">${i + 1}</td>
                 <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb">${item.description}</td>
-                <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;text-align:right">₹${item.rate.toFixed(2)}</td>
+                <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;text-align:right">Rs ${item.rate.toFixed(2)}</td>
                 <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;text-align:center">${item.quantity}</td>
-                <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;text-align:right;font-weight:600">₹${(item.rate * item.quantity).toFixed(2)}</td>
+                <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;text-align:right;font-weight:600">Rs ${(item.rate * item.quantity).toFixed(2)}</td>
             </tr>
-        `).join('');
+        `
+            )
+            .join("");
 
         const html = `
         <!DOCTYPE html>
@@ -139,8 +228,12 @@ export default function AddBillModal({
         </head>
         <body>
             <div class="header">
-                <h1>${patient.hospitalName}</h1>
+                <h1>${companyName}</h1>
                 <p>Patient Bill / Invoice</p>
+                ${companyAddress ? `<p>${companyAddress}</p>` : ""}
+                ${companyOwner ? `<p>Owner: ${companyOwner}</p>` : ""}
+                ${companyEmail ? `<p>Email: ${companyEmail}</p>` : ""}
+                ${(companyMobile1 || companyMobile2) ? `<p>Mobile: ${[companyMobile1, companyMobile2].filter(Boolean).join(", ")}</p>` : ""}
             </div>
 
             <div class="bill-meta">
@@ -152,7 +245,7 @@ export default function AddBillModal({
                 </div>
                 <div>
                     <div class="label">Ward / Bed</div>
-                    <div class="value">${patient.wardName} — Bed ${patient.bedNo}</div>
+                    <div class="value">${patient.wardName} - Bed ${patient.bedNo}</div>
                     <div class="label" style="margin-top:8px">Doctor</div>
                     <div class="value">${patient.doctorName}</div>
                 </div>
@@ -169,16 +262,16 @@ export default function AddBillModal({
                     <tr>
                         <th style="width:40px">#</th>
                         <th>Description</th>
-                        <th style="width:100px;text-align:right">Rate (₹)</th>
+                        <th style="width:100px;text-align:right">Rate</th>
                         <th style="width:60px;text-align:center">Qty</th>
-                        <th style="width:120px;text-align:right">Amount (₹)</th>
+                        <th style="width:120px;text-align:right">Amount</th>
                     </tr>
                 </thead>
                 <tbody>
                     ${itemsRows}
                     <tr class="total-row">
                         <td colspan="4" style="text-align:right">Total Amount</td>
-                        <td style="text-align:right">₹${total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                        <td style="text-align:right">Rs ${total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                     </tr>
                 </tbody>
             </table>
@@ -190,7 +283,7 @@ export default function AddBillModal({
         </html>
         `;
 
-        const printWindow = window.open('', '_blank', 'width=800,height=600');
+        const printWindow = window.open("", "_blank", "width=800,height=600");
         if (printWindow) {
             printWindow.document.write(html);
             printWindow.document.close();
@@ -202,19 +295,17 @@ export default function AddBillModal({
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!patient) return;
-        if (billItems.length === 0) return;
+        if (!patient || billItems.length === 0) return;
 
         const totalAmount = calculateTotal();
-
         const bill: Bill = {
             id: existingBill?.id || Date.now().toString(),
-            date: existingBill?.date || new Date().toISOString().split('T')[0],
+            date: existingBill?.date || new Date().toISOString().split("T")[0],
             totalAmount,
-            items: billItems.map(item => ({
+            items: billItems.map((item) => ({
                 ...item,
-                amount: item.rate * item.quantity
-            }))
+                amount: item.rate * item.quantity,
+            })),
         };
 
         onSaveBill(patient.id, bill);
@@ -228,17 +319,21 @@ export default function AddBillModal({
     return (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
             <div className="bg-neutral-900 rounded-xl border border-neutral-800 p-6 w-full max-w-4xl shadow-2xl h-[90vh] flex flex-col">
-                <h2 className="text-xl font-bold mb-4">{isEditing ? 'Edit Bill' : 'Add Bill'}</h2>
+                <h2 className="text-xl font-bold mb-4">{isEditing ? "Edit Bill" : "Add Bill"}</h2>
 
                 <div className="bg-neutral-950/50 p-4 rounded-lg border border-neutral-800 mb-6 grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                     <div>
                         <label className="block text-neutral-500 text-xs uppercase tracking-wide">Patient</label>
-                        <div className="font-medium text-white">{patient.prefix} {patient.name}</div>
+                        <div className="font-medium text-white">
+                            {patient.prefix} {patient.name}
+                        </div>
                         <div className="text-neutral-400 text-xs">{patient.regNo}</div>
                     </div>
                     <div>
                         <label className="block text-neutral-500 text-xs uppercase tracking-wide">Admission</label>
-                        <div className="text-neutral-300">{patient.wardName}, Bed {patient.bedNo}</div>
+                        <div className="text-neutral-300">
+                            {patient.wardName}, Bed {patient.bedNo}
+                        </div>
                         <div className="text-neutral-400 text-xs">{patient.admissionDate}</div>
                     </div>
                     <div>
@@ -249,7 +344,49 @@ export default function AddBillModal({
                 </div>
 
                 <form onSubmit={handleSubmit} className="flex-1 flex flex-col min-h-0">
-                    {/* Single input row */}
+                    {WARD_BILL_PACKAGES.length > 0 && (
+                        <div className="bg-neutral-950/50 border border-neutral-800 rounded-lg p-3 mb-3">
+                            <div className="flex gap-2 items-end">
+                                <div className="flex-1">
+                                    <label className="block text-xs text-neutral-500 mb-1">Ward Package</label>
+                                    <select
+                                        value={selectedPackageId}
+                                        onChange={(e) => setSelectedPackageId(e.target.value)}
+                                        className="w-full bg-neutral-950 border border-neutral-800 rounded p-2 text-sm focus:ring-2 focus:ring-blue-600 outline-none"
+                                    >
+                                        {WARD_BILL_PACKAGES.map((pkg) => (
+                                            <option key={pkg.id} value={pkg.id}>
+                                                {pkg.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div className="w-20">
+                                    <label className="block text-xs text-neutral-500 mb-1">Qty</label>
+                                    <input
+                                        type="number"
+                                        min="1"
+                                        className="w-full bg-neutral-950 border border-neutral-800 rounded p-2 text-sm focus:ring-2 focus:ring-blue-600 outline-none"
+                                        value={packageQty}
+                                        onChange={(e) =>
+                                            setPackageQty(e.target.value === "" ? "" : Number(e.target.value))
+                                        }
+                                    />
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={addSelectedPackage}
+                                    className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded text-sm font-medium"
+                                >
+                                    Add Package
+                                </button>
+                            </div>
+                            <p className="text-xs text-neutral-600 mt-2">
+                                Adds all package charges in one action. You can still add line items individually below.
+                            </p>
+                        </div>
+                    )}
+
                     <div className="bg-neutral-950/50 border border-neutral-800 rounded-lg p-3 mb-4">
                         <div className="flex gap-2 items-end">
                             <div className="flex-1">
@@ -259,26 +396,35 @@ export default function AddBillModal({
                                     list="billable-items"
                                     type="text"
                                     className="w-full bg-neutral-950 border border-neutral-800 rounded p-2 text-sm focus:ring-2 focus:ring-blue-600 outline-none"
-                                    placeholder="Select or type item..."
+                                    placeholder="Select or type item/package..."
                                     value={inputDesc}
                                     onChange={(e) => handleDescChange(e.target.value)}
                                     onKeyDown={handleInputKeyDown}
                                 />
                                 <datalist id="billable-items">
                                     {BILLABLE_ITEMS.map((opt) => (
-                                        <option key={opt.id} value={opt.name}>{opt.name} - ₹{opt.rate}</option>
+                                        <option key={opt.id} value={opt.name}>
+                                            {opt.name} - Rs {opt.rate}
+                                        </option>
+                                    ))}
+                                    {WARD_BILL_PACKAGES.map((pkg) => (
+                                        <option key={pkg.id} value={pkg.name}>
+                                            {pkg.name} - Package
+                                        </option>
                                     ))}
                                 </datalist>
                             </div>
                             <div className="w-28">
-                                <label className="block text-xs text-neutral-500 mb-1">Rate (₹)</label>
+                                <label className="block text-xs text-neutral-500 mb-1">Rate</label>
                                 <input
                                     type="number"
                                     min="0"
                                     step="0.01"
                                     className="w-full bg-neutral-950 border border-neutral-800 rounded p-2 text-sm focus:ring-2 focus:ring-blue-600 outline-none"
                                     value={inputRate}
-                                    onChange={(e) => setInputRate(e.target.value === '' ? '' : Number(e.target.value))}
+                                    onChange={(e) =>
+                                        setInputRate(e.target.value === "" ? "" : Number(e.target.value))
+                                    }
                                     onKeyDown={handleInputKeyDown}
                                     placeholder="0"
                                 />
@@ -290,23 +436,30 @@ export default function AddBillModal({
                                     min="1"
                                     className="w-full bg-neutral-950 border border-neutral-800 rounded p-2 text-sm focus:ring-2 focus:ring-blue-600 outline-none"
                                     value={inputQty}
-                                    onChange={(e) => setInputQty(e.target.value === '' ? '' : Number(e.target.value))}
+                                    onChange={(e) =>
+                                        setInputQty(e.target.value === "" ? "" : Number(e.target.value))
+                                    }
                                     onKeyDown={handleInputKeyDown}
                                     placeholder="1"
                                 />
                             </div>
                             <div className="w-24 text-right text-sm font-medium text-neutral-400 pb-2">
-                                ₹{(Number(inputRate) * Number(inputQty) || 0).toFixed(2)}
+                                Rs {(Number(inputRate) * Number(inputQty) || 0).toFixed(2)}
                             </div>
                         </div>
-                        <p className="text-xs text-neutral-600 mt-2">Fill all fields and press <kbd className="px-1.5 py-0.5 bg-neutral-800 rounded text-neutral-400 text-xs border border-neutral-700">Enter</kbd> to add item</p>
+                        <p className="text-xs text-neutral-600 mt-2">
+                            Fill all fields and press{" "}
+                            <kbd className="px-1.5 py-0.5 bg-neutral-800 rounded text-neutral-400 text-xs border border-neutral-700">
+                                Enter
+                            </kbd>{" "}
+                            to add item or package.
+                        </p>
                     </div>
 
-                    {/* Added items list */}
                     <div className="flex-1 overflow-y-auto pr-2">
                         {billItems.length === 0 ? (
                             <div className="flex items-center justify-center h-full text-neutral-600 text-sm">
-                                No items added yet. Use the input above to add bill items.
+                                No items added yet. Use package or item entry above.
                             </div>
                         ) : (
                             <div className="space-y-2">
@@ -319,12 +472,12 @@ export default function AddBillModal({
                                             <span className="text-xs text-neutral-600 font-mono w-6">{index + 1}.</span>
                                             <span className="text-sm text-white font-medium truncate">{item.description}</span>
                                             <span className="text-xs text-neutral-500 whitespace-nowrap">
-                                                ₹{item.rate.toFixed(2)} × {item.quantity}
+                                                Rs {item.rate.toFixed(2)} x {item.quantity}
                                             </span>
                                         </div>
                                         <div className="flex items-center gap-3">
                                             <span className="text-sm font-semibold text-neutral-300 whitespace-nowrap">
-                                                ₹{(item.rate * item.quantity).toFixed(2)}
+                                                Rs {(item.rate * item.quantity).toFixed(2)}
                                             </span>
                                             <button
                                                 type="button"
@@ -332,7 +485,7 @@ export default function AddBillModal({
                                                 className="text-neutral-600 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100 p-1"
                                                 title="Remove item"
                                             >
-                                                ✕
+                                                x
                                             </button>
                                         </div>
                                     </div>
@@ -342,10 +495,20 @@ export default function AddBillModal({
                     </div>
 
                     <div className="mt-6 pt-4 border-t border-neutral-800 flex justify-between items-center">
-                        <div className="text-xs text-neutral-500">{billItems.length} item{billItems.length !== 1 ? 's' : ''}</div>
+                        <div className="text-xs text-neutral-500">
+                            {billItems.length} item{billItems.length !== 1 ? "s" : ""}
+                        </div>
                         <div className="text-right">
-                            <span className="text-neutral-400 text-sm uppercase tracking-wider mr-4">Total Bill Amount</span>
-                            <span className="text-2xl font-bold text-white">₹{calculateTotal().toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                            <span className="text-neutral-400 text-sm uppercase tracking-wider mr-4">
+                                Total Bill Amount
+                            </span>
+                            <span className="text-2xl font-bold text-white">
+                                Rs{" "}
+                                {calculateTotal().toLocaleString(undefined, {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2,
+                                })}
+                            </span>
                         </div>
                     </div>
 
@@ -360,15 +523,15 @@ export default function AddBillModal({
                         <button
                             type="button"
                             onClick={handlePrintBill}
-                            className="bg-neutral-800 hover:bg-neutral-700 text-neutral-200 px-5 py-2 rounded-lg font-medium transition-colors border border-neutral-700 flex items-center gap-2"
+                            className="bg-neutral-800 hover:bg-neutral-700 text-neutral-200 px-5 py-2 rounded-lg font-medium transition-colors border border-neutral-700"
                         >
-                            🖨 Print Bill
+                            Print Bill
                         </button>
                         <button
                             type="submit"
                             className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors"
                         >
-                            {isEditing ? 'Update Bill' : 'Save Bill'}
+                            {isEditing ? "Update Bill" : "Save Bill"}
                         </button>
                     </div>
                 </form>

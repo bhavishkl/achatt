@@ -1,6 +1,20 @@
 import { supabaseAdmin } from '@/lib/supabaseAdmin';
 import { NextResponse } from 'next/server';
 
+function mapCompany(company: any) {
+  return {
+    id: company.id,
+    name: company.name,
+    address: company.address,
+    emailId: company.email_id,
+    mobileNumber1: company.mobile_number_1,
+    mobileNumber2: company.mobile_number_2,
+    ownerName: company.owner_name,
+    createdAt: company.created_at,
+    updatedAt: company.updated_at,
+  };
+}
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const userId = searchParams.get('userId');
@@ -39,7 +53,7 @@ export async function GET(request: Request) {
         return NextResponse.json({ message: 'Company not found', error: companyError.message }, { status: 404 });
     }
 
-    return NextResponse.json({ company });
+    return NextResponse.json({ company: mapCompany(company) });
 
   } catch (error: any) {
     console.error("Internal Server Error:", error);

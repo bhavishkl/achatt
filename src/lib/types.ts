@@ -5,6 +5,11 @@
 export interface Company {
   id: string;
   name: string;
+  address: string | null;
+  emailId: string | null;
+  mobileNumber1: string | null;
+  mobileNumber2: string | null;
+  ownerName: string | null;
   createdAt: string;
   updatedAt: string;
 }
