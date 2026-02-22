@@ -1,13 +1,25 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { Patient, Bill } from "@/types/patient";
 import { DUMMY_PATIENTS } from "@/data/patients";
 import AdmittedPatientsTable from "@/components/AdmittedPatientsTable";
 import DischargedPatientsTable from "@/components/DischargedPatientsTable";
 import AddPatientModal from "@/components/AddPatientModal";
 import AddBillModal from "@/components/AddBillModal";
+
+const normalizePatient = (p: Patient): Patient => ({
+  ...p,
+  advanceBalance: p.advanceBalance ?? 0,
+  bills: (p.bills ?? []).map((b) => ({
+    ...b,
+    dischargeDate: b.dischargeDate ?? "",
+    ipBillType: b.ipBillType ?? "draft",
+    grossAmount: b.grossAmount ?? b.totalAmount,
+    advanceUsed: b.advanceUsed ?? 0,
+    concession: b.concession ?? 0,
+  })),
+});
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<'admission' | 'discharged'>('admission');
@@ -19,14 +31,20 @@ export default function Home() {
   const [isBillModalOpen, setIsBillModalOpen] = useState(false);
   const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null);
   const [editingBill, setEditingBill] = useState<Bill | null>(null);
+  const [advancePatientId, setAdvancePatientId] = useState<string | null>(null);
+  const [advanceInput, setAdvanceInput] = useState<number | string>('');
 
   useEffect(() => {
     const stored = localStorage.getItem('patients');
     if (stored) {
-      setPatients(JSON.parse(stored));
+      const parsed = JSON.parse(stored) as Patient[];
+      const normalized = parsed.map(normalizePatient);
+      setPatients(normalized);
+      localStorage.setItem('patients', JSON.stringify(normalized));
     } else {
-      setPatients(DUMMY_PATIENTS);
-      localStorage.setItem('patients', JSON.stringify(DUMMY_PATIENTS));
+      const normalized = DUMMY_PATIENTS.map(normalizePatient);
+      setPatients(normalized);
+      localStorage.setItem('patients', JSON.stringify(normalized));
     }
   }, []);
 
@@ -88,14 +106,21 @@ export default function Home() {
     const updatedPatients = patients.map(p => {
       if (p.id === patientId) {
         const existingIndex = p.bills?.findIndex(b => b.id === bill.id) ?? -1;
+        const previousAdvanceUsed = existingIndex >= 0 ? (p.bills?.[existingIndex]?.advanceUsed ?? 0) : 0;
+        const nextAdvanceUsed = bill.advanceUsed ?? 0;
+        const nextAdvanceBalance = Math.max(
+          0,
+          (p.advanceBalance ?? 0) + previousAdvanceUsed - nextAdvanceUsed
+        );
+
         if (existingIndex >= 0) {
           // Update existing bill
           const updatedBills = [...(p.bills || [])];
           updatedBills[existingIndex] = bill;
-          return { ...p, bills: updatedBills };
+          return { ...p, bills: updatedBills, advanceBalance: nextAdvanceBalance };
         } else {
           // Add new bill
-          return { ...p, bills: [...(p.bills || []), bill] };
+          return { ...p, bills: [...(p.bills || []), bill], advanceBalance: nextAdvanceBalance };
         }
       }
       return p;
@@ -109,6 +134,32 @@ export default function Home() {
   const closeBillModal = () => {
     setIsBillModalOpen(false);
     setEditingBill(null);
+  };
+
+  const openAdvanceModal = (patientId: string) => {
+    setAdvancePatientId(patientId);
+    setAdvanceInput('');
+  };
+
+  const closeAdvanceModal = () => {
+    setAdvancePatientId(null);
+    setAdvanceInput('');
+  };
+
+  const handleSaveAdvance = () => {
+    if (!advancePatientId) return;
+    const amount = Number(advanceInput);
+    if (!amount || amount <= 0) return;
+
+    const updatedPatients = patients.map((p) =>
+      p.id === advancePatientId
+        ? { ...p, advanceBalance: (p.advanceBalance ?? 0) + amount }
+        : p
+    );
+
+    setPatients(updatedPatients);
+    localStorage.setItem('patients', JSON.stringify(updatedPatients));
+    closeAdvanceModal();
   };
 
   const admittedPatients = patients.filter(p => p.status === 'admitted');
@@ -157,6 +208,7 @@ export default function Home() {
             onAddBill={openBillModal}
             onEditBill={openEditBillModal}
             onEditPatient={openEditPatientModal}
+            onAddAdvance={openAdvanceModal}
             onAddNew={() => { setEditingPatient(null); setIsAddModalOpen(true); }}
           />
         )}
@@ -182,6 +234,40 @@ export default function Home() {
         onClose={closeBillModal}
         onSaveBill={handleSaveBill}
       />
+
+      {advancePatientId && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
+          <div className="w-full max-w-md bg-neutral-900 border border-neutral-800 rounded-xl p-6">
+            <h3 className="text-lg font-semibold text-white mb-2">Add Advance Amount</h3>
+            <p className="text-sm text-neutral-400 mb-4">Enter advance received from patient.</p>
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              value={advanceInput}
+              onChange={(e) => setAdvanceInput(e.target.value === '' ? '' : Number(e.target.value))}
+              className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-600"
+              placeholder="e.g. 5000"
+            />
+            <div className="flex justify-end gap-3 mt-5">
+              <button
+                type="button"
+                onClick={closeAdvanceModal}
+                className="px-4 py-2 text-neutral-400 hover:text-white"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveAdvance}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg"
+              >
+                Save Advance
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

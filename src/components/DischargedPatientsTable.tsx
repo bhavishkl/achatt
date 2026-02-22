@@ -8,7 +8,7 @@ interface DischargedPatientsTableProps {
     onViewBill: (patientId: string, billId: string) => void;
 }
 
-type SortField = 'regNo' | 'name' | 'diagnosis' | 'admissionDate' | 'dischargeDate' | 'totalBill';
+type SortField = 'regNo' | 'name' | 'wardDetails' | 'admissionDate' | 'dischargeDate' | 'totalBill';
 type SortDir = 'asc' | 'desc';
 
 const PAGE_SIZE = 10;
@@ -47,7 +47,8 @@ export default function DischargedPatientsTable({
             list = list.filter(p =>
                 p.name.toLowerCase().includes(q) ||
                 p.regNo.toLowerCase().includes(q) ||
-                p.diagnosis.toLowerCase().includes(q) ||
+                p.wardName.toLowerCase().includes(q) ||
+                p.bedNo.toLowerCase().includes(q) ||
                 p.doctorName.toLowerCase().includes(q) ||
                 p.attenderName.toLowerCase().includes(q) ||
                 p.attenderMobile.includes(q)
@@ -72,8 +73,8 @@ export default function DischargedPatientsTable({
                     aVal = a.regNo; bVal = b.regNo; break;
                 case 'name':
                     aVal = a.name.toLowerCase(); bVal = b.name.toLowerCase(); break;
-                case 'diagnosis':
-                    aVal = a.diagnosis.toLowerCase(); bVal = b.diagnosis.toLowerCase(); break;
+                case 'wardDetails':
+                    aVal = `${a.wardName} ${a.bedNo}`.toLowerCase(); bVal = `${b.wardName} ${b.bedNo}`.toLowerCase(); break;
                 case 'admissionDate':
                     aVal = a.admissionDate; bVal = b.admissionDate; break;
                 case 'dischargeDate':
@@ -128,7 +129,7 @@ export default function DischargedPatientsTable({
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500 text-sm">🔍</span>
                     <input
                         type="text"
-                        placeholder="Search name, reg no, diagnosis, doctor..."
+                        placeholder="Search name, reg no, ward, bed, doctor..."
                         value={search}
                         onChange={e => { setSearch(e.target.value); setPage(1); }}
                         className="w-full bg-neutral-900 border border-neutral-800 rounded-lg pl-9 pr-4 py-2 text-sm text-white placeholder-neutral-500 focus:ring-2 focus:ring-blue-600 outline-none transition-colors"
@@ -203,8 +204,8 @@ export default function DischargedPatientsTable({
                                 <th className="p-4 cursor-pointer select-none hover:text-white transition-colors" onClick={() => handleSort('name')}>
                                     Patient <SortIcon field="name" />
                                 </th>
-                                <th className="p-4 cursor-pointer select-none hover:text-white transition-colors" onClick={() => handleSort('diagnosis')}>
-                                    Diagnosis <SortIcon field="diagnosis" />
+                                <th className="p-4 cursor-pointer select-none hover:text-white transition-colors" onClick={() => handleSort('wardDetails')}>
+                                    Ward Details <SortIcon field="wardDetails" />
                                 </th>
                                 <th className="p-4 cursor-pointer select-none hover:text-white transition-colors" onClick={() => handleSort('admissionDate')}>
                                     Admitted <SortIcon field="admissionDate" />
@@ -234,7 +235,10 @@ export default function DischargedPatientsTable({
                                             {patient.prefix} {patient.name}
                                             <div className="text-xs text-neutral-500">{patient.age} Yrs, {patient.gender}</div>
                                         </td>
-                                        <td className="p-4 text-neutral-400">{patient.diagnosis}</td>
+                                        <td className="p-4 text-neutral-400">
+                                            <div>{patient.wardName}</div>
+                                            <div className="text-xs text-neutral-500">Bed: {patient.bedNo}</div>
+                                        </td>
                                         <td className="p-4 text-neutral-400">{patient.admissionDate}</td>
                                         <td className="p-4 text-green-400">{patient.dischargeDate}</td>
                                         <td className="p-4">

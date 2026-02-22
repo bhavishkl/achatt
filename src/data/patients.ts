@@ -21,6 +21,7 @@ export const DUMMY_PATIENTS: Patient[] = [
         attenderRelation: 'Brother',
         diagnosis: 'Viral Fever',
         status: 'admitted',
+        advanceBalance: 0,
         bills: []
     },
     {
@@ -44,6 +45,7 @@ export const DUMMY_PATIENTS: Patient[] = [
         diagnosis: 'Migraine',
         status: 'discharged',
         dischargeDate: '2023-10-24',
+        advanceBalance: 0,
         bills: []
     }
 ];

@@ -9,6 +9,11 @@ export interface BillItem {
 export interface Bill {
     id: string;
     date: string;
+    dischargeDate?: string;
+    ipBillType?: "draft" | "final";
+    grossAmount?: number;
+    advanceUsed?: number;
+    concession?: number;
     totalAmount: number;
     items: BillItem[];
 }
@@ -47,5 +52,6 @@ export interface Patient {
     diagnosis: string; // Kept for backward compatibility/quick view
     status: 'admitted' | 'discharged';
     dischargeDate?: string;
+    advanceBalance: number;
     bills: Bill[];
 }
