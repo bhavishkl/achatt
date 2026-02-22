@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
   const [isSigningUp, setIsSigningUp] = useState(false);
   const [message, setMessage] = useState('');
   const router = useRouter();
@@ -35,12 +36,20 @@ export default function LoginPage() {
     });
     const data = await response.json();
     if (response.ok) {
-      const result = await data; // wait, data is already awaited above: const data = await response.json();
       setMessage('Sign in successful!');
-      sessionStorage.setItem('isAuthenticated', 'true');
-      sessionStorage.setItem('userEmail', email);
+      const activeStorage = rememberMe ? localStorage : sessionStorage;
+      const inactiveStorage = rememberMe ? sessionStorage : localStorage;
+
+      inactiveStorage.removeItem('isAuthenticated');
+      inactiveStorage.removeItem('userEmail');
+      inactiveStorage.removeItem('userId');
+
+      activeStorage.setItem('isAuthenticated', 'true');
+      activeStorage.setItem('userEmail', email);
       if (data.userId) {
-        sessionStorage.setItem('userId', data.userId);
+        activeStorage.setItem('userId', data.userId);
+      } else {
+        activeStorage.removeItem('userId');
       }
       router.push('/');
     } else {
@@ -117,6 +126,22 @@ export default function LoginPage() {
               />
             </div>
           </div>
+
+          {!isSigningUp && (
+            <div className="flex items-center">
+              <input
+                id="remember-me"
+                name="remember-me"
+                type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                className="h-4 w-4 rounded border-neutral-700 bg-neutral-800 text-blue-600 focus:ring-blue-500"
+              />
+              <label htmlFor="remember-me" className="ml-2 block text-sm text-neutral-300">
+                Remember me
+              </label>
+            </div>
+          )}
 
           <div>
             <button

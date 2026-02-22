@@ -20,9 +20,9 @@ export default function AppHeader() {
   useEffect(() => {
     // Skip auth check on login page to avoid redirect loops or weird behavior
     // But we still might want to check if they ARE logged in to redirect them OUT of login (though the login page handles that)
-    const session = sessionStorage.getItem('isAuthenticated');
-    const email = sessionStorage.getItem('userEmail');
-    const uid = sessionStorage.getItem('userId');
+    const session = sessionStorage.getItem('isAuthenticated') ?? localStorage.getItem('isAuthenticated');
+    const email = sessionStorage.getItem('userEmail') ?? localStorage.getItem('userEmail');
+    const uid = sessionStorage.getItem('userId') ?? localStorage.getItem('userId');
 
     if (session === 'true') {
       setIsAuthenticated(true);
@@ -46,18 +46,24 @@ export default function AppHeader() {
           .catch((err) => console.error("Error fetching company:", err));
       }
     } else {
+      if (pathname !== '/login') {
+        router.push('/login');
+      }
       setIsAuthenticated(false);
       setUserEmail(null);
       setUserId(null);
       setCompany(null);
       setCompanyId(null);
     }
-  }, [pathname, setCompanyId]); // Re-run on path change to re-validate if needed
+  }, [pathname, router, setCompanyId]); // Re-run on path change to re-validate if needed
 
   const handleSignOut = () => {
     sessionStorage.removeItem('isAuthenticated');
     sessionStorage.removeItem('userEmail');
     sessionStorage.removeItem('userId');
+    localStorage.removeItem('isAuthenticated');
+    localStorage.removeItem('userEmail');
+    localStorage.removeItem('userId');
     setCompanyId(null);
     setIsAuthenticated(false);
     setUserEmail(null);

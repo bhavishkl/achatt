@@ -1,9 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState } from "react";
 import type { TabKey } from "@/lib/types";
-import { useAppStore } from "@/lib/store";
 import EmployeesTab from "@/components/EmployeesTab";
 import WeekOffTab from "@/components/WeekOffTab";
 import HolidayTab from "@/components/HolidayTab";
@@ -24,26 +22,6 @@ const TABS: { key: TabKey; label: string; icon: string }[] = [
 
 export default function AttendancePage() {
   const [activeTab, setActiveTab] = useState<TabKey>("employees");
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const router = useRouter();
-
-  useEffect(() => {
-    // Basic protection check - header handles the comprehensive check and data fetching
-    const session = sessionStorage.getItem('isAuthenticated');
-    if (session !== 'true') {
-      router.push('/login');
-    } else {
-      setIsAuthenticated(true);
-    }
-  }, [router]);
-
-  if (!isAuthenticated) {
-    return (
-        <main className="min-h-screen bg-neutral-950 flex items-center justify-center">
-            <p className="text-white">Loading...</p>
-        </main>
-    );
-  }
 
   return (
     <main className="min-h-screen bg-neutral-950">

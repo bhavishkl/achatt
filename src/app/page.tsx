@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Patient, Bill } from "@/types/patient";
 import { DUMMY_PATIENTS } from "@/data/patients";
@@ -11,9 +10,6 @@ import AddPatientModal from "@/components/AddPatientModal";
 import AddBillModal from "@/components/AddBillModal";
 
 export default function Home() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const router = useRouter();
-
   const [activeTab, setActiveTab] = useState<'admission' | 'discharged'>('admission');
   const [patients, setPatients] = useState<Patient[]>([]);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -25,21 +21,14 @@ export default function Home() {
   const [editingBill, setEditingBill] = useState<Bill | null>(null);
 
   useEffect(() => {
-    const session = sessionStorage.getItem('isAuthenticated');
-    if (session !== 'true') {
-      router.push('/login');
+    const stored = localStorage.getItem('patients');
+    if (stored) {
+      setPatients(JSON.parse(stored));
     } else {
-      setIsAuthenticated(true);
-
-      const stored = localStorage.getItem('patients');
-      if (stored) {
-        setPatients(JSON.parse(stored));
-      } else {
-        setPatients(DUMMY_PATIENTS);
-        localStorage.setItem('patients', JSON.stringify(DUMMY_PATIENTS));
-      }
+      setPatients(DUMMY_PATIENTS);
+      localStorage.setItem('patients', JSON.stringify(DUMMY_PATIENTS));
     }
-  }, [router]);
+  }, []);
 
   const handleSavePatient = (patient: Patient) => {
     let updatedPatients;
@@ -122,14 +111,6 @@ export default function Home() {
     setEditingBill(null);
   };
 
-  if (!isAuthenticated) {
-    return (
-      <main className="min-h-screen bg-neutral-950 flex items-center justify-center">
-        <p className="text-white">Loading...</p>
-      </main>
-    );
-  }
-
   const admittedPatients = patients.filter(p => p.status === 'admitted');
   const dischargedPatients = patients.filter(p => p.status === 'discharged');
   const selectedPatient = patients.find(p => p.id === selectedPatientId) || null;
@@ -145,16 +126,7 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-neutral-950 text-white p-6">
       <div className="max-w-7xl mx-auto">
-        <header className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-3xl font-bold">Hospital Admission System</h1>
-            <p className="text-neutral-400 text-sm mt-1">Manage patient admissions and discharges</p>
-          </div>
-          <Link href="/attendance" className="text-sm text-blue-400 hover:text-blue-300">
-            Go to Staff Attendance &rarr;
-          </Link>
-        </header>
-
+        
         {/* Tabs */}
         <div className="flex border-b border-neutral-800 mb-6">
           <button

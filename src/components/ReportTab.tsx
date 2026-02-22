@@ -151,9 +151,9 @@ export default function ReportTab() {
         styles: { fontSize: 6, cellPadding: 1 },
         headStyles: { fillColor: [23, 23, 23] },
         columnStyles: {
-          0: { cellWidth: 15 }, // ID
-          1: { cellWidth: 20 }, // Name
-          2: { cellWidth: 15 }, // Dept
+          0: { cellWidth: 5 }, // ID
+          1: { cellWidth: 15 }, // Name
+          2: { cellWidth: 10 }, // Dept
         },
         didParseCell: function (data) {
           if (data.section === 'body' && data.column.index >= 3 && data.column.index < 3 + days.length) {
