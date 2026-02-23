@@ -16,6 +16,7 @@ export default function ReportTab() {
   const holidayGroups = useAppStore((s) => s.holidayGroups);
   const leaveGroups = useAppStore((s) => s.leaveGroups);
   const shiftGroups = useAppStore((s) => s.shiftGroups);
+  const shiftRotations = useAppStore((s) => s.shiftRotations);
   const leaveRecords = useAppStore((s) => s.leaveRecords);
   const processedPunches = useAppStore((s) => s.processedPunches);
 
@@ -72,10 +73,26 @@ export default function ReportTab() {
     return h * 60 + m;
   };
 
+  const toHHMM = (timeStr: string | null) => {
+    if (!timeStr) return null;
+    const [h, m] = timeStr.split(":");
+    if (h === undefined || m === undefined) return timeStr;
+    return `${h}:${m}`;
+  };
+
   const getShiftStart = (internalEmpId: string) => {
     const g = shiftGroups.find(g => g.employeeIds.includes(internalEmpId));
     return g ? g.startTime : null;
   };
+
+  const isNightRotationDate = (internalEmpId: string, dateStr: string) =>
+    shiftRotations.some(
+      (rot) =>
+        rot.employeeId === internalEmpId &&
+        rot.shiftType === "night" &&
+        dateStr >= rot.startDate &&
+        dateStr <= rot.endDate,
+    );
 
   const handlePrint = () => {
     window.print();
@@ -112,7 +129,7 @@ export default function ReportTab() {
 
           const p = punchesMap.get(`${r.employeeId}-${dateStr}`);
           if (p) {
-            return p.punchIn || "P";
+            return toHHMM(p.punchIn) || "P";
           }
 
           return "A";
@@ -186,7 +203,7 @@ export default function ReportTab() {
         days.forEach((d) => {
           const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
           const p = punchesMap.get(`${r.employeeId}-${dateStr}`);
-          if (p && p.punchIn && shiftStart) {
+          if (p && p.punchIn && shiftStart && internalEmpId && !isNightRotationDate(internalEmpId, dateStr)) {
             const punchMins = timeToMinutes(p.punchIn);
             const shiftMins = timeToMinutes(shiftStart);
             if (punchMins > shiftMins + 5) {
@@ -370,7 +387,7 @@ export default function ReportTab() {
                     days.forEach(d => {
                       const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
                       const p = punchesMap.get(`${r.employeeId}-${dateStr}`);
-                      if (p && p.punchIn && shiftStart) {
+                      if (p && p.punchIn && shiftStart && internalId && !isNightRotationDate(internalId, dateStr)) {
                         const punchMins = timeToMinutes(p.punchIn);
                         const shiftMins = timeToMinutes(shiftStart);
                         if (punchMins > shiftMins + 5) { // 5 mins grace
@@ -437,7 +454,7 @@ export default function ReportTab() {
                           let isLateEntry = false;
                           if (reportType === 'late' && p.punchIn && internalEmpId) {
                             const shiftStart = getShiftStart(internalEmpId);
-                            if (shiftStart) {
+                            if (shiftStart && !isNightRotationDate(internalEmpId, dateStr)) {
                               const punchMins = timeToMinutes(p.punchIn);
                               const shiftMins = timeToMinutes(shiftStart);
                               if (punchMins > shiftMins + 5) {
@@ -450,9 +467,9 @@ export default function ReportTab() {
                             <td key={d} className={`py-1 px-2 text-center align-top text-xs ${isLateEntry ? 'bg-red-500/10' : ''}`}>
                               <div className="flex flex-col items-center gap-1">
                                 <div className={`font-medium ${isLateEntry ? 'text-red-400' : 'text-emerald-300'}`}>
-                                  {p.punchIn || '-'}
+                                  {toHHMM(p.punchIn) || '-'}
                                 </div>
-                                <div className="text-neutral-400">{p.punchOut || '-'}</div>
+                                <div className="text-neutral-400">{toHHMM(p.punchOut) || '-'}</div>
                               </div>
                             </td>
                           );

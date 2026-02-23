@@ -110,8 +110,8 @@ export const useAppStore = create<AppState>()(
           // Add new records
           const newRecords = [...s.punchRecords, ...records];
           
-          // Process the punches
-          const processed = processPunchRecords(newRecords);
+          // Process punches with current employee + rotation context
+          const processed = processPunchRecords(newRecords, s.employees, s.shiftRotations);
           
           return {
             punchRecords: newRecords,
@@ -126,7 +126,11 @@ export const useAppStore = create<AppState>()(
 
       // ---- Employees ----
       employees: [],
-      setEmployees: (employees) => set({ employees }),
+      setEmployees: (employees) =>
+        set((s) => ({
+          employees,
+          processedPunches: processPunchRecords(s.punchRecords, employees, s.shiftRotations),
+        })),
       addEmployee: (e) =>
         set((s) => ({
           employees: [
@@ -242,15 +246,28 @@ export const useAppStore = create<AppState>()(
 
       // ---- Shift Rotations ----
       shiftRotations: [],
-      setShiftRotations: (rotations) => set({ shiftRotations: rotations }),
+      setShiftRotations: (rotations) =>
+        set((s) => ({
+          shiftRotations: rotations,
+          processedPunches: processPunchRecords(s.punchRecords, s.employees, rotations),
+        })),
       addShiftRotation: (r) =>
         set((s) => ({
           shiftRotations: [...s.shiftRotations, r],
+          processedPunches: processPunchRecords(
+            s.punchRecords,
+            s.employees,
+            [...s.shiftRotations, r],
+          ),
         })),
       deleteShiftRotation: (id) =>
-        set((s) => ({
-          shiftRotations: s.shiftRotations.filter((r) => r.id !== id),
-        })),
+        set((s) => {
+          const nextRotations = s.shiftRotations.filter((r) => r.id !== id);
+          return {
+            shiftRotations: nextRotations,
+            processedPunches: processPunchRecords(s.punchRecords, s.employees, nextRotations),
+          };
+        }),
 
       // ---- Leave Records (per-date) ----
       leaveRecords: [],
@@ -311,75 +328,125 @@ const groupKeyMap: Record<
 // ============================================================
 // Punch Record Processing
 // ============================================================
-function processPunchRecords(records: PunchRecord[]): ProcessedPunch[] {
-  // Group punches by employeeId and date
-  const grouped: Record<string, PunchRecord[]> = {};
-  
+function processPunchRecords(
+  records: PunchRecord[],
+  employees: Employee[],
+  shiftRotations: ShiftRotation[],
+): ProcessedPunch[] {
+  const toTimeString = (isoDateTime: string) =>
+    new Date(isoDateTime).toLocaleTimeString("en-GB", {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false,
+    });
+
+  // Map external employeeId (punch files) -> internal employee id (rotations)
+  const externalToInternal = new Map<string, string>();
+  employees.forEach((emp) => {
+    externalToInternal.set(emp.employeeId, emp.id);
+  });
+
+  // Group records per employee per date.
+  const byEmpDate = new Map<string, Map<string, PunchRecord[]>>();
   records.forEach((record) => {
-    const key = `${record.employeeId}-${record.date}`;
-    if (!grouped[key]) {
-      grouped[key] = [];
+    let dateMap = byEmpDate.get(record.employeeId);
+    if (!dateMap) {
+      dateMap = new Map<string, PunchRecord[]>();
+      byEmpDate.set(record.employeeId, dateMap);
     }
-    grouped[key].push(record);
+    const dayPunches = dateMap.get(record.date) ?? [];
+    dayPunches.push(record);
+    dateMap.set(record.date, dayPunches);
   });
 
-  // Process each group
-  return Object.keys(grouped).map((key) => {
-    // Split only at the first '-' to preserve the full date (YYYY-MM-DD)
-    const parts = key.split(/-(.+)/);
-    const employeeId = parts[0];
-    const date = parts[1];
-    const punches = grouped[key];
-    
-    // Sort punches by time
-    const sortedPunches = punches.sort((a, b) => 
-      new Date(a.punchTime).getTime() - new Date(b.punchTime).getTime()
-    );
-
-    // Determine punch in and punch out
-    let punchIn: string | null = null;
-    let punchOut: string | null = null;
-
-    if (sortedPunches.length >= 2) {
-      punchIn = new Date(sortedPunches[0].punchTime).toLocaleTimeString('en-GB', {
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-        hour12: false,
-      });
-      punchOut = new Date(sortedPunches[sortedPunches.length - 1].punchTime).toLocaleTimeString('en-GB', {
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-        hour12: false,
-      });
-    } else if (sortedPunches.length === 1) {
-      punchIn = new Date(sortedPunches[0].punchTime).toLocaleTimeString('en-GB', {
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-        hour12: false,
-      });
-    }
-
-    // Determine status
-    let status: 'present' | 'absent' | 'missed';
-    if (punchIn && punchOut) {
-      status = 'present';
-    } else if (punchIn) {
-      status = 'missed';
-    } else {
-      status = 'absent';
-    }
-
-    return {
-      employeeId,
-      date,
-      punchIn,
-      punchOut,
-      status,
-    };
+  byEmpDate.forEach((dateMap) => {
+    dateMap.forEach((dayPunches, date) => {
+      dayPunches.sort(
+        (a, b) => new Date(a.punchTime).getTime() - new Date(b.punchTime).getTime(),
+      );
+      dateMap.set(date, dayPunches);
+    });
   });
+
+  // Build lookup for night shift ranges by internal employee id.
+  const nightRangesByEmp = new Map<string, { startDate: string; endDate: string }[]>();
+  shiftRotations.forEach((rotation) => {
+    if (rotation.shiftType !== "night") return;
+    const existing = nightRangesByEmp.get(rotation.employeeId) ?? [];
+    existing.push({ startDate: rotation.startDate, endDate: rotation.endDate });
+    nightRangesByEmp.set(rotation.employeeId, existing);
+  });
+
+  const isNightShiftDate = (externalEmployeeId: string, date: string) => {
+    const internalId = externalToInternal.get(externalEmployeeId);
+    if (!internalId) return false;
+    const ranges = nightRangesByEmp.get(internalId);
+    if (!ranges || ranges.length === 0) return false;
+    return ranges.some((r) => date >= r.startDate && date <= r.endDate);
+  };
+
+  const nextDateString = (date: string) => {
+    const d = new Date(`${date}T00:00:00`);
+    d.setDate(d.getDate() + 1);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  };
+
+  const consumedFirstPunch = new Set<string>(); // key: employeeId-date
+  const processed: ProcessedPunch[] = [];
+
+  byEmpDate.forEach((dateMap, employeeId) => {
+    const sortedDates = Array.from(dateMap.keys()).sort();
+
+    sortedDates.forEach((date) => {
+      const todayPunches = dateMap.get(date) ?? [];
+      const consumeTodayFirst = consumedFirstPunch.has(`${employeeId}-${date}`);
+      const usableToday = consumeTodayFirst ? todayPunches.slice(1) : todayPunches;
+
+      let punchIn: string | null = null;
+      let punchOut: string | null = null;
+
+      if (isNightShiftDate(employeeId, date)) {
+        // Night rotation rule:
+        // - punchIn: 2nd punch of the date
+        // - punchOut: 1st punch of the next date
+        const inSource = todayPunches[1];
+        if (inSource) {
+          punchIn = toTimeString(inSource.punchTime);
+        }
+
+        const nextDate = nextDateString(date);
+        const nextDayPunches = dateMap.get(nextDate) ?? [];
+        const nextDayFirst = nextDayPunches[0];
+        if (nextDayFirst) {
+          punchOut = toTimeString(nextDayFirst.punchTime);
+          consumedFirstPunch.add(`${employeeId}-${nextDate}`);
+        }
+      } else if (usableToday.length >= 2) {
+        punchIn = toTimeString(usableToday[0].punchTime);
+        punchOut = toTimeString(usableToday[usableToday.length - 1].punchTime);
+      } else if (usableToday.length === 1) {
+        punchIn = toTimeString(usableToday[0].punchTime);
+      }
+
+      const status: "present" | "absent" | "missed" =
+        punchIn && punchOut ? "present" : punchIn ? "missed" : "absent";
+
+      processed.push({
+        employeeId,
+        date,
+        punchIn,
+        punchOut,
+        status,
+      });
+    });
+  });
+
+  return processed.sort(
+    (a, b) =>
+      a.employeeId.localeCompare(b.employeeId) ||
+      new Date(a.date).getTime() - new Date(b.date).getTime(),
+  );
 }
 
 // ============================================================
