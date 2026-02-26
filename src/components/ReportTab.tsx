@@ -24,8 +24,9 @@ export default function ReportTab() {
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth());
-  const [reportType, setReportType] = useState<'attendance' | 'late'>('attendance');
+  const [reportType, setReportType] = useState<'attendance' | 'late' | 'totals'>('attendance');
   const [selectedDept, setSelectedDept] = useState<string>("All Departments");
+  const [deductions, setDeductions] = useState<Record<string, { advance: number, lateEntry: number }>>({});
 
   const departments = useMemo(() => {
     const depts = new Set(employees.map((e) => e.department).filter(Boolean));
@@ -77,6 +78,16 @@ export default function ReportTab() {
   }, [employees]);
 
   const totalNetSalary = filteredReport.reduce((sum, r) => sum + r.netSalary, 0);
+  
+  const currentTotalNetSalary = useMemo(() => {
+    return filteredReport.reduce((sum, r) => {
+      if (reportType === 'totals') {
+         const empDeds = deductions[r.employeeId] || { advance: 0, lateEntry: 0 };
+         return sum + (r.netSalary - empDeds.advance - empDeds.lateEntry);
+      }
+      return sum + r.netSalary;
+    }, 0);
+  }, [filteredReport, reportType, deductions]);
 
   // Helper to parse "HH:mm" or "HH:mm:ss" to minutes
   const timeToMinutes = (timeStr: string) => {
@@ -111,6 +122,64 @@ export default function ReportTab() {
     return punchMins > shiftMins + LATE_ENTRY_GRACE_MINUTES;
   };
 
+  const handleDeductionChange = (empId: string, field: 'advance' | 'lateEntry', value: string) => {
+    const numValue = Number(value) || 0;
+    setDeductions(prev => ({
+      ...prev,
+      [empId]: {
+        ...(prev[empId] || { advance: 0, lateEntry: 0 }),
+        [field]: numValue
+      }
+    }));
+  };
+
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleSaveDeductions = async () => {
+    const deductionsPayload = Object.entries(deductions)
+      .map(([empId, ded]) => {
+        const internalId = empIdToInternalId.get(empId);
+        return {
+          id: internalId,
+          advanceDeduction: ded.advance
+        };
+      })
+      .filter(d => d.id && d.advanceDeduction > 0);
+
+    if (deductionsPayload.length === 0) {
+      alert("No advance deductions to save.");
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const res = await fetch("/api/employees/deduct-advances", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ deductions: deductionsPayload })
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to save deductions");
+      }
+
+      alert("Advance deductions saved successfully.");
+      // Clear advance deductions after saving (optional, but good UX)
+      setDeductions(prev => {
+        const next = { ...prev };
+        for (const k in next) {
+          next[k] = { ...next[k], advance: 0 };
+        }
+        return next;
+      });
+    } catch (err) {
+      console.error(err);
+      alert("Error saving deductions.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const handlePrint = () => {
     window.print();
   };
@@ -118,7 +187,7 @@ export default function ReportTab() {
   const handleExportPDF = () => {
     const doc = new jsPDF({ orientation: "landscape" });
 
-    const title = `${reportType === 'attendance' ? 'Attendance' : 'Late Entry'} Report - ${MONTH_NAMES[month]} ${year}${selectedDept !== 'All Departments' ? ` (${selectedDept})` : ''}`;
+    const title = `${reportType === 'attendance' ? 'Attendance' : reportType === 'late' ? 'Late Entry' : 'Totals Only'} Report - ${MONTH_NAMES[month]} ${year}${selectedDept !== 'All Departments' ? ` (${selectedDept})` : ''}`;
     doc.text(title, 14, 15);
 
     if (reportType === 'attendance') {
@@ -203,7 +272,7 @@ export default function ReportTab() {
           }
         }
       });
-    } else {
+    } else if (reportType === 'late') {
       // Late Entry Report - Detailed
       const headers = [
         "ID", "Name",
@@ -255,6 +324,79 @@ export default function ReportTab() {
           1: { cellWidth: 40 }, // Name
         }
       });
+    } else if (reportType === 'totals') {
+      const headers = [
+        "ID", "Name", "Dept",
+        "Total", "W.Off", "Hol", "Leave", "Abs", "Present", "DD", "Late",
+        "Basic", "Advance Ded.", "Late Ded.", "Gross Salary"
+      ];
+
+      const body = filteredReport.map((r) => {
+        let totalLateDays = 0;
+        let presentDays = 0;
+        const internalEmpId = empIdToInternalId.get(r.employeeId);
+        
+        days.forEach((d) => {
+          const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+          const p = punchesMap.get(`${r.employeeId}-${dateStr}`);
+          if (p) {
+            presentDays++;
+            if (p.punchIn && internalEmpId) {
+              const shiftStart = getShiftStartForDate(internalEmpId, dateStr);
+              if (shiftStart && checkIsLate(p.punchIn, shiftStart)) {
+                totalLateDays++;
+              }
+            }
+          }
+        });
+
+        const ddCount = internalEmpId
+          ? leaveRecords.filter(
+            (lr) => lr.substituteEmployeeId === internalEmpId && lr.date.startsWith(`${year}-${String(month + 1).padStart(2, '0')}`)
+          ).length
+          : 0;
+
+        const empDeds = deductions[r.employeeId] || { advance: 0, lateEntry: 0 };
+        const finalGrossSalary = r.netSalary - empDeds.advance - empDeds.lateEntry;
+
+        return [
+          r.employeeId,
+          r.employeeName,
+          r.department,
+          r.totalDays,
+          r.weekOffs,
+          r.holidays,
+          r.leaves,
+          r.absences,
+          presentDays,
+          ddCount,
+          totalLateDays,
+          r.basicSalary.toLocaleString(),
+          empDeds.advance.toLocaleString(),
+          empDeds.lateEntry.toLocaleString(),
+          finalGrossSalary.toLocaleString()
+        ];
+      });
+
+      autoTable(doc, {
+        head: [headers],
+        body: body,
+        startY: 20,
+        styles: { fontSize: 8, cellPadding: 2 },
+        headStyles: { fillColor: [23, 23, 23] },
+        columnStyles: {
+          4: { textColor: [217, 119, 6] }, // W.Off
+          5: { textColor: [124, 58, 237] }, // Hol
+          6: { textColor: [202, 138, 4] }, // Leave
+          7: { textColor: [220, 38, 38] }, // Abs
+          8: { textColor: [5, 150, 105], fontStyle: 'bold' }, // Present
+          9: { textColor: [37, 99, 235], fontStyle: 'bold' }, // DD
+          10: { textColor: [217, 119, 6], fontStyle: 'bold' }, // Late
+          12: { textColor: [220, 38, 38] }, // Advance Ded
+          13: { textColor: [220, 38, 38] }, // Late Ded
+          14: { textColor: [5, 150, 105], fontStyle: 'bold' } // Gross Salary
+        }
+      });
     }
 
     doc.save(`${reportType}_report_${year}-${String(month + 1).padStart(2, '0')}.pdf`);
@@ -277,6 +419,15 @@ export default function ReportTab() {
           >
             ⬇️ Export PDF
           </button>
+          {reportType === 'totals' && (
+            <button
+              onClick={handleSaveDeductions}
+              disabled={isSaving}
+              className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors no-print disabled:opacity-50"
+            >
+              {isSaving ? "Saving..." : "💾 Save Deductions"}
+            </button>
+          )}
 
           <div className="h-6 w-px bg-neutral-700 mx-1 self-center hidden sm:block no-print"></div>
 
@@ -294,11 +445,12 @@ export default function ReportTab() {
 
           <select
             value={reportType}
-            onChange={(e) => setReportType(e.target.value as 'attendance' | 'late')}
+            onChange={(e) => setReportType(e.target.value as 'attendance' | 'late' | 'totals')}
             className="bg-neutral-800 border border-neutral-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 no-print"
           >
             <option value="attendance">Attendance Report</option>
             <option value="late">Late Entry Report</option>
+            <option value="totals">Totals Only Report</option>
           </select>
           <select
             value={month}
@@ -346,11 +498,11 @@ export default function ReportTab() {
                 {filteredReport[0]?.totalDays ?? "—"}
               </p>
             </div>
-            {reportType === 'attendance' ? (
+            {reportType === 'attendance' || reportType === 'totals' ? (
               <div className="bg-neutral-800 border border-neutral-700 rounded-xl p-4">
                 <p className="text-xs text-neutral-400 uppercase tracking-wide">Total Salary</p>
                 <p className="text-2xl font-bold text-emerald-400 mt-1">
-                  ₹{Math.round(totalNetSalary).toLocaleString()}
+                  ₹{Math.round(currentTotalNetSalary).toLocaleString()}
                 </p>
               </div>
             ) : (
@@ -377,7 +529,7 @@ export default function ReportTab() {
                   <th className="sticky top-0 z-20 bg-neutral-900/95 backdrop-blur-sm text-left py-3 px-2 font-medium border-b border-neutral-700">Dept</th>
 
                   {/* Per-day columns (dates as columns) */}
-                  {days.map((d) => {
+                  {reportType !== 'totals' && days.map((d) => {
                     const dateObj = new Date(year, month, d);
                     const dow = dateObj.toLocaleDateString(undefined, { weekday: 'short' });
                     return (
@@ -393,14 +545,28 @@ export default function ReportTab() {
                   <th className="sticky top-0 z-20 bg-neutral-900/95 backdrop-blur-sm text-right py-3 px-2 font-medium border-b border-neutral-700">Hol.</th>
                   <th className="sticky top-0 z-20 bg-neutral-900/95 backdrop-blur-sm text-right py-3 px-2 font-medium border-b border-neutral-700">Leave</th>
                   <th className="sticky top-0 z-20 bg-neutral-900/95 backdrop-blur-sm text-right py-3 px-2 font-medium border-b border-neutral-700">Absent</th>
-                  <th className="sticky top-0 z-20 bg-neutral-900/95 backdrop-blur-sm text-right py-3 px-2 font-medium border-b border-neutral-700">Working</th>
-                  <th className="sticky top-0 z-20 bg-neutral-900/95 backdrop-blur-sm text-left py-3 px-2 font-medium border-b border-neutral-700">Shift</th>
+                  {reportType === 'totals' ? (
+                    <th className="sticky top-0 z-20 bg-neutral-900/95 backdrop-blur-sm text-right py-3 px-2 font-medium border-b border-neutral-700">Present</th>
+                  ) : (
+                    <th className="sticky top-0 z-20 bg-neutral-900/95 backdrop-blur-sm text-right py-3 px-2 font-medium border-b border-neutral-700">Working</th>
+                  )}
+                  {reportType !== 'totals' && (
+                    <th className="sticky top-0 z-20 bg-neutral-900/95 backdrop-blur-sm text-left py-3 px-2 font-medium border-b border-neutral-700">Shift</th>
+                  )}
                   <th className="sticky top-0 z-20 bg-neutral-900/95 backdrop-blur-sm text-right py-3 px-2 font-medium text-blue-400 border-b border-neutral-700">DD</th>
                   {reportType === 'attendance' ? (
                     <>
                       <th className="sticky top-0 z-20 bg-neutral-900/95 backdrop-blur-sm text-right py-3 px-2 font-medium border-b border-neutral-700">Basic</th>
                       <th className="sticky top-0 z-20 bg-neutral-900/95 backdrop-blur-sm text-right py-3 px-2 font-medium border-b border-neutral-700">Per Day</th>
                       <th className="sticky top-0 z-20 bg-neutral-900/95 backdrop-blur-sm text-right py-3 px-2 font-medium border-b border-neutral-700">Net Salary</th>
+                    </>
+                  ) : reportType === 'totals' ? (
+                    <>
+                      <th className="sticky top-0 z-20 bg-neutral-900/95 backdrop-blur-sm text-right py-3 px-2 font-medium text-orange-400 border-b border-neutral-700">Late Entry</th>
+                      <th className="sticky top-0 z-20 bg-neutral-900/95 backdrop-blur-sm text-right py-3 px-2 font-medium border-b border-neutral-700">Basic</th>
+                      <th className="sticky top-0 z-20 bg-neutral-900/95 backdrop-blur-sm text-right py-3 px-2 font-medium border-b border-neutral-700">Advance Ded.</th>
+                      <th className="sticky top-0 z-20 bg-neutral-900/95 backdrop-blur-sm text-right py-3 px-2 font-medium border-b border-neutral-700">Late Ded.</th>
+                      <th className="sticky top-0 z-20 bg-neutral-900/95 backdrop-blur-sm text-right py-3 px-2 font-medium border-b border-neutral-700">Gross Salary</th>
                     </>
                   ) : (
                     <th className="sticky top-0 z-20 bg-neutral-900/95 backdrop-blur-sm text-right py-3 px-2 font-medium text-orange-400 border-b border-neutral-700">Late Days</th>
@@ -410,21 +576,19 @@ export default function ReportTab() {
               <tbody>
                 {filteredReport.map((r) => {
                   let totalLateDays = 0;
-
-                  // Pre-calculate late days if needed for summary
-                  // We also need it for rendering the cell if reportType is 'late'
-                  // To avoid double loop, we can just calculate on the fly or memoize, 
-                  // but the loop inside map is cheap enough.
-                  if (reportType === 'late') {
+                  let presentDays = 0;
+                  if (reportType === 'late' || reportType === 'totals') {
                     const internalId = empIdToInternalId.get(r.employeeId);
-
                     days.forEach(d => {
                       const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
                       const p = punchesMap.get(`${r.employeeId}-${dateStr}`);
-                      if (p && p.punchIn && internalId) {
-                        const shiftStart = getShiftStartForDate(internalId, dateStr);
-                        if (shiftStart && checkIsLate(p.punchIn, shiftStart)) {
-                          totalLateDays++;
+                      if (p) {
+                        presentDays++;
+                        if (p.punchIn && internalId) {
+                          const shiftStart = getShiftStartForDate(internalId, dateStr);
+                          if (shiftStart && checkIsLate(p.punchIn, shiftStart)) {
+                            totalLateDays++;
+                          }
                         }
                       }
                     });
@@ -442,7 +606,7 @@ export default function ReportTab() {
                       <td className="py-2 px-2 text-neutral-400 border-b border-neutral-800">{r.department}</td>
 
                       {/* Per-day cells */}
-                      {days.map((d) => {
+                      {reportType !== 'totals' && days.map((d) => {
                         const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
 
                         // Use holidayDates/weekOffDates provided by the report row
@@ -518,10 +682,20 @@ export default function ReportTab() {
                       <td className="py-2 px-2 text-right text-purple-400 border-b border-neutral-800">{r.holidays}</td>
                       <td className="py-2 px-2 text-right text-yellow-400 border-b border-neutral-800">{r.leaves}</td>
                       <td className="py-2 px-2 text-right text-red-400 border-b border-neutral-800">{r.absences}</td>
-                      <td className="py-2 px-2 text-right text-emerald-400 font-medium border-b border-neutral-800">
-                        {r.workingDays}
-                      </td>
-                      <td className="py-2 px-2 text-neutral-400 text-xs border-b border-neutral-800">{r.shiftInfo}</td>
+                      {reportType === 'totals' ? (
+                        <td className="py-2 px-2 text-right text-emerald-400 font-medium border-b border-neutral-800">
+                          {presentDays}
+                        </td>
+                      ) : (
+                        <td className="py-2 px-2 text-right text-emerald-400 font-medium border-b border-neutral-800">
+                          {r.workingDays}
+                        </td>
+                      )}
+                      
+                      {reportType !== 'totals' && (
+                        <td className="py-2 px-2 text-neutral-400 text-xs border-b border-neutral-800">{r.shiftInfo}</td>
+                      )}
+                      
                       <td className="py-2 px-2 text-right text-blue-400 font-medium border-b border-neutral-800">
                         {(() => {
                           const intId = empIdToInternalId.get(r.employeeId);
@@ -545,6 +719,36 @@ export default function ReportTab() {
                             ₹{r.netSalary.toLocaleString()}
                           </td>
                         </>
+                      ) : reportType === 'totals' ? (
+                        <>
+                          <td className="py-2 px-2 text-right text-orange-400 font-bold border-b border-neutral-800">
+                            {totalLateDays}
+                          </td>
+                          <td className="py-2 px-2 text-right text-neutral-300 border-b border-neutral-800">
+                            ₹{r.basicSalary.toLocaleString()}
+                          </td>
+                          <td className="py-2 px-2 text-right border-b border-neutral-800">
+                            <input 
+                              type="number" 
+                              className="w-16 bg-neutral-800 border border-neutral-700 rounded px-1 py-1 text-xs text-white text-right"
+                              value={deductions[r.employeeId]?.advance || ''}
+                              onChange={(e) => handleDeductionChange(r.employeeId, 'advance', e.target.value)}
+                              placeholder="0"
+                            />
+                          </td>
+                          <td className="py-2 px-2 text-right border-b border-neutral-800">
+                            <input 
+                              type="number" 
+                              className="w-16 bg-neutral-800 border border-neutral-700 rounded px-1 py-1 text-xs text-white text-right"
+                              value={deductions[r.employeeId]?.lateEntry || ''}
+                              onChange={(e) => handleDeductionChange(r.employeeId, 'lateEntry', e.target.value)}
+                              placeholder="0"
+                            />
+                          </td>
+                          <td className="py-2 px-2 text-right text-emerald-400 font-semibold border-b border-neutral-800">
+                            ₹{(r.netSalary - (deductions[r.employeeId]?.advance || 0) - (deductions[r.employeeId]?.lateEntry || 0)).toLocaleString()}
+                          </td>
+                        </>
                       ) : (
                         <td className="py-2 px-2 text-right text-orange-400 font-bold border-b border-neutral-800">
                           {totalLateDays}
@@ -556,12 +760,12 @@ export default function ReportTab() {
               </tbody>
               <tfoot className="sticky bottom-0 z-20 bg-neutral-900 shadow-[0_-1px_0_rgba(64,64,64,1)]">
                 <tr>
-                  <td colSpan={11} className="py-3 px-2 text-right text-neutral-400 font-medium">
-                    {reportType === 'attendance' ? 'Total Net Salary' : 'Summary'}
+                  <td colSpan={reportType === 'totals' ? 14 : 11} className="py-3 px-2 text-right text-neutral-400 font-medium">
+                    {reportType === 'attendance' || reportType === 'totals' ? 'Total Net Salary' : 'Summary'}
                   </td>
-                  {reportType === 'attendance' ? (
-                    <td className="py-3 px-2 text-right text-emerald-400 font-bold text-base">
-                      ₹{Math.round(totalNetSalary).toLocaleString()}
+                  {reportType === 'attendance' || reportType === 'totals' ? (
+                    <td colSpan={reportType === 'totals' ? 1 : 1} className="py-3 px-2 text-right text-emerald-400 font-bold text-base">
+                      ₹{Math.round(currentTotalNetSalary).toLocaleString()}
                     </td>
                   ) : (
                     <td className="py-3 px-2 text-right text-neutral-400 italic">

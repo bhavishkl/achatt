@@ -1,0 +1,1 @@
+ALTER TABLE employees ADD COLUMN advance_amount NUMERIC DEFAULT 0;

@@ -12,7 +12,7 @@ export async function GET(request: Request) {
   try {
     const { data: employees, error } = await supabaseAdmin
       .from('employees')
-      .select('*')
+      .select('*, advance_amount')
       .eq('company_id', companyId)
       .order('created_at', { ascending: false });
 

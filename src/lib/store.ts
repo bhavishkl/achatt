@@ -548,7 +548,7 @@ export function computeAttendanceReport(
     // Working days now treat week-offs, holidays and recorded leaves as PAID.
     // Only true absences (calculated above) reduce payable days.
     const workingDays = Math.max(0, daysInMonth - absences);
-    const perDaySalary = emp.basicSalary / daysInMonth;
+    const perDaySalary = emp.basicSalary / 30;
     const netSalary = perDaySalary * workingDays;
 
     return {

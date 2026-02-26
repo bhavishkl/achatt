@@ -27,6 +27,7 @@ export interface Employee {
   employeeId: string; // e.g. "EMP-001"
   name: string;
   basicSalary: number;
+  advanceAmount?: number;
   department: string;
   createdAt: string;
 }

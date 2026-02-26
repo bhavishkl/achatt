@@ -24,6 +24,9 @@ export default function EmployeesTab() {
   const [showForm, setShowForm] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [showAdvanceForm, setShowAdvanceForm] = useState(false);
+  const [advanceEmpId, setAdvanceEmpId] = useState("");
+  const [advanceAmount, setAdvanceAmount] = useState("");
 
   // Fetch employees
   useEffect(() => {
@@ -39,6 +42,7 @@ export default function EmployeesTab() {
               employeeId: e.employee_id,
               name: e.name,
               basicSalary: Number(e.basic_salary),
+              advanceAmount: Number(e.advance_amount) || 0,
               department: e.department,
               createdAt: e.created_at,
             }));
@@ -144,6 +148,44 @@ export default function EmployeesTab() {
     }
   }
 
+  async function handleAdvanceSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!advanceEmpId || !advanceAmount) return;
+
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/employees/${advanceEmpId}/advance`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          advanceAmount: Number(advanceAmount)
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        // Find existing emp to preserve other fields
+        const emp = employees.find(e => e.id === advanceEmpId);
+        if (emp) {
+          updateEmployeeStore(advanceEmpId, {
+            ...emp,
+            advanceAmount: (emp.advanceAmount || 0) + Number(advanceAmount)
+          });
+        }
+        setShowAdvanceForm(false);
+        setAdvanceEmpId("");
+        setAdvanceAmount("");
+      } else {
+        console.error("Failed to add advance:", data);
+        alert("Failed to add advance");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("An error occurred");
+    } finally {
+      setLoading(false);
+    }
+  }
+
   function startEdit(emp: Employee) {
     setForm({
       employeeId: emp.employeeId,
@@ -165,15 +207,79 @@ export default function EmployeesTab() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl font-semibold text-white">Employees</h2>
-        {!showForm && (
-          <button
-            onClick={() => setShowForm(true)}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-          >
-            + Add Employee
-          </button>
+        {!showForm && !showAdvanceForm && (
+          <div className="flex gap-2">
+            <button
+              onClick={() => setShowAdvanceForm(true)}
+              className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+            >
+              + Add Advance
+            </button>
+            <button
+              onClick={() => setShowForm(true)}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+            >
+              + Add Employee
+            </button>
+          </div>
         )}
       </div>
+
+      {showAdvanceForm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-neutral-900 border border-neutral-800 rounded-2xl w-full max-w-md p-6 shadow-xl">
+            <h3 className="text-xl font-semibold text-white mb-4">Add Advance Amount</h3>
+            <form onSubmit={handleAdvanceSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm text-neutral-400 mb-1">Select Employee</label>
+                <select
+                  value={advanceEmpId}
+                  onChange={(e) => setAdvanceEmpId(e.target.value)}
+                  className="w-full bg-neutral-800 border border-neutral-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  required
+                >
+                  <option value="" disabled>Select an employee</option>
+                  {employees.map(emp => (
+                    <option key={emp.id} value={emp.id}>{emp.name} ({emp.employeeId})</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm text-neutral-400 mb-1">Advance Amount (₹)</label>
+                <input
+                  type="number"
+                  value={advanceAmount}
+                  onChange={(e) => setAdvanceAmount(e.target.value)}
+                  placeholder="e.g. 5000"
+                  min="1"
+                  className="w-full bg-neutral-800 border border-neutral-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  required
+                />
+              </div>
+              <div className="flex gap-3 pt-4 border-t border-neutral-800">
+                <button
+                  type="submit"
+                  disabled={loading || !advanceEmpId || !advanceAmount}
+                  className="flex-1 bg-purple-600 hover:bg-purple-700 text-white px-5 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+                >
+                  {loading ? "Saving..." : "Add Advance"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowAdvanceForm(false);
+                    setAdvanceEmpId("");
+                    setAdvanceAmount("");
+                  }}
+                  className="flex-1 bg-neutral-800 hover:bg-neutral-700 text-white px-5 py-2 rounded-lg text-sm font-medium transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {showForm && (
         <form
@@ -267,6 +373,7 @@ export default function EmployeesTab() {
                 <th className="text-left py-3 px-3 font-medium">Name</th>
                 <th className="text-left py-3 px-3 font-medium">Department</th>
                 <th className="text-right py-3 px-3 font-medium">Basic Salary</th>
+                <th className="text-right py-3 px-3 font-medium">Advance</th>
                 <th className="text-right py-3 px-3 font-medium">Actions</th>
               </tr>
             </thead>
@@ -281,6 +388,9 @@ export default function EmployeesTab() {
                   <td className="py-3 px-3 text-neutral-300">{emp.department}</td>
                   <td className="py-3 px-3 text-right text-neutral-300">
                     ₹{emp.basicSalary.toLocaleString()}
+                  </td>
+                  <td className="py-3 px-3 text-right text-purple-400">
+                    ₹{(emp.advanceAmount || 0).toLocaleString()}
                   </td>
                   <td className="py-3 px-3 text-right">
                     {confirmDeleteId === emp.id ? (
