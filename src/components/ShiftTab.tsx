@@ -33,6 +33,8 @@ export default function ShiftTab() {
   const [rotationForm, setRotationForm] = useState({
     employeeId: "",
     shiftType: "morning",
+    startTime: "",
+    endTime: "",
     startDate: "",
     endDate: "",
   });
@@ -140,7 +142,7 @@ export default function ShiftTab() {
 
   async function handleRotationSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!rotationForm.employeeId || !rotationForm.startDate || !rotationForm.endDate || !companyId) return;
+    if (!rotationForm.employeeId || !rotationForm.startTime || !rotationForm.endTime || !rotationForm.startDate || !rotationForm.endDate || !companyId) return;
 
     setRotationLoading(true);
     try {
@@ -151,6 +153,8 @@ export default function ShiftTab() {
           companyId,
           employeeId: rotationForm.employeeId,
           shiftType: rotationForm.shiftType,
+          startTime: rotationForm.startTime,
+          endTime: rotationForm.endTime,
           startDate: rotationForm.startDate,
           endDate: rotationForm.endDate,
         }),
@@ -162,6 +166,8 @@ export default function ShiftTab() {
         setRotationForm({
           employeeId: "",
           shiftType: "morning",
+          startTime: "",
+          endTime: "",
           startDate: "",
           endDate: "",
         });
@@ -471,7 +477,7 @@ export default function ShiftTab() {
             className="bg-neutral-800 border border-neutral-700 rounded-xl p-5 mb-6 space-y-4"
           >
             <h3 className="text-white font-medium">New Rotational Shift</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
               <div>
                 <label className="block text-sm text-neutral-400 mb-1">Employee</label>
                 <select
@@ -497,6 +503,24 @@ export default function ShiftTab() {
                   <option value="morning">Morning</option>
                   <option value="night">Night</option>
                 </select>
+              </div>
+              <div>
+                <label className="block text-sm text-neutral-400 mb-1">Start Time</label>
+                <input
+                  type="time"
+                  value={rotationForm.startTime}
+                  onChange={(e) => setRotationForm({ ...rotationForm, startTime: e.target.value })}
+                  className="w-full bg-neutral-900 border border-neutral-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm text-neutral-400 mb-1">End Time</label>
+                <input
+                  type="time"
+                  value={rotationForm.endTime}
+                  onChange={(e) => setRotationForm({ ...rotationForm, endTime: e.target.value })}
+                  className="w-full bg-neutral-900 border border-neutral-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
               </div>
               <div>
                 <label className="block text-sm text-neutral-400 mb-1">Start Date</label>
@@ -529,7 +553,7 @@ export default function ShiftTab() {
                 type="button"
                 onClick={() => {
                   setShowRotationForm(false);
-                  setRotationForm({ employeeId: "", shiftType: "morning", startDate: "", endDate: "" });
+                  setRotationForm({ employeeId: "", shiftType: "morning", startTime: "", endTime: "", startDate: "", endDate: "" });
                 }}
                 className="bg-neutral-700 hover:bg-neutral-600 text-white px-5 py-2 rounded-lg text-sm font-medium transition-colors"
               >
@@ -544,30 +568,46 @@ export default function ShiftTab() {
             No rotational shifts assigned yet.
           </div>
         ) : (
-          <div className="space-y-3">
-            {shiftRotations.map((rot) => {
-              const emp = employees.find((e) => e.id === rot.employeeId);
-              return (
-                <div
-                  key={rot.id}
-                  className="bg-neutral-800 border border-neutral-700 rounded-xl p-4 flex items-center justify-between"
-                >
-                  <div>
-                    <h4 className="text-white font-medium">{emp?.name || "Unknown Employee"}</h4>
-                    <p className="text-sm text-neutral-400">
-                      <span className={`inline-block w-2 h-2 rounded-full mr-2 ${rot.shiftType === "morning" ? "bg-yellow-400" : "bg-indigo-400"}`}></span>
-                      {rot.shiftType === "morning" ? "Morning" : "Night"} Shift · {rot.startDate} to {rot.endDate}
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => handleDeleteRotation(rot.id)}
-                    className="text-red-400 hover:text-red-300 text-xs font-medium"
-                  >
-                    Delete
-                  </button>
-                </div>
-              );
-            })}
+          <div className="overflow-x-auto bg-neutral-800 border border-neutral-700 rounded-xl">
+            <table className="w-full text-left text-sm text-neutral-300">
+              <thead className="bg-neutral-900 border-b border-neutral-700 text-neutral-400">
+                <tr>
+                  <th className="px-4 py-3 font-medium">Employee</th>
+                  <th className="px-4 py-3 font-medium">Shift Type</th>
+                  <th className="px-4 py-3 font-medium">Start Time</th>
+                  <th className="px-4 py-3 font-medium">End Time</th>
+                  <th className="px-4 py-3 font-medium">Start Date</th>
+                  <th className="px-4 py-3 font-medium">End Date</th>
+                  <th className="px-4 py-3 font-medium text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-neutral-700">
+                {shiftRotations.map((rot) => {
+                  const emp = employees.find((e) => e.id === rot.employeeId);
+                  return (
+                    <tr key={rot.id} className="hover:bg-neutral-700/50">
+                      <td className="px-4 py-3 font-medium text-white">{emp?.name || "Unknown"}</td>
+                      <td className="px-4 py-3 capitalize">
+                        <span className={`inline-block w-2 h-2 rounded-full mr-2 ${rot.shiftType === "morning" ? "bg-yellow-400" : "bg-indigo-400"}`}></span>
+                        {rot.shiftType}
+                      </td>
+                      <td className="px-4 py-3">{rot.startTime || "-"}</td>
+                      <td className="px-4 py-3">{rot.endTime || "-"}</td>
+                      <td className="px-4 py-3">{rot.startDate}</td>
+                      <td className="px-4 py-3">{rot.endDate}</td>
+                      <td className="px-4 py-3 text-right">
+                        <button
+                          onClick={() => handleDeleteRotation(rot.id)}
+                          className="text-red-400 hover:text-red-300 font-medium"
+                        >
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         )}
       </div>

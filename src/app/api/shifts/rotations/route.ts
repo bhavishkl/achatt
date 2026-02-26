@@ -25,6 +25,8 @@ export async function GET(request: Request) {
       id: r.id,
       employeeId: r.employee_id,
       shiftType: r.shift_type,
+      startTime: r.start_time,
+      endTime: r.end_time,
       startDate: r.start_date,
       endDate: r.end_date,
     }));
@@ -39,9 +41,9 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { companyId, employeeId, shiftType, startDate, endDate } = body;
+    const { companyId, employeeId, shiftType, startTime, endTime, startDate, endDate } = body;
 
-    if (!companyId || !employeeId || !shiftType || !startDate || !endDate) {
+    if (!companyId || !employeeId || !shiftType || !startTime || !endTime || !startDate || !endDate) {
       return NextResponse.json({ message: 'Missing required fields' }, { status: 400 });
     }
 
@@ -52,6 +54,8 @@ export async function POST(request: Request) {
           company_id: companyId,
           employee_id: employeeId,
           shift_type: shiftType,
+          start_time: startTime,
+          end_time: endTime,
           start_date: startDate,
           end_date: endDate,
         },
@@ -68,6 +72,8 @@ export async function POST(request: Request) {
       id: rotation.id,
       employeeId: rotation.employee_id,
       shiftType: rotation.shift_type,
+      startTime: rotation.start_time,
+      endTime: rotation.end_time,
       startDate: rotation.start_date,
       endDate: rotation.end_date,
     };

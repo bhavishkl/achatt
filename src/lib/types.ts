@@ -81,7 +81,9 @@ export interface ShiftGroup {
 export interface ShiftRotation {
   id: string;
   employeeId: string;
-  shiftType: "morning" | "night"; // or just string
+  shiftType: "morning" | "night" | string; // or just string
+  startTime: string; // HH:mm
+  endTime: string; // HH:mm
   startDate: string; // YYYY-MM-DD
   endDate: string; // YYYY-MM-DD
 }

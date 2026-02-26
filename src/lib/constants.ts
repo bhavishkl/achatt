@@ -5,7 +5,7 @@ export const DEPARTMENTS = [
     "DUTY DOCTOR",
     "Sales",
     "Operations",
-    "IT",
+    "PHARMACY",
     "Legal",
     "Customer Support",
     "Administration",

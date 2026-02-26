@@ -9,6 +9,7 @@ const MONTH_NAMES = [
   "January", "February", "March", "April", "May", "June",
   "July", "August", "September", "October", "November", "December",
 ];
+const LATE_ENTRY_GRACE_MINUTES = 15;
 
 export default function ReportTab() {
   const employees = useAppStore((s) => s.employees);
@@ -24,6 +25,12 @@ export default function ReportTab() {
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth());
   const [reportType, setReportType] = useState<'attendance' | 'late'>('attendance');
+  const [selectedDept, setSelectedDept] = useState<string>("All Departments");
+
+  const departments = useMemo(() => {
+    const depts = new Set(employees.map((e) => e.department).filter(Boolean));
+    return ["All Departments", ...Array.from(depts).sort()];
+  }, [employees]);
 
   const report = useMemo(
     () =>
@@ -40,6 +47,11 @@ export default function ReportTab() {
       ),
     [employees, weekOffGroups, holidayGroups, leaveGroups, shiftGroups, leaveRecords, processedPunches, year, month],
   );
+
+  const filteredReport = useMemo(() => {
+    if (selectedDept === "All Departments") return report;
+    return report.filter((r) => r.department === selectedDept);
+  }, [report, selectedDept]);
 
   // Build days array for the selected month
   const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -64,7 +76,7 @@ export default function ReportTab() {
     return m;
   }, [employees]);
 
-  const totalNetSalary = report.reduce((sum, r) => sum + r.netSalary, 0);
+  const totalNetSalary = filteredReport.reduce((sum, r) => sum + r.netSalary, 0);
 
   // Helper to parse "HH:mm" or "HH:mm:ss" to minutes
   const timeToMinutes = (timeStr: string) => {
@@ -80,19 +92,24 @@ export default function ReportTab() {
     return `${h}:${m}`;
   };
 
-  const getShiftStart = (internalEmpId: string) => {
+  const getShiftStartForDate = (internalEmpId: string, dateStr: string) => {
+    const rot = shiftRotations.find(
+      (r) => r.employeeId === internalEmpId && dateStr >= r.startDate && dateStr <= r.endDate
+    );
+    if (rot && rot.startTime) return rot.startTime;
     const g = shiftGroups.find(g => g.employeeIds.includes(internalEmpId));
     return g ? g.startTime : null;
   };
 
-  const isNightRotationDate = (internalEmpId: string, dateStr: string) =>
-    shiftRotations.some(
-      (rot) =>
-        rot.employeeId === internalEmpId &&
-        rot.shiftType === "night" &&
-        dateStr >= rot.startDate &&
-        dateStr <= rot.endDate,
-    );
+  const checkIsLate = (punchIn: string, shiftStart: string) => {
+    let punchMins = timeToMinutes(punchIn);
+    const shiftMins = timeToMinutes(shiftStart);
+    // Handle night shift crossing midnight
+    if (shiftMins > 12 * 60 && punchMins < 12 * 60) {
+      punchMins += 24 * 60;
+    }
+    return punchMins > shiftMins + LATE_ENTRY_GRACE_MINUTES;
+  };
 
   const handlePrint = () => {
     window.print();
@@ -101,7 +118,7 @@ export default function ReportTab() {
   const handleExportPDF = () => {
     const doc = new jsPDF({ orientation: "landscape" });
 
-    const title = `${reportType === 'attendance' ? 'Attendance' : 'Late Entry'} Report - ${MONTH_NAMES[month]} ${year}`;
+    const title = `${reportType === 'attendance' ? 'Attendance' : 'Late Entry'} Report - ${MONTH_NAMES[month]} ${year}${selectedDept !== 'All Departments' ? ` (${selectedDept})` : ''}`;
     doc.text(title, 14, 15);
 
     if (reportType === 'attendance') {
@@ -112,7 +129,7 @@ export default function ReportTab() {
         "Basic", "Per Day", "Net Salary"
       ];
 
-      const body = report.map((r) => {
+      const body = filteredReport.map((r) => {
         const internalEmpId = empIdToInternalId.get(r.employeeId);
 
         // Calculate row cells for days
@@ -187,27 +204,32 @@ export default function ReportTab() {
         }
       });
     } else {
-      // Late Entry Report - Concise
+      // Late Entry Report - Detailed
       const headers = [
         "ID", "Name",
-        "Total", "W.Off", "Hol", "Leave", "Abs", "Work", "Shift",
-        "Late Days"
+        "Late Dates", "Punch In", "Punch Out",
+        "Total Late Days"
       ];
 
-      const body = report.map((r) => {
+      const body = filteredReport.map((r) => {
         let totalLateDays = 0;
         const internalEmpId = empIdToInternalId.get(r.employeeId);
-        const shiftStart = internalEmpId ? getShiftStart(internalEmpId) : null;
+        
+        const lateDates: string[] = [];
+        const punchIns: string[] = [];
+        const punchOuts: string[] = [];
 
         // Calculate late days
         days.forEach((d) => {
           const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
           const p = punchesMap.get(`${r.employeeId}-${dateStr}`);
-          if (p && p.punchIn && shiftStart && internalEmpId && !isNightRotationDate(internalEmpId, dateStr)) {
-            const punchMins = timeToMinutes(p.punchIn);
-            const shiftMins = timeToMinutes(shiftStart);
-            if (punchMins > shiftMins + 5) {
+          if (p && p.punchIn && internalEmpId) {
+            const shiftStart = getShiftStartForDate(internalEmpId, dateStr);
+            if (shiftStart && checkIsLate(p.punchIn, shiftStart)) {
               totalLateDays++;
+              lateDates.push(dateStr);
+              punchIns.push(toHHMM(p.punchIn) || "-");
+              punchOuts.push(toHHMM(p.punchOut) || "-");
             }
           }
         });
@@ -215,13 +237,9 @@ export default function ReportTab() {
         return [
           r.employeeId,
           r.employeeName,
-          r.totalDays,
-          r.weekOffs,
-          r.holidays,
-          r.leaves,
-          r.absences,
-          r.workingDays,
-          r.shiftInfo,
+          lateDates.length > 0 ? lateDates.join("\n") : "-",
+          punchIns.length > 0 ? punchIns.join("\n") : "-",
+          punchOuts.length > 0 ? punchOuts.join("\n") : "-",
           totalLateDays
         ];
       });
@@ -263,6 +281,18 @@ export default function ReportTab() {
           <div className="h-6 w-px bg-neutral-700 mx-1 self-center hidden sm:block no-print"></div>
 
           <select
+            value={selectedDept}
+            onChange={(e) => setSelectedDept(e.target.value)}
+            className="bg-neutral-800 border border-neutral-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 no-print"
+          >
+            {departments.map((dept) => (
+              <option key={dept} value={dept}>
+                {dept}
+              </option>
+            ))}
+          </select>
+
+          <select
             value={reportType}
             onChange={(e) => setReportType(e.target.value as 'attendance' | 'late')}
             className="bg-neutral-800 border border-neutral-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 no-print"
@@ -297,18 +327,23 @@ export default function ReportTab() {
           <p className="text-lg mb-1">No employees to report on</p>
           <p className="text-sm">Add employees and assign them to groups first.</p>
         </div>
+      ) : filteredReport.length === 0 ? (
+        <div className="text-center py-12 text-neutral-500 bg-neutral-800/20 border border-neutral-800 rounded-xl">
+          <p className="text-lg mb-1">No employees found in {selectedDept}</p>
+          <p className="text-sm">Try selecting a different department or view all.</p>
+        </div>
       ) : (
         <>
           {/* Summary cards */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
             <div className="bg-neutral-800 border border-neutral-700 rounded-xl p-4">
               <p className="text-xs text-neutral-400 uppercase tracking-wide">Employees</p>
-              <p className="text-2xl font-bold text-white mt-1">{report.length}</p>
+              <p className="text-2xl font-bold text-white mt-1">{filteredReport.length}</p>
             </div>
             <div className="bg-neutral-800 border border-neutral-700 rounded-xl p-4">
               <p className="text-xs text-neutral-400 uppercase tracking-wide">Days in Month</p>
               <p className="text-2xl font-bold text-white mt-1">
-                {report[0]?.totalDays ?? "—"}
+                {filteredReport[0]?.totalDays ?? "—"}
               </p>
             </div>
             {reportType === 'attendance' ? (
@@ -333,47 +368,47 @@ export default function ReportTab() {
           </div>
 
           {/* Report table */}
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+          <div className="overflow-auto max-h-[calc(100vh-160px)] border border-neutral-700 rounded-xl bg-neutral-900/20">
+            <table className="w-full text-sm border-separate border-spacing-0">
               <thead>
-                <tr className="border-b border-neutral-700 text-neutral-400">
-                  <th className="text-left py-3 px-2 font-medium">ID</th>
-                  <th className="text-left py-3 px-2 font-medium">Name</th>
-                  <th className="text-left py-3 px-2 font-medium">Dept</th>
+                <tr className="text-neutral-400">
+                  <th className="sticky top-0 z-20 bg-neutral-900/95 backdrop-blur-sm text-left py-3 px-2 font-medium border-b border-neutral-700">ID</th>
+                  <th className="sticky top-0 z-20 bg-neutral-900/95 backdrop-blur-sm text-left py-3 px-2 font-medium border-b border-neutral-700">Name</th>
+                  <th className="sticky top-0 z-20 bg-neutral-900/95 backdrop-blur-sm text-left py-3 px-2 font-medium border-b border-neutral-700">Dept</th>
 
                   {/* Per-day columns (dates as columns) */}
                   {days.map((d) => {
                     const dateObj = new Date(year, month, d);
                     const dow = dateObj.toLocaleDateString(undefined, { weekday: 'short' });
                     return (
-                      <th key={d} className="text-center py-2 px-1 font-medium text-xs uppercase">
+                      <th key={d} className="sticky top-0 z-20 bg-neutral-900/95 backdrop-blur-sm text-center py-2 px-1 font-medium text-xs uppercase border-b border-neutral-700">
                         <div className="text-sm">{d}</div>
                         <div className="text-xs text-neutral-400">{dow}</div>
                       </th>
                     );
                   })}
 
-                  <th className="text-right py-3 px-2 font-medium">Total</th>
-                  <th className="text-right py-3 px-2 font-medium">W.Off</th>
-                  <th className="text-right py-3 px-2 font-medium">Hol.</th>
-                  <th className="text-right py-3 px-2 font-medium">Leave</th>
-                  <th className="text-right py-3 px-2 font-medium">Absent</th>
-                  <th className="text-right py-3 px-2 font-medium">Working</th>
-                  <th className="text-left py-3 px-2 font-medium">Shift</th>
-                  <th className="text-right py-3 px-2 font-medium text-blue-400">DD</th>
+                  <th className="sticky top-0 z-20 bg-neutral-900/95 backdrop-blur-sm text-right py-3 px-2 font-medium border-b border-neutral-700">Total</th>
+                  <th className="sticky top-0 z-20 bg-neutral-900/95 backdrop-blur-sm text-right py-3 px-2 font-medium border-b border-neutral-700">W.Off</th>
+                  <th className="sticky top-0 z-20 bg-neutral-900/95 backdrop-blur-sm text-right py-3 px-2 font-medium border-b border-neutral-700">Hol.</th>
+                  <th className="sticky top-0 z-20 bg-neutral-900/95 backdrop-blur-sm text-right py-3 px-2 font-medium border-b border-neutral-700">Leave</th>
+                  <th className="sticky top-0 z-20 bg-neutral-900/95 backdrop-blur-sm text-right py-3 px-2 font-medium border-b border-neutral-700">Absent</th>
+                  <th className="sticky top-0 z-20 bg-neutral-900/95 backdrop-blur-sm text-right py-3 px-2 font-medium border-b border-neutral-700">Working</th>
+                  <th className="sticky top-0 z-20 bg-neutral-900/95 backdrop-blur-sm text-left py-3 px-2 font-medium border-b border-neutral-700">Shift</th>
+                  <th className="sticky top-0 z-20 bg-neutral-900/95 backdrop-blur-sm text-right py-3 px-2 font-medium text-blue-400 border-b border-neutral-700">DD</th>
                   {reportType === 'attendance' ? (
                     <>
-                      <th className="text-right py-3 px-2 font-medium">Basic</th>
-                      <th className="text-right py-3 px-2 font-medium">Per Day</th>
-                      <th className="text-right py-3 px-2 font-medium">Net Salary</th>
+                      <th className="sticky top-0 z-20 bg-neutral-900/95 backdrop-blur-sm text-right py-3 px-2 font-medium border-b border-neutral-700">Basic</th>
+                      <th className="sticky top-0 z-20 bg-neutral-900/95 backdrop-blur-sm text-right py-3 px-2 font-medium border-b border-neutral-700">Per Day</th>
+                      <th className="sticky top-0 z-20 bg-neutral-900/95 backdrop-blur-sm text-right py-3 px-2 font-medium border-b border-neutral-700">Net Salary</th>
                     </>
                   ) : (
-                    <th className="text-right py-3 px-2 font-medium text-orange-400">Late Days</th>
+                    <th className="sticky top-0 z-20 bg-neutral-900/95 backdrop-blur-sm text-right py-3 px-2 font-medium text-orange-400 border-b border-neutral-700">Late Days</th>
                   )}
                 </tr>
               </thead>
               <tbody>
-                {report.map((r) => {
+                {filteredReport.map((r) => {
                   let totalLateDays = 0;
 
                   // Pre-calculate late days if needed for summary
@@ -382,15 +417,13 @@ export default function ReportTab() {
                   // but the loop inside map is cheap enough.
                   if (reportType === 'late') {
                     const internalId = empIdToInternalId.get(r.employeeId);
-                    const shiftStart = internalId ? getShiftStart(internalId) : null;
 
                     days.forEach(d => {
                       const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
                       const p = punchesMap.get(`${r.employeeId}-${dateStr}`);
-                      if (p && p.punchIn && shiftStart && internalId && !isNightRotationDate(internalId, dateStr)) {
-                        const punchMins = timeToMinutes(p.punchIn);
-                        const shiftMins = timeToMinutes(shiftStart);
-                        if (punchMins > shiftMins + 5) { // 5 mins grace
+                      if (p && p.punchIn && internalId) {
+                        const shiftStart = getShiftStartForDate(internalId, dateStr);
+                        if (shiftStart && checkIsLate(p.punchIn, shiftStart)) {
                           totalLateDays++;
                         }
                       }
@@ -400,13 +433,13 @@ export default function ReportTab() {
                   return (
                     <tr
                       key={r.employeeId}
-                      className="border-b border-neutral-800 hover:bg-neutral-800/50 transition-colors"
+                      className="hover:bg-neutral-800/50 transition-colors"
                     >
-                      <td className="py-2 px-2 text-neutral-300 font-mono text-xs">
+                      <td className="py-2 px-2 text-neutral-300 font-mono text-xs border-b border-neutral-800">
                         {r.employeeId}
                       </td>
-                      <td className="py-2 px-2 text-white">{r.employeeName}</td>
-                      <td className="py-2 px-2 text-neutral-400">{r.department}</td>
+                      <td className="py-2 px-2 text-white border-b border-neutral-800">{r.employeeName}</td>
+                      <td className="py-2 px-2 text-neutral-400 border-b border-neutral-800">{r.department}</td>
 
                       {/* Per-day cells */}
                       {days.map((d) => {
@@ -416,7 +449,7 @@ export default function ReportTab() {
                         const isHoliday = r.holidayDates?.includes(dateStr);
                         if (isHoliday) {
                           return (
-                            <td key={d} className="py-1 px-2 text-center align-top text-xs">
+                            <td key={d} className="py-1 px-2 text-center align-top text-xs border-b border-neutral-800">
                               <div className="text-purple-300 font-medium">🎉</div>
                               <div className="text-xs text-neutral-400">Hol.</div>
                             </td>
@@ -426,7 +459,7 @@ export default function ReportTab() {
                         const isWeekOff = r.weekOffDates?.includes(dateStr);
                         if (isWeekOff) {
                           return (
-                            <td key={d} className="py-1 px-2 text-center align-top text-xs">
+                            <td key={d} className="py-1 px-2 text-center align-top text-xs border-b border-neutral-800">
                               <div className="text-orange-300 font-medium">🟧</div>
                               <div className="text-xs text-neutral-400">W.Off</div>
                             </td>
@@ -441,7 +474,7 @@ export default function ReportTab() {
 
                         if (isLeave) {
                           return (
-                            <td key={d} className="py-1 px-2 text-center align-top text-xs">
+                            <td key={d} className="py-1 px-2 text-center align-top text-xs border-b border-neutral-800">
                               <div className="text-yellow-300 font-medium">🟡</div>
                               <div className="text-xs text-neutral-400">Leave</div>
                             </td>
@@ -453,18 +486,14 @@ export default function ReportTab() {
                         if (p) {
                           let isLateEntry = false;
                           if (reportType === 'late' && p.punchIn && internalEmpId) {
-                            const shiftStart = getShiftStart(internalEmpId);
-                            if (shiftStart && !isNightRotationDate(internalEmpId, dateStr)) {
-                              const punchMins = timeToMinutes(p.punchIn);
-                              const shiftMins = timeToMinutes(shiftStart);
-                              if (punchMins > shiftMins + 5) {
-                                isLateEntry = true;
-                              }
+                            const shiftStart = getShiftStartForDate(internalEmpId, dateStr);
+                            if (shiftStart && checkIsLate(p.punchIn, shiftStart)) {
+                              isLateEntry = true;
                             }
                           }
 
                           return (
-                            <td key={d} className={`py-1 px-2 text-center align-top text-xs ${isLateEntry ? 'bg-red-500/10' : ''}`}>
+                            <td key={d} className={`py-1 px-2 text-center align-top text-xs border-b border-neutral-800 ${isLateEntry ? 'bg-red-500/10' : ''}`}>
                               <div className="flex flex-col items-center gap-1">
                                 <div className={`font-medium ${isLateEntry ? 'text-red-400' : 'text-emerald-300'}`}>
                                   {toHHMM(p.punchIn) || '-'}
@@ -477,23 +506,23 @@ export default function ReportTab() {
 
                         // No punch + not holiday/week-off/leave → mark Absent
                         return (
-                          <td key={d} className="py-1 px-2 text-center align-top text-xs">
+                          <td key={d} className="py-1 px-2 text-center align-top text-xs border-b border-neutral-800">
                             <div className="text-red-400 font-medium">✖</div>
                             <div className="text-xs text-neutral-400">Abs.</div>
                           </td>
                         );
                       })}
 
-                      <td className="py-2 px-2 text-right text-neutral-300">{r.totalDays}</td>
-                      <td className="py-2 px-2 text-right text-orange-400">{r.weekOffs}</td>
-                      <td className="py-2 px-2 text-right text-purple-400">{r.holidays}</td>
-                      <td className="py-2 px-2 text-right text-yellow-400">{r.leaves}</td>
-                      <td className="py-2 px-2 text-right text-red-400">{r.absences}</td>
-                      <td className="py-2 px-2 text-right text-emerald-400 font-medium">
+                      <td className="py-2 px-2 text-right text-neutral-300 border-b border-neutral-800">{r.totalDays}</td>
+                      <td className="py-2 px-2 text-right text-orange-400 border-b border-neutral-800">{r.weekOffs}</td>
+                      <td className="py-2 px-2 text-right text-purple-400 border-b border-neutral-800">{r.holidays}</td>
+                      <td className="py-2 px-2 text-right text-yellow-400 border-b border-neutral-800">{r.leaves}</td>
+                      <td className="py-2 px-2 text-right text-red-400 border-b border-neutral-800">{r.absences}</td>
+                      <td className="py-2 px-2 text-right text-emerald-400 font-medium border-b border-neutral-800">
                         {r.workingDays}
                       </td>
-                      <td className="py-2 px-2 text-neutral-400 text-xs">{r.shiftInfo}</td>
-                      <td className="py-2 px-2 text-right text-blue-400 font-medium">
+                      <td className="py-2 px-2 text-neutral-400 text-xs border-b border-neutral-800">{r.shiftInfo}</td>
+                      <td className="py-2 px-2 text-right text-blue-400 font-medium border-b border-neutral-800">
                         {(() => {
                           const intId = empIdToInternalId.get(r.employeeId);
                           const monthPrefix = `${year}-${String(month + 1).padStart(2, '0')}`;
@@ -506,18 +535,18 @@ export default function ReportTab() {
 
                       {reportType === 'attendance' ? (
                         <>
-                          <td className="py-2 px-2 text-right text-neutral-300">
+                          <td className="py-2 px-2 text-right text-neutral-300 border-b border-neutral-800">
                             ₹{r.basicSalary.toLocaleString()}
                           </td>
-                          <td className="py-2 px-2 text-right text-neutral-400">
+                          <td className="py-2 px-2 text-right text-neutral-400 border-b border-neutral-800">
                             ₹{r.perDaySalary.toLocaleString()}
                           </td>
-                          <td className="py-2 px-2 text-right text-emerald-400 font-semibold">
+                          <td className="py-2 px-2 text-right text-emerald-400 font-semibold border-b border-neutral-800">
                             ₹{r.netSalary.toLocaleString()}
                           </td>
                         </>
                       ) : (
-                        <td className="py-2 px-2 text-right text-orange-400 font-bold">
+                        <td className="py-2 px-2 text-right text-orange-400 font-bold border-b border-neutral-800">
                           {totalLateDays}
                         </td>
                       )}
@@ -525,8 +554,8 @@ export default function ReportTab() {
                   );
                 })}
               </tbody>
-              <tfoot>
-                <tr className="border-t border-neutral-600">
+              <tfoot className="sticky bottom-0 z-20 bg-neutral-900 shadow-[0_-1px_0_rgba(64,64,64,1)]">
+                <tr>
                   <td colSpan={11} className="py-3 px-2 text-right text-neutral-400 font-medium">
                     {reportType === 'attendance' ? 'Total Net Salary' : 'Summary'}
                   </td>
