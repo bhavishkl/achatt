@@ -68,7 +68,27 @@ export interface LeaveRecord {
   employeeId: string;
   date: string; // YYYY-MM-DD
   reason: string;
-  substituteEmployeeId?: string; // employee covering double duty
+}
+
+export interface AbsentRecord {
+  id: string;
+  employeeId: string;
+  date: string; // YYYY-MM-DD
+  reason?: string;
+}
+
+export interface PresentRecord {
+  id: string;
+  employeeId: string;
+  date: string; // YYYY-MM-DD
+  note?: string;
+}
+
+export interface DoubleDutyRecord {
+  id: string;
+  employeeId: string;
+  date: string; // YYYY-MM-DD
+  note?: string;
 }
 
 export interface ShiftGroup {

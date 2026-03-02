@@ -19,6 +19,9 @@ export default function ReportTab() {
   const shiftGroups = useAppStore((s) => s.shiftGroups);
   const shiftRotations = useAppStore((s) => s.shiftRotations);
   const leaveRecords = useAppStore((s) => s.leaveRecords);
+  const absentRecords = useAppStore((s) => s.absentRecords);
+  const presentRecords = useAppStore((s) => s.presentRecords);
+  const doubleDutyRecords = useAppStore((s) => s.doubleDutyRecords);
   const processedPunches = useAppStore((s) => s.processedPunches);
 
   const now = new Date();
@@ -42,11 +45,13 @@ export default function ReportTab() {
         leaveGroups,
         shiftGroups,
         leaveRecords,
+        absentRecords,
+        presentRecords,
         processedPunches,
         year,
         month,
       ),
-    [employees, weekOffGroups, holidayGroups, leaveGroups, shiftGroups, leaveRecords, processedPunches, year, month],
+    [employees, weekOffGroups, holidayGroups, leaveGroups, shiftGroups, leaveRecords, absentRecords, presentRecords, processedPunches, year, month],
   );
 
   const filteredReport = useMemo(() => {
@@ -57,6 +62,19 @@ export default function ReportTab() {
   // Build days array for the selected month
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
+
+  const salaryByEmployeeId = useMemo(() => {
+    const salaryMap = new Map<string, { perDaySalary: number; netSalary: number }>();
+    filteredReport.forEach((r) => {
+      const perDaySalary = r.basicSalary / daysInMonth;
+      const netSalary = perDaySalary * r.workingDays;
+      salaryMap.set(r.employeeId, {
+        perDaySalary: Math.round(perDaySalary * 100) / 100,
+        netSalary: Math.round(netSalary * 100) / 100,
+      });
+    });
+    return salaryMap;
+  }, [filteredReport, daysInMonth]);
 
   // Quick lookup map for processed punches within the selected month
   const punchesMap = useMemo(() => {
@@ -70,6 +88,42 @@ export default function ReportTab() {
     return m;
   }, [processedPunches, year, month]);
 
+  const leaveSet = useMemo(() => {
+    const s = new Set<string>();
+    const prefix = `${year}-${String(month + 1).padStart(2, "0")}`;
+    leaveRecords.forEach((r) => {
+      if (r.date.startsWith(prefix)) s.add(`${r.employeeId}-${r.date}`);
+    });
+    return s;
+  }, [leaveRecords, year, month]);
+
+  const absentSet = useMemo(() => {
+    const s = new Set<string>();
+    const prefix = `${year}-${String(month + 1).padStart(2, "0")}`;
+    absentRecords.forEach((r) => {
+      if (r.date.startsWith(prefix)) s.add(`${r.employeeId}-${r.date}`);
+    });
+    return s;
+  }, [absentRecords, year, month]);
+
+  const presentSet = useMemo(() => {
+    const s = new Set<string>();
+    const prefix = `${year}-${String(month + 1).padStart(2, "0")}`;
+    presentRecords.forEach((r) => {
+      if (r.date.startsWith(prefix)) s.add(`${r.employeeId}-${r.date}`);
+    });
+    return s;
+  }, [presentRecords, year, month]);
+
+  const doubleDutySet = useMemo(() => {
+    const s = new Set<string>();
+    const prefix = `${year}-${String(month + 1).padStart(2, "0")}`;
+    doubleDutyRecords.forEach((r) => {
+      if (r.date.startsWith(prefix)) s.add(`${r.employeeId}-${r.date}`);
+    });
+    return s;
+  }, [doubleDutyRecords, year, month]);
+
   // Map external employeeId (e.g. "EMP-001") -> internal store id (emp.id)
   const empIdToInternalId = useMemo(() => {
     const m = new Map<string, string>();
@@ -77,17 +131,38 @@ export default function ReportTab() {
     return m;
   }, [employees]);
 
-  const totalNetSalary = filteredReport.reduce((sum, r) => sum + r.netSalary, 0);
-  
+  const ddCountByEmployeeId = useMemo(() => {
+    const m = new Map<string, number>();
+    filteredReport.forEach((r) => {
+      const internalId = empIdToInternalId.get(r.employeeId);
+      if (!internalId) {
+        m.set(r.employeeId, 0);
+        return;
+      }
+      const count = Array.from(doubleDutySet).filter((key) =>
+        key.startsWith(`${internalId}-`),
+      ).length;
+      m.set(r.employeeId, count);
+    });
+    return m;
+  }, [filteredReport, empIdToInternalId, doubleDutySet]);
+
   const currentTotalNetSalary = useMemo(() => {
     return filteredReport.reduce((sum, r) => {
+      const salary = salaryByEmployeeId.get(r.employeeId) || { perDaySalary: r.perDaySalary, netSalary: r.netSalary };
+      const ddCount = ddCountByEmployeeId.get(r.employeeId) || 0;
+      const ddSalary = ddCount * salary.perDaySalary;
+      const payableSalary = salary.netSalary + ddSalary;
       if (reportType === 'totals') {
          const empDeds = deductions[r.employeeId] || { advance: 0, lateEntry: 0 };
-         return sum + (r.netSalary - empDeds.advance - empDeds.lateEntry);
+         return sum + (payableSalary - empDeds.advance - empDeds.lateEntry);
       }
-      return sum + r.netSalary;
+      if (reportType === 'attendance') {
+        return sum + payableSalary;
+      }
+      return sum;
     }, 0);
-  }, [filteredReport, reportType, deductions]);
+  }, [filteredReport, reportType, deductions, salaryByEmployeeId, ddCountByEmployeeId]);
 
   // Helper to parse "HH:mm" or "HH:mm:ss" to minutes
   const timeToMinutes = (timeStr: string) => {
@@ -184,6 +259,42 @@ export default function ReportTab() {
     window.print();
   };
 
+  const buildPdfBody = (
+    rows: Array<{ department: string; row: any[] }>,
+    colCount: number,
+  ) => {
+    if (selectedDept !== "All Departments") {
+      return rows.map((r) => r.row);
+    }
+
+    const byDept = new Map<string, any[][]>();
+    rows.forEach(({ department, row }) => {
+      const deptRows = byDept.get(department) ?? [];
+      deptRows.push(row);
+      byDept.set(department, deptRows);
+    });
+
+    const groupedBody: any[] = [];
+    Array.from(byDept.keys())
+      .sort((a, b) => a.localeCompare(b))
+      .forEach((dept) => {
+        groupedBody.push([
+          {
+            content: `Department: ${dept}`,
+            colSpan: colCount,
+            styles: {
+              fillColor: [38, 38, 38],
+              textColor: [255, 255, 255],
+              fontStyle: "bold",
+            },
+          },
+        ]);
+        groupedBody.push(...(byDept.get(dept) ?? []));
+      });
+
+    return groupedBody;
+  };
+
   const handleExportPDF = () => {
     const doc = new jsPDF({ orientation: "landscape" });
 
@@ -198,7 +309,8 @@ export default function ReportTab() {
         "Basic", "Per Day", "Net Salary"
       ];
 
-      const body = filteredReport.map((r) => {
+      const rowInputs = filteredReport.map((r) => {
+        const salary = salaryByEmployeeId.get(r.employeeId) || { perDaySalary: r.perDaySalary, netSalary: r.netSalary };
         const internalEmpId = empIdToInternalId.get(r.employeeId);
 
         // Calculate row cells for days
@@ -209,9 +321,19 @@ export default function ReportTab() {
           if (r.weekOffDates?.includes(dateStr)) return "WO";
 
           const isLeave = internalEmpId
-            ? leaveRecords.some((lr) => lr.employeeId === internalEmpId && lr.date === dateStr)
+            ? leaveSet.has(`${internalEmpId}-${dateStr}`)
             : false;
           if (isLeave) return "L";
+
+          const isAbsent = internalEmpId
+            ? absentSet.has(`${internalEmpId}-${dateStr}`)
+            : false;
+          if (isAbsent) return "A";
+
+          const isPresent = internalEmpId
+            ? presentSet.has(`${internalEmpId}-${dateStr}`)
+            : false;
+          if (isPresent) return "P";
 
           const p = punchesMap.get(`${r.employeeId}-${dateStr}`);
           if (p) {
@@ -222,30 +344,30 @@ export default function ReportTab() {
         });
 
         // Count double duty for this employee
-        const internalId = empIdToInternalId.get(r.employeeId);
-        const ddCount = internalId
-          ? leaveRecords.filter(
-            (lr) => lr.substituteEmployeeId === internalId && lr.date.startsWith(`${year}-${String(month + 1).padStart(2, '0')}`)
-          ).length
-          : 0;
+        const ddCount = ddCountByEmployeeId.get(r.employeeId) || 0;
+        const payableSalary = salary.netSalary + ddCount * salary.perDaySalary;
 
-        return [
-          r.employeeId,
-          r.employeeName,
-          r.department,
-          ...dayCells,
-          r.totalDays,
-          r.weekOffs,
-          r.holidays,
-          r.leaves,
-          r.absences,
-          r.workingDays,
-          ddCount,
-          r.basicSalary.toLocaleString(),
-          r.perDaySalary.toLocaleString(),
-          r.netSalary.toLocaleString()
-        ];
+        return {
+          department: r.department,
+          row: [
+            r.employeeId,
+            r.employeeName,
+            r.department,
+            ...dayCells,
+            r.totalDays,
+            r.weekOffs,
+            r.holidays,
+            r.leaves,
+            r.absences,
+            r.workingDays,
+            ddCount,
+            r.basicSalary.toLocaleString(),
+            salary.perDaySalary.toLocaleString(),
+            payableSalary.toLocaleString(),
+          ],
+        };
       });
+      const body = buildPdfBody(rowInputs, headers.length);
 
       autoTable(doc, {
         head: [headers],
@@ -280,7 +402,7 @@ export default function ReportTab() {
         "Total Late Days"
       ];
 
-      const body = filteredReport.map((r) => {
+      const rowInputs = filteredReport.map((r) => {
         let totalLateDays = 0;
         const internalEmpId = empIdToInternalId.get(r.employeeId);
         
@@ -303,15 +425,19 @@ export default function ReportTab() {
           }
         });
 
-        return [
-          r.employeeId,
-          r.employeeName,
-          lateDates.length > 0 ? lateDates.join("\n") : "-",
-          punchIns.length > 0 ? punchIns.join("\n") : "-",
-          punchOuts.length > 0 ? punchOuts.join("\n") : "-",
-          totalLateDays
-        ];
+        return {
+          department: r.department,
+          row: [
+            r.employeeId,
+            r.employeeName,
+            lateDates.length > 0 ? lateDates.join("\n") : "-",
+            punchIns.length > 0 ? punchIns.join("\n") : "-",
+            punchOuts.length > 0 ? punchOuts.join("\n") : "-",
+            totalLateDays,
+          ],
+        };
       });
+      const body = buildPdfBody(rowInputs, headers.length);
 
       autoTable(doc, {
         head: [headers],
@@ -331,13 +457,25 @@ export default function ReportTab() {
         "Basic", "Advance Ded.", "Late Ded.", "Gross Salary"
       ];
 
-      const body = filteredReport.map((r) => {
+      const rowInputs = filteredReport.map((r) => {
+        const salary = salaryByEmployeeId.get(r.employeeId) || { perDaySalary: r.perDaySalary, netSalary: r.netSalary };
         let totalLateDays = 0;
         let presentDays = 0;
         const internalEmpId = empIdToInternalId.get(r.employeeId);
         
         days.forEach((d) => {
           const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+          const leaveKey = internalEmpId ? `${internalEmpId}-${dateStr}` : null;
+          const hasLeave = leaveKey ? leaveSet.has(leaveKey) : false;
+          const hasAbsent = leaveKey ? absentSet.has(leaveKey) : false;
+          const hasPresentOverride = leaveKey ? presentSet.has(leaveKey) : false;
+
+          if (hasLeave || hasAbsent) return;
+          if (hasPresentOverride) {
+            presentDays++;
+            return;
+          }
+
           const p = punchesMap.get(`${r.employeeId}-${dateStr}`);
           if (p) {
             presentDays++;
@@ -350,33 +488,34 @@ export default function ReportTab() {
           }
         });
 
-        const ddCount = internalEmpId
-          ? leaveRecords.filter(
-            (lr) => lr.substituteEmployeeId === internalEmpId && lr.date.startsWith(`${year}-${String(month + 1).padStart(2, '0')}`)
-          ).length
-          : 0;
+        const ddCount = ddCountByEmployeeId.get(r.employeeId) || 0;
+        const payableSalary = salary.netSalary + ddCount * salary.perDaySalary;
 
         const empDeds = deductions[r.employeeId] || { advance: 0, lateEntry: 0 };
-        const finalGrossSalary = r.netSalary - empDeds.advance - empDeds.lateEntry;
+        const finalGrossSalary = payableSalary - empDeds.advance - empDeds.lateEntry;
 
-        return [
-          r.employeeId,
-          r.employeeName,
-          r.department,
-          r.totalDays,
-          r.weekOffs,
-          r.holidays,
-          r.leaves,
-          r.absences,
-          presentDays,
-          ddCount,
-          totalLateDays,
-          r.basicSalary.toLocaleString(),
-          empDeds.advance.toLocaleString(),
-          empDeds.lateEntry.toLocaleString(),
-          finalGrossSalary.toLocaleString()
-        ];
+        return {
+          department: r.department,
+          row: [
+            r.employeeId,
+            r.employeeName,
+            r.department,
+            r.totalDays,
+            r.weekOffs,
+            r.holidays,
+            r.leaves,
+            r.absences,
+            presentDays,
+            ddCount,
+            totalLateDays,
+            r.basicSalary.toLocaleString(),
+            empDeds.advance.toLocaleString(),
+            empDeds.lateEntry.toLocaleString(),
+            finalGrossSalary.toLocaleString(),
+          ],
+        };
       });
+      const body = buildPdfBody(rowInputs, headers.length);
 
       autoTable(doc, {
         head: [headers],
@@ -575,12 +714,26 @@ export default function ReportTab() {
               </thead>
               <tbody>
                 {filteredReport.map((r) => {
+                  const salary = salaryByEmployeeId.get(r.employeeId) || { perDaySalary: r.perDaySalary, netSalary: r.netSalary };
+                  const ddCount = ddCountByEmployeeId.get(r.employeeId) || 0;
+                  const payableSalary = salary.netSalary + ddCount * salary.perDaySalary;
                   let totalLateDays = 0;
                   let presentDays = 0;
                   if (reportType === 'late' || reportType === 'totals') {
                     const internalId = empIdToInternalId.get(r.employeeId);
                     days.forEach(d => {
                       const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                      const leaveKey = internalId ? `${internalId}-${dateStr}` : null;
+                      const hasLeave = leaveKey ? leaveSet.has(leaveKey) : false;
+                      const hasAbsent = leaveKey ? absentSet.has(leaveKey) : false;
+                      const hasPresentOverride = leaveKey ? presentSet.has(leaveKey) : false;
+
+                      if (hasLeave || hasAbsent) return;
+                      if (hasPresentOverride) {
+                        presentDays++;
+                        return;
+                      }
+
                       const p = punchesMap.get(`${r.employeeId}-${dateStr}`);
                       if (p) {
                         presentDays++;
@@ -633,7 +786,7 @@ export default function ReportTab() {
                         // Check explicit leave records for the employee/date
                         const internalEmpId = empIdToInternalId.get(r.employeeId);
                         const isLeave = internalEmpId
-                          ? leaveRecords.some((lr) => lr.employeeId === internalEmpId && lr.date === dateStr)
+                          ? leaveSet.has(`${internalEmpId}-${dateStr}`)
                           : false;
 
                         if (isLeave) {
@@ -644,6 +797,34 @@ export default function ReportTab() {
                             </td>
                           );
                         }
+
+                        const isAbsent = internalEmpId
+                          ? absentSet.has(`${internalEmpId}-${dateStr}`)
+                          : false;
+                        if (isAbsent) {
+                          return (
+                            <td key={d} className="py-1 px-2 text-center align-top text-xs border-b border-neutral-800">
+                              <div className="text-red-400 font-medium">✖</div>
+                              <div className="text-xs text-neutral-400">Abs.</div>
+                            </td>
+                          );
+                        }
+
+                        const isPresentOverride = internalEmpId
+                          ? presentSet.has(`${internalEmpId}-${dateStr}`)
+                          : false;
+                        if (isPresentOverride) {
+                          return (
+                            <td key={d} className="py-1 px-2 text-center align-top text-xs border-b border-neutral-800">
+                              <div className="text-emerald-300 font-medium">✔</div>
+                              <div className="text-xs text-neutral-400">Present</div>
+                            </td>
+                          );
+                        }
+
+                        const isDoubleDuty = internalEmpId
+                          ? doubleDutySet.has(`${internalEmpId}-${dateStr}`)
+                          : false;
 
                         // Otherwise show punches
                         const p = punchesMap.get(`${r.employeeId}-${dateStr}`);
@@ -663,6 +844,7 @@ export default function ReportTab() {
                                   {toHHMM(p.punchIn) || '-'}
                                 </div>
                                 <div className="text-neutral-400">{toHHMM(p.punchOut) || '-'}</div>
+                                {isDoubleDuty && <div className="text-blue-300 text-[10px]">DD</div>}
                               </div>
                             </td>
                           );
@@ -697,14 +879,7 @@ export default function ReportTab() {
                       )}
                       
                       <td className="py-2 px-2 text-right text-blue-400 font-medium border-b border-neutral-800">
-                        {(() => {
-                          const intId = empIdToInternalId.get(r.employeeId);
-                          const monthPrefix = `${year}-${String(month + 1).padStart(2, '0')}`;
-                          const ddCount = intId
-                            ? leaveRecords.filter((lr) => lr.substituteEmployeeId === intId && lr.date.startsWith(monthPrefix)).length
-                            : 0;
-                          return ddCount;
-                        })()}
+                        {ddCount}
                       </td>
 
                       {reportType === 'attendance' ? (
@@ -713,10 +888,10 @@ export default function ReportTab() {
                             ₹{r.basicSalary.toLocaleString()}
                           </td>
                           <td className="py-2 px-2 text-right text-neutral-400 border-b border-neutral-800">
-                            ₹{r.perDaySalary.toLocaleString()}
+                            ₹{salary.perDaySalary.toLocaleString()}
                           </td>
                           <td className="py-2 px-2 text-right text-emerald-400 font-semibold border-b border-neutral-800">
-                            ₹{r.netSalary.toLocaleString()}
+                            ₹{payableSalary.toLocaleString()}
                           </td>
                         </>
                       ) : reportType === 'totals' ? (
@@ -746,7 +921,7 @@ export default function ReportTab() {
                             />
                           </td>
                           <td className="py-2 px-2 text-right text-emerald-400 font-semibold border-b border-neutral-800">
-                            ₹{(r.netSalary - (deductions[r.employeeId]?.advance || 0) - (deductions[r.employeeId]?.lateEntry || 0)).toLocaleString()}
+                            ₹{(payableSalary - (deductions[r.employeeId]?.advance || 0) - (deductions[r.employeeId]?.lateEntry || 0)).toLocaleString()}
                           </td>
                         </>
                       ) : (

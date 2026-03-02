@@ -6,6 +6,9 @@ import type {
   HolidayGroup,
   LeaveGroup,
   LeaveRecord,
+  AbsentRecord,
+  PresentRecord,
+  DoubleDutyRecord,
   ShiftGroup,
   ShiftRotation,
   HolidayEntry,
@@ -82,6 +85,15 @@ interface AppState {
   setLeaveRecords: (records: LeaveRecord[]) => void;
   addLeaveRecord: (employeeId: string, date: string, reason: string) => void;
   removeLeaveRecord: (id: string) => void;
+  absentRecords: AbsentRecord[];
+  setAbsentRecords: (records: AbsentRecord[]) => void;
+  removeAbsentRecord: (id: string) => void;
+  presentRecords: PresentRecord[];
+  setPresentRecords: (records: PresentRecord[]) => void;
+  removePresentRecord: (id: string) => void;
+  doubleDutyRecords: DoubleDutyRecord[];
+  setDoubleDutyRecords: (records: DoubleDutyRecord[]) => void;
+  removeDoubleDutyRecord: (id: string) => void;
 
   // --- Group membership helpers ---
   addEmployeeToGroup: (
@@ -166,6 +178,9 @@ export const useAppStore = create<AppState>()(
           })),
           shiftRotations: s.shiftRotations.filter((r) => r.employeeId !== id),
           leaveRecords: s.leaveRecords.filter((r) => r.employeeId !== id),
+          absentRecords: s.absentRecords.filter((r) => r.employeeId !== id),
+          presentRecords: s.presentRecords.filter((r) => r.employeeId !== id),
+          doubleDutyRecords: s.doubleDutyRecords.filter((r) => r.employeeId !== id),
         })),
 
       // ---- Company Context ----
@@ -282,6 +297,24 @@ export const useAppStore = create<AppState>()(
       removeLeaveRecord: (id) =>
         set((s) => ({
           leaveRecords: s.leaveRecords.filter((r) => r.id !== id),
+        })),
+      absentRecords: [],
+      setAbsentRecords: (records) => set({ absentRecords: records }),
+      removeAbsentRecord: (id) =>
+        set((s) => ({
+          absentRecords: s.absentRecords.filter((r) => r.id !== id),
+        })),
+      presentRecords: [],
+      setPresentRecords: (records) => set({ presentRecords: records }),
+      removePresentRecord: (id) =>
+        set((s) => ({
+          presentRecords: s.presentRecords.filter((r) => r.id !== id),
+        })),
+      doubleDutyRecords: [],
+      setDoubleDutyRecords: (records) => set({ doubleDutyRecords: records }),
+      removeDoubleDutyRecord: (id) =>
+        set((s) => ({
+          doubleDutyRecords: s.doubleDutyRecords.filter((r) => r.id !== id),
         })),
 
       // ---- Group membership ----
@@ -459,6 +492,8 @@ export function computeAttendanceReport(
   leaveGroups: LeaveGroup[],
   shiftGroups: ShiftGroup[],
   leaveRecords: LeaveRecord[],
+  absentRecords: AbsentRecord[],
+  presentRecords: PresentRecord[],
   processedPunches: ProcessedPunch[],
   year: number,
   month: number, // 0-based
@@ -504,6 +539,16 @@ export function computeAttendanceReport(
     const leaves = leaveRecords.filter(
       (r) => r.employeeId === emp.id && r.date.startsWith(monthPrefix),
     ).length;
+    const absentDateSet = new Set(
+      absentRecords
+        .filter((r) => r.employeeId === emp.id && r.date.startsWith(monthPrefix))
+        .map((r) => r.date),
+    );
+    const presentDateSet = new Set(
+      presentRecords
+        .filter((r) => r.employeeId === emp.id && r.date.startsWith(monthPrefix))
+        .map((r) => r.date),
+    );
 
     // Also check leave group allowance (for reference, but actual count from records)
     const empLeaveGroup = leaveGroups.find((g) =>
@@ -532,9 +577,12 @@ export function computeAttendanceReport(
       const isHoliday = holidayDateSet.has(dateStr);
       const isWeekOff = weekOffDateSet.has(dateStr);
       const isLeave = leaveRecords.some((lr) => lr.employeeId === emp.id && lr.date === dateStr);
+      const isPresentOverride = presentDateSet.has(dateStr);
+      const isAbsentOverride = absentDateSet.has(dateStr);
       const hasPunch = punchDateSet.has(dateStr);
 
-      if (!isHoliday && !isWeekOff && !isLeave && !hasPunch) absences++;
+      if (isHoliday || isWeekOff || isLeave || isPresentOverride) continue;
+      if (isAbsentOverride || !hasPunch) absences++;
     }
 
     // Shift

@@ -14,7 +14,7 @@ const TABS: { key: TabKey; label: string; icon: string }[] = [
   { key: "employees", label: "Employees", icon: "👥" },
   { key: "weekoff", label: "Week Off", icon: "📅" },
   { key: "holiday", label: "Holidays", icon: "🎉" },
-  { key: "leave", label: "Leaves", icon: "🏖️" },
+  { key: "leave", label: "Attendance", icon: "📋" },
   { key: "shift", label: "Shifts", icon: "⏰" },
   { key: "punch", label: "Punch Upload", icon: "💼" },
   { key: "report", label: "Report", icon: "📊" },

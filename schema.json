@@ -404,14 +404,141 @@
         "max_length": null,
         "is_nullable": "YES",
         "column_default": "CURRENT_TIMESTAMP"
+      }
+    ]
+  },
+  {
+    "table_name": "absent_records",
+    "columns": [
+      {
+        "ordinal_position": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "max_length": null,
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
       },
       {
-        "ordinal_position": 6,
-        "column_name": "substitute_employee_id",
+        "ordinal_position": 2,
+        "column_name": "employee_id",
         "data_type": "uuid",
+        "max_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "ordinal_position": 3,
+        "column_name": "date",
+        "data_type": "date",
+        "max_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "ordinal_position": 4,
+        "column_name": "reason",
+        "data_type": "text",
         "max_length": null,
         "is_nullable": "YES",
         "column_default": null
+      },
+      {
+        "ordinal_position": 5,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "max_length": null,
+        "is_nullable": "YES",
+        "column_default": "CURRENT_TIMESTAMP"
+      }
+    ]
+  },
+  {
+    "table_name": "present_records",
+    "columns": [
+      {
+        "ordinal_position": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "max_length": null,
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "ordinal_position": 2,
+        "column_name": "employee_id",
+        "data_type": "uuid",
+        "max_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "ordinal_position": 3,
+        "column_name": "date",
+        "data_type": "date",
+        "max_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "ordinal_position": 4,
+        "column_name": "note",
+        "data_type": "text",
+        "max_length": null,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "ordinal_position": 5,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "max_length": null,
+        "is_nullable": "YES",
+        "column_default": "CURRENT_TIMESTAMP"
+      }
+    ]
+  },
+  {
+    "table_name": "double_duty_records",
+    "columns": [
+      {
+        "ordinal_position": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "max_length": null,
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "ordinal_position": 2,
+        "column_name": "employee_id",
+        "data_type": "uuid",
+        "max_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "ordinal_position": 3,
+        "column_name": "date",
+        "data_type": "date",
+        "max_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "ordinal_position": 4,
+        "column_name": "note",
+        "data_type": "text",
+        "max_length": null,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "ordinal_position": 5,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "max_length": null,
+        "is_nullable": "YES",
+        "column_default": "CURRENT_TIMESTAMP"
       }
     ]
   },
