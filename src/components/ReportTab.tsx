@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { useAppStore, computeAttendanceReport } from "@/lib/store";
@@ -10,6 +10,7 @@ const MONTH_NAMES = [
   "July", "August", "September", "October", "November", "December",
 ];
 const LATE_ENTRY_GRACE_MINUTES = 15;
+const REPORT_PERIOD_STORAGE_KEY = "attendance-report-period";
 
 export default function ReportTab() {
   const employees = useAppStore((s) => s.employees);
@@ -27,9 +28,46 @@ export default function ReportTab() {
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth());
+  const [hasLoadedSavedPeriod, setHasLoadedSavedPeriod] = useState(false);
   const [reportType, setReportType] = useState<'attendance' | 'late' | 'totals'>('attendance');
   const [selectedDept, setSelectedDept] = useState<string>("All Departments");
+  const [search, setSearch] = useState("");
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
   const [deductions, setDeductions] = useState<Record<string, { advance: number, lateEntry: number }>>({});
+
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem(REPORT_PERIOD_STORAGE_KEY);
+      if (!saved) return;
+
+      const parsed = JSON.parse(saved) as { year?: unknown; month?: unknown };
+      const savedYear = Number(parsed.year);
+      const savedMonth = Number(parsed.month);
+
+      if (Number.isInteger(savedYear) && savedYear >= 2020 && savedYear <= 2040) {
+        setYear(savedYear);
+      }
+      if (Number.isInteger(savedMonth) && savedMonth >= 0 && savedMonth <= 11) {
+        setMonth(savedMonth);
+      }
+    } catch {
+      // Ignore invalid localStorage values
+    } finally {
+      setHasLoadedSavedPeriod(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!hasLoadedSavedPeriod) return;
+    try {
+      window.localStorage.setItem(
+        REPORT_PERIOD_STORAGE_KEY,
+        JSON.stringify({ year, month }),
+      );
+    } catch {
+      // Ignore write errors
+    }
+  }, [year, month, hasLoadedSavedPeriod]);
 
   const departments = useMemo(() => {
     const depts = new Set(employees.map((e) => e.department).filter(Boolean));
@@ -55,9 +93,21 @@ export default function ReportTab() {
   );
 
   const filteredReport = useMemo(() => {
-    if (selectedDept === "All Departments") return report;
-    return report.filter((r) => r.department === selectedDept);
-  }, [report, selectedDept]);
+    let result = report;
+    if (selectedDept !== "All Departments") {
+      result = result.filter((r) => r.department === selectedDept);
+    }
+    const q = search.trim().toLowerCase();
+    if (q) {
+      result = result.filter(
+        (r) =>
+          r.employeeName.toLowerCase().includes(q) ||
+          r.employeeId.toLowerCase().includes(q) ||
+          r.department.toLowerCase().includes(q),
+      );
+    }
+    return result;
+  }, [report, selectedDept, search]);
 
   // Build days array for the selected month
   const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -581,6 +631,13 @@ export default function ReportTab() {
               </option>
             ))}
           </select>
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search by name, ID, or dept..."
+            className="bg-neutral-800 border border-neutral-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-neutral-500 no-print"
+          />
 
           <select
             value={reportType}
@@ -750,7 +807,12 @@ export default function ReportTab() {
                   return (
                     <tr
                       key={r.employeeId}
-                      className="hover:bg-neutral-800/50 transition-colors"
+                      onClick={() => setSelectedEmployeeId((prev) => (prev === r.employeeId ? null : r.employeeId))}
+                      className={`transition-colors cursor-pointer ${
+                        selectedEmployeeId === r.employeeId
+                          ? "bg-blue-900/35 ring-1 ring-inset ring-blue-500/60"
+                          : "hover:bg-neutral-800/50"
+                      }`}
                     >
                       <td className="py-2 px-2 text-neutral-300 font-mono text-xs border-b border-neutral-800">
                         {r.employeeId}

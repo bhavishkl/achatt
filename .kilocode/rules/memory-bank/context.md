@@ -1,6 +1,9 @@
 # Context
 
 ## Recent Changes
+- Added a search filter in `src/components/ReportTab.tsx` (name/employee ID/department) and clickable row selection highlighting for employee rows in the report table.
+- Updated `src/components/LeaveTab.tsx` to initialize `selectedDate` from shared localStorage key `attendance-report-period` and persist month/year back on date changes, so Attendance opens the same month selected in Reports.
+- Added localStorage persistence for the Reports period selector in `src/components/ReportTab.tsx` using key `attendance-report-period`, so selected month/year (for example January) is restored after page refresh.
 - Updated `src/components/ReportTab.tsx` so Attendance and Totals reports calculate per-day salary using the selected month's actual day count (`new Date(year, month + 1, 0).getDate()`) instead of a fixed 30-day divisor.
 - Applied the month-based salary values consistently in table rendering, PDF export, and total net salary/footer calculations for `attendance` and `totals` report types.
 - Verified the change with `npm run -s typecheck` (passes).

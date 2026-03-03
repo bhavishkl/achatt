@@ -5,6 +5,8 @@ import { useAppStore } from "@/lib/store";
 import type { LeaveGroup } from "@/lib/types";
 import { DEPARTMENTS } from "@/lib/constants";
 
+const REPORT_PERIOD_STORAGE_KEY = "attendance-report-period";
+
 function formatDate(d: Date): string {
   return d.toISOString().slice(0, 10);
 }
@@ -16,6 +18,36 @@ function formatDisplayDate(d: Date): string {
     month: "long",
     day: "numeric",
   });
+}
+
+function getInitialSelectedDate(): string {
+  const now = new Date();
+  if (typeof window === "undefined") return formatDate(now);
+
+  try {
+    const saved = window.localStorage.getItem(REPORT_PERIOD_STORAGE_KEY);
+    if (!saved) return formatDate(now);
+
+    const parsed = JSON.parse(saved) as { year?: unknown; month?: unknown };
+    const savedYear = Number(parsed.year);
+    const savedMonth = Number(parsed.month);
+
+    if (
+      Number.isInteger(savedYear) &&
+      savedYear >= 2020 &&
+      savedYear <= 2040 &&
+      Number.isInteger(savedMonth) &&
+      savedMonth >= 0 &&
+      savedMonth <= 11
+    ) {
+      const day = Math.min(now.getDate(), new Date(savedYear, savedMonth + 1, 0).getDate());
+      return formatDate(new Date(savedYear, savedMonth, day));
+    }
+  } catch {
+    // Ignore invalid localStorage values
+  }
+
+  return formatDate(now);
 }
 
 export default function LeaveTab() {
@@ -44,7 +76,7 @@ export default function LeaveTab() {
   const removeEmpFromGroup = useAppStore((s) => s.removeEmployeeFromGroup);
 
   const [activeSubTab, setActiveSubTab] = useState<"daily" | "groups">("daily");
-  const [selectedDate, setSelectedDate] = useState(formatDate(new Date()));
+  const [selectedDate, setSelectedDate] = useState(getInitialSelectedDate);
   const [search, setSearch] = useState("");
   const [departmentFilter, setDepartmentFilter] = useState("");
 
@@ -77,6 +109,19 @@ export default function LeaveTab() {
       .catch((err) => console.error("Error fetching attendance data:", err))
       .finally(() => setLoading(false));
   }, [companyId, setLeaveGroups, setLeaveRecords, setAbsentRecords, setPresentRecords, setDoubleDutyRecords]);
+
+  useEffect(() => {
+    const d = new Date(selectedDate + "T00:00:00");
+    if (Number.isNaN(d.getTime())) return;
+    try {
+      window.localStorage.setItem(
+        REPORT_PERIOD_STORAGE_KEY,
+        JSON.stringify({ year: d.getFullYear(), month: d.getMonth() }),
+      );
+    } catch {
+      // Ignore write errors
+    }
+  }, [selectedDate]);
 
   const todayLeaveRecords = useMemo(
     () => leaveRecords.filter((r) => r.date === selectedDate),
