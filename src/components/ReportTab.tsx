@@ -10,6 +10,7 @@ const MONTH_NAMES = [
   "July", "August", "September", "October", "November", "December",
 ];
 const LATE_ENTRY_GRACE_MINUTES = 15;
+const LATE_DEDUCTION_RATE = 0.25;
 const REPORT_PERIOD_STORAGE_KEY = "attendance-report-period";
 
 export default function ReportTab() {
@@ -33,7 +34,7 @@ export default function ReportTab() {
   const [selectedDept, setSelectedDept] = useState<string>("All Departments");
   const [search, setSearch] = useState("");
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
-  const [deductions, setDeductions] = useState<Record<string, { advance: number, lateEntry: number }>>({});
+  const [deductions, setDeductions] = useState<Record<string, { advance: number }>>({});
 
   useEffect(() => {
     try {
@@ -197,6 +198,94 @@ export default function ReportTab() {
     return m;
   }, [filteredReport, empIdToInternalId, doubleDutySet]);
 
+  const lateDaysByEmployeeId = useMemo(() => {
+    const timeToMinutesLocal = (timeStr: string) => {
+      const [h, m] = timeStr.split(":").map(Number);
+      return h * 60 + m;
+    };
+    const getShiftStartForDateLocal = (internalEmpId: string, dateStr: string) => {
+      const rot = shiftRotations.find(
+        (r) => r.employeeId === internalEmpId && dateStr >= r.startDate && dateStr <= r.endDate
+      );
+      if (rot && rot.startTime) return rot.startTime;
+      const g = shiftGroups.find((group) => group.employeeIds.includes(internalEmpId));
+      return g ? g.startTime : null;
+    };
+    const checkIsLateLocal = (punchIn: string, shiftStart: string) => {
+      let punchMins = timeToMinutesLocal(punchIn);
+      const shiftMins = timeToMinutesLocal(shiftStart);
+      if (shiftMins > 12 * 60 && punchMins < 12 * 60) {
+        punchMins += 24 * 60;
+      }
+      return punchMins > shiftMins + LATE_ENTRY_GRACE_MINUTES;
+    };
+
+    const m = new Map<string, number>();
+    filteredReport.forEach((r) => {
+      let totalLateDays = 0;
+      const internalId = empIdToInternalId.get(r.employeeId);
+
+      if (!internalId) {
+        m.set(r.employeeId, 0);
+        return;
+      }
+
+      days.forEach((d) => {
+        const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+        const leaveKey = `${internalId}-${dateStr}`;
+        const hasLeave = leaveSet.has(leaveKey);
+        const hasAbsent = absentSet.has(leaveKey);
+        const hasPresentOverride = presentSet.has(leaveKey);
+
+        if (hasLeave || hasAbsent || hasPresentOverride) return;
+
+        const p = punchesMap.get(`${r.employeeId}-${dateStr}`);
+        if (p?.punchIn) {
+          const shiftStart = getShiftStartForDateLocal(internalId, dateStr);
+          if (shiftStart && checkIsLateLocal(p.punchIn, shiftStart)) {
+            totalLateDays++;
+          }
+        }
+      });
+
+      m.set(r.employeeId, totalLateDays);
+    });
+    return m;
+  }, [filteredReport, empIdToInternalId, days, year, month, leaveSet, absentSet, presentSet, punchesMap, shiftRotations, shiftGroups]);
+
+  const presentDaysByEmployeeId = useMemo(() => {
+    const m = new Map<string, number>();
+    filteredReport.forEach((r) => {
+      let presentDays = 0;
+      const internalId = empIdToInternalId.get(r.employeeId);
+
+      if (!internalId) {
+        m.set(r.employeeId, 0);
+        return;
+      }
+
+      days.forEach((d) => {
+        const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+        const leaveKey = `${internalId}-${dateStr}`;
+        const hasLeave = leaveSet.has(leaveKey);
+        const hasAbsent = absentSet.has(leaveKey);
+        const hasPresentOverride = presentSet.has(leaveKey);
+
+        if (hasLeave || hasAbsent) return;
+        if (hasPresentOverride) {
+          presentDays++;
+          return;
+        }
+
+        const p = punchesMap.get(`${r.employeeId}-${dateStr}`);
+        if (p) presentDays++;
+      });
+
+      m.set(r.employeeId, presentDays);
+    });
+    return m;
+  }, [filteredReport, empIdToInternalId, days, year, month, leaveSet, absentSet, presentSet, punchesMap]);
+
   const currentTotalNetSalary = useMemo(() => {
     return filteredReport.reduce((sum, r) => {
       const salary = salaryByEmployeeId.get(r.employeeId) || { perDaySalary: r.perDaySalary, netSalary: r.netSalary };
@@ -204,15 +293,17 @@ export default function ReportTab() {
       const ddSalary = ddCount * salary.perDaySalary;
       const payableSalary = salary.netSalary + ddSalary;
       if (reportType === 'totals') {
-         const empDeds = deductions[r.employeeId] || { advance: 0, lateEntry: 0 };
-         return sum + (payableSalary - empDeds.advance - empDeds.lateEntry);
+         const empDeds = deductions[r.employeeId] || { advance: 0 };
+         const totalLateDays = lateDaysByEmployeeId.get(r.employeeId) || 0;
+         const lateDeduction = totalLateDays * salary.perDaySalary * LATE_DEDUCTION_RATE;
+         return sum + (payableSalary - empDeds.advance - lateDeduction);
       }
       if (reportType === 'attendance') {
         return sum + payableSalary;
       }
       return sum;
     }, 0);
-  }, [filteredReport, reportType, deductions, salaryByEmployeeId, ddCountByEmployeeId]);
+  }, [filteredReport, reportType, deductions, salaryByEmployeeId, ddCountByEmployeeId, lateDaysByEmployeeId]);
 
   // Helper to parse "HH:mm" or "HH:mm:ss" to minutes
   const timeToMinutes = (timeStr: string) => {
@@ -247,12 +338,12 @@ export default function ReportTab() {
     return punchMins > shiftMins + LATE_ENTRY_GRACE_MINUTES;
   };
 
-  const handleDeductionChange = (empId: string, field: 'advance' | 'lateEntry', value: string) => {
+  const handleDeductionChange = (empId: string, field: 'advance', value: string) => {
     const numValue = Number(value) || 0;
     setDeductions(prev => ({
       ...prev,
       [empId]: {
-        ...(prev[empId] || { advance: 0, lateEntry: 0 }),
+        ...(prev[empId] || { advance: 0 }),
         [field]: numValue
       }
     }));
@@ -504,45 +595,20 @@ export default function ReportTab() {
       const headers = [
         "ID", "Name", "Dept",
         "Total", "W.Off", "Hol", "Leave", "Abs", "Present", "DD", "Late",
-        "Basic", "Advance Ded.", "Late Ded.", "Gross Salary"
+        "Basic", "Advance Ded.", "Late Ded. (25%)", "Gross Salary"
       ];
 
       const rowInputs = filteredReport.map((r) => {
         const salary = salaryByEmployeeId.get(r.employeeId) || { perDaySalary: r.perDaySalary, netSalary: r.netSalary };
-        let totalLateDays = 0;
-        let presentDays = 0;
-        const internalEmpId = empIdToInternalId.get(r.employeeId);
-        
-        days.forEach((d) => {
-          const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-          const leaveKey = internalEmpId ? `${internalEmpId}-${dateStr}` : null;
-          const hasLeave = leaveKey ? leaveSet.has(leaveKey) : false;
-          const hasAbsent = leaveKey ? absentSet.has(leaveKey) : false;
-          const hasPresentOverride = leaveKey ? presentSet.has(leaveKey) : false;
-
-          if (hasLeave || hasAbsent) return;
-          if (hasPresentOverride) {
-            presentDays++;
-            return;
-          }
-
-          const p = punchesMap.get(`${r.employeeId}-${dateStr}`);
-          if (p) {
-            presentDays++;
-            if (p.punchIn && internalEmpId) {
-              const shiftStart = getShiftStartForDate(internalEmpId, dateStr);
-              if (shiftStart && checkIsLate(p.punchIn, shiftStart)) {
-                totalLateDays++;
-              }
-            }
-          }
-        });
+        const totalLateDays = lateDaysByEmployeeId.get(r.employeeId) || 0;
+        const presentDays = presentDaysByEmployeeId.get(r.employeeId) || 0;
 
         const ddCount = ddCountByEmployeeId.get(r.employeeId) || 0;
         const payableSalary = salary.netSalary + ddCount * salary.perDaySalary;
 
-        const empDeds = deductions[r.employeeId] || { advance: 0, lateEntry: 0 };
-        const finalGrossSalary = payableSalary - empDeds.advance - empDeds.lateEntry;
+        const empDeds = deductions[r.employeeId] || { advance: 0 };
+        const lateDeduction = totalLateDays * salary.perDaySalary * LATE_DEDUCTION_RATE;
+        const finalGrossSalary = payableSalary - empDeds.advance - lateDeduction;
 
         return {
           department: r.department,
@@ -560,7 +626,7 @@ export default function ReportTab() {
             totalLateDays,
             r.basicSalary.toLocaleString(),
             empDeds.advance.toLocaleString(),
-            empDeds.lateEntry.toLocaleString(),
+            lateDeduction.toLocaleString(),
             finalGrossSalary.toLocaleString(),
           ],
         };
@@ -761,7 +827,7 @@ export default function ReportTab() {
                       <th className="sticky top-0 z-20 bg-neutral-900/95 backdrop-blur-sm text-right py-3 px-2 font-medium text-orange-400 border-b border-neutral-700">Late Entry</th>
                       <th className="sticky top-0 z-20 bg-neutral-900/95 backdrop-blur-sm text-right py-3 px-2 font-medium border-b border-neutral-700">Basic</th>
                       <th className="sticky top-0 z-20 bg-neutral-900/95 backdrop-blur-sm text-right py-3 px-2 font-medium border-b border-neutral-700">Advance Ded.</th>
-                      <th className="sticky top-0 z-20 bg-neutral-900/95 backdrop-blur-sm text-right py-3 px-2 font-medium border-b border-neutral-700">Late Ded.</th>
+                      <th className="sticky top-0 z-20 bg-neutral-900/95 backdrop-blur-sm text-right py-3 px-2 font-medium border-b border-neutral-700">Late Ded. (25%)</th>
                       <th className="sticky top-0 z-20 bg-neutral-900/95 backdrop-blur-sm text-right py-3 px-2 font-medium border-b border-neutral-700">Gross Salary</th>
                     </>
                   ) : (
@@ -774,35 +840,9 @@ export default function ReportTab() {
                   const salary = salaryByEmployeeId.get(r.employeeId) || { perDaySalary: r.perDaySalary, netSalary: r.netSalary };
                   const ddCount = ddCountByEmployeeId.get(r.employeeId) || 0;
                   const payableSalary = salary.netSalary + ddCount * salary.perDaySalary;
-                  let totalLateDays = 0;
-                  let presentDays = 0;
-                  if (reportType === 'late' || reportType === 'totals') {
-                    const internalId = empIdToInternalId.get(r.employeeId);
-                    days.forEach(d => {
-                      const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-                      const leaveKey = internalId ? `${internalId}-${dateStr}` : null;
-                      const hasLeave = leaveKey ? leaveSet.has(leaveKey) : false;
-                      const hasAbsent = leaveKey ? absentSet.has(leaveKey) : false;
-                      const hasPresentOverride = leaveKey ? presentSet.has(leaveKey) : false;
-
-                      if (hasLeave || hasAbsent) return;
-                      if (hasPresentOverride) {
-                        presentDays++;
-                        return;
-                      }
-
-                      const p = punchesMap.get(`${r.employeeId}-${dateStr}`);
-                      if (p) {
-                        presentDays++;
-                        if (p.punchIn && internalId) {
-                          const shiftStart = getShiftStartForDate(internalId, dateStr);
-                          if (shiftStart && checkIsLate(p.punchIn, shiftStart)) {
-                            totalLateDays++;
-                          }
-                        }
-                      }
-                    });
-                  }
+                  const totalLateDays = lateDaysByEmployeeId.get(r.employeeId) || 0;
+                  const presentDays = presentDaysByEmployeeId.get(r.employeeId) || 0;
+                  const lateDeduction = totalLateDays * salary.perDaySalary * LATE_DEDUCTION_RATE;
 
                   return (
                     <tr
@@ -968,22 +1008,16 @@ export default function ReportTab() {
                             <input 
                               type="number" 
                               className="w-16 bg-neutral-800 border border-neutral-700 rounded px-1 py-1 text-xs text-white text-right"
-                              value={deductions[r.employeeId]?.advance || ''}
+                              value={deductions[r.employeeId]?.advance || ""}
                               onChange={(e) => handleDeductionChange(r.employeeId, 'advance', e.target.value)}
                               placeholder="0"
                             />
                           </td>
-                          <td className="py-2 px-2 text-right border-b border-neutral-800">
-                            <input 
-                              type="number" 
-                              className="w-16 bg-neutral-800 border border-neutral-700 rounded px-1 py-1 text-xs text-white text-right"
-                              value={deductions[r.employeeId]?.lateEntry || ''}
-                              onChange={(e) => handleDeductionChange(r.employeeId, 'lateEntry', e.target.value)}
-                              placeholder="0"
-                            />
+                          <td className="py-2 px-2 text-right text-red-400 border-b border-neutral-800">
+                            ₹{lateDeduction.toLocaleString()}
                           </td>
                           <td className="py-2 px-2 text-right text-emerald-400 font-semibold border-b border-neutral-800">
-                            ₹{(payableSalary - (deductions[r.employeeId]?.advance || 0) - (deductions[r.employeeId]?.lateEntry || 0)).toLocaleString()}
+                            ₹{(payableSalary - (deductions[r.employeeId]?.advance || 0) - lateDeduction).toLocaleString()}
                           </td>
                         </>
                       ) : (

@@ -1,6 +1,9 @@
 # Context
 
 ## Recent Changes
+- Updated `src/components/ReportTab.tsx` totals calculations to auto-deduct late salary as `25% of per-day salary` for each late punch-in day, and removed manual late-deduction entry in the totals table.
+- Applied the same automatic `Late Ded. (25%)` value in totals PDF export and total net salary/footer calculations for consistency between UI and export.
+- Verified the change with `npm run typecheck` (passes).
 - Added a search filter in `src/components/ReportTab.tsx` (name/employee ID/department) and clickable row selection highlighting for employee rows in the report table.
 - Updated `src/components/LeaveTab.tsx` to initialize `selectedDate` from shared localStorage key `attendance-report-period` and persist month/year back on date changes, so Attendance opens the same month selected in Reports.
 - Added localStorage persistence for the Reports period selector in `src/components/ReportTab.tsx` using key `attendance-report-period`, so selected month/year (for example January) is restored after page refresh.
