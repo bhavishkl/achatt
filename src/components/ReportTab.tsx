@@ -445,13 +445,10 @@ export default function ReportTab() {
     if (reportType === 'attendance') {
       const headers = [
         "ID", "Name", "Dept",
-        ...days.map(String),
-        "Total", "W.Off", "Hol", "Leave", "Abs", "Work", "DD",
-        "Basic", "Per Day", "Net Salary"
+        ...days.map(String)
       ];
 
       const rowInputs = filteredReport.map((r) => {
-        const salary = salaryByEmployeeId.get(r.employeeId) || { perDaySalary: r.perDaySalary, netSalary: r.netSalary };
         const internalEmpId = empIdToInternalId.get(r.employeeId);
 
         // Calculate row cells for days
@@ -478,15 +475,15 @@ export default function ReportTab() {
 
           const p = punchesMap.get(`${r.employeeId}-${dateStr}`);
           if (p) {
-            return toHHMM(p.punchIn) || "P";
+            const inTime = toHHMM(p.punchIn);
+            const outTime = toHHMM(p.punchOut);
+            if (inTime && outTime) return `${inTime}\n${outTime}`;
+            if (inTime) return inTime;
+            return "P";
           }
 
           return "A";
         });
-
-        // Count double duty for this employee
-        const ddCount = ddCountByEmployeeId.get(r.employeeId) || 0;
-        const payableSalary = salary.netSalary + ddCount * salary.perDaySalary;
 
         return {
           department: r.department,
@@ -495,16 +492,6 @@ export default function ReportTab() {
             r.employeeName,
             r.department,
             ...dayCells,
-            r.totalDays,
-            r.weekOffs,
-            r.holidays,
-            r.leaves,
-            r.absences,
-            r.workingDays,
-            ddCount,
-            r.basicSalary.toLocaleString(),
-            salary.perDaySalary.toLocaleString(),
-            payableSalary.toLocaleString(),
           ],
         };
       });
@@ -514,12 +501,12 @@ export default function ReportTab() {
         head: [headers],
         body: body as any[],
         startY: 20,
-        styles: { fontSize: 6, cellPadding: 1 },
+        styles: { fontSize: 5, cellPadding: 0.5 },
         headStyles: { fillColor: [23, 23, 23] },
         columnStyles: {
-          0: { cellWidth: 5 }, // ID
-          1: { cellWidth: 15 }, // Name
-          2: { cellWidth: 10 }, // Dept
+          0: { cellWidth: 8 }, // ID
+          1: { cellWidth: 20 }, // Name
+          2: { cellWidth: 15 }, // Dept
         },
         didParseCell: function (data) {
           if (data.section === 'body' && data.column.index >= 3 && data.column.index < 3 + days.length) {
@@ -802,41 +789,40 @@ export default function ReportTab() {
                     );
                   })}
 
-                  <th className="sticky top-0 z-20 bg-neutral-900/95 backdrop-blur-sm text-right py-3 px-2 font-medium border-b border-neutral-700">Total</th>
-                  <th className="sticky top-0 z-20 bg-neutral-900/95 backdrop-blur-sm text-right py-3 px-2 font-medium border-b border-neutral-700">W.Off</th>
-                  <th className="sticky top-0 z-20 bg-neutral-900/95 backdrop-blur-sm text-right py-3 px-2 font-medium border-b border-neutral-700">Hol.</th>
-                  <th className="sticky top-0 z-20 bg-neutral-900/95 backdrop-blur-sm text-right py-3 px-2 font-medium border-b border-neutral-700">Leave</th>
-                  <th className="sticky top-0 z-20 bg-neutral-900/95 backdrop-blur-sm text-right py-3 px-2 font-medium border-b border-neutral-700">Absent</th>
-                  {reportType === 'totals' ? (
-                    <th className="sticky top-0 z-20 bg-neutral-900/95 backdrop-blur-sm text-right py-3 px-2 font-medium border-b border-neutral-700">Present</th>
-                  ) : (
-                    <th className="sticky top-0 z-20 bg-neutral-900/95 backdrop-blur-sm text-right py-3 px-2 font-medium border-b border-neutral-700">Working</th>
-                  )}
-                  {reportType !== 'totals' && (
-                    <th className="sticky top-0 z-20 bg-neutral-900/95 backdrop-blur-sm text-left py-3 px-2 font-medium border-b border-neutral-700">Shift</th>
-                  )}
-                  <th className="sticky top-0 z-20 bg-neutral-900/95 backdrop-blur-sm text-right py-3 px-2 font-medium text-blue-400 border-b border-neutral-700">DD</th>
-                  {reportType === 'attendance' ? (
+                  {reportType !== 'attendance' && (
                     <>
-                      <th className="sticky top-0 z-20 bg-neutral-900/95 backdrop-blur-sm text-right py-3 px-2 font-medium border-b border-neutral-700">Basic</th>
-                      <th className="sticky top-0 z-20 bg-neutral-900/95 backdrop-blur-sm text-right py-3 px-2 font-medium border-b border-neutral-700">Per Day</th>
-                      <th className="sticky top-0 z-20 bg-neutral-900/95 backdrop-blur-sm text-right py-3 px-2 font-medium border-b border-neutral-700">Net Salary</th>
+                      <th className="sticky top-0 z-20 bg-neutral-900/95 backdrop-blur-sm text-right py-3 px-2 font-medium border-b border-neutral-700">Total</th>
+                      <th className="sticky top-0 z-20 bg-neutral-900/95 backdrop-blur-sm text-right py-3 px-2 font-medium border-b border-neutral-700">W.Off</th>
+                      <th className="sticky top-0 z-20 bg-neutral-900/95 backdrop-blur-sm text-right py-3 px-2 font-medium border-b border-neutral-700">Hol.</th>
+                      <th className="sticky top-0 z-20 bg-neutral-900/95 backdrop-blur-sm text-right py-3 px-2 font-medium border-b border-neutral-700">Leave</th>
+                      <th className="sticky top-0 z-20 bg-neutral-900/95 backdrop-blur-sm text-right py-3 px-2 font-medium border-b border-neutral-700">Absent</th>
+                      {reportType === 'totals' ? (
+                        <th className="sticky top-0 z-20 bg-neutral-900/95 backdrop-blur-sm text-right py-3 px-2 font-medium border-b border-neutral-700">Present</th>
+                      ) : (
+                        <th className="sticky top-0 z-20 bg-neutral-900/95 backdrop-blur-sm text-right py-3 px-2 font-medium border-b border-neutral-700">Working</th>
+                      )}
+                      {reportType !== 'totals' && (
+                        <th className="sticky top-0 z-20 bg-neutral-900/95 backdrop-blur-sm text-left py-3 px-2 font-medium border-b border-neutral-700">Shift</th>
+                      )}
+                      <th className="sticky top-0 z-20 bg-neutral-900/95 backdrop-blur-sm text-right py-3 px-2 font-medium text-blue-400 border-b border-neutral-700">DD</th>
+                      {reportType === 'totals' ? (
+                        <>
+                          <th className="sticky top-0 z-20 bg-neutral-900/95 backdrop-blur-sm text-right py-3 px-2 font-medium text-orange-400 border-b border-neutral-700">Late Entry</th>
+                          <th className="sticky top-0 z-20 bg-neutral-900/95 backdrop-blur-sm text-right py-3 px-2 font-medium border-b border-neutral-700">Basic</th>
+                          <th className="sticky top-0 z-20 bg-neutral-900/95 backdrop-blur-sm text-right py-3 px-2 font-medium border-b border-neutral-700">Advance Ded.</th>
+                          <th className="sticky top-0 z-20 bg-neutral-900/95 backdrop-blur-sm text-right py-3 px-2 font-medium border-b border-neutral-700">Late Ded. (25%)</th>
+                          <th className="sticky top-0 z-20 bg-neutral-900/95 backdrop-blur-sm text-right py-3 px-2 font-medium border-b border-neutral-700">Gross Salary</th>
+                        </>
+                      ) : (
+                        <th className="sticky top-0 z-20 bg-neutral-900/95 backdrop-blur-sm text-right py-3 px-2 font-medium text-orange-400 border-b border-neutral-700">Late Days</th>
+                      )}
                     </>
-                  ) : reportType === 'totals' ? (
-                    <>
-                      <th className="sticky top-0 z-20 bg-neutral-900/95 backdrop-blur-sm text-right py-3 px-2 font-medium text-orange-400 border-b border-neutral-700">Late Entry</th>
-                      <th className="sticky top-0 z-20 bg-neutral-900/95 backdrop-blur-sm text-right py-3 px-2 font-medium border-b border-neutral-700">Basic</th>
-                      <th className="sticky top-0 z-20 bg-neutral-900/95 backdrop-blur-sm text-right py-3 px-2 font-medium border-b border-neutral-700">Advance Ded.</th>
-                      <th className="sticky top-0 z-20 bg-neutral-900/95 backdrop-blur-sm text-right py-3 px-2 font-medium border-b border-neutral-700">Late Ded. (25%)</th>
-                      <th className="sticky top-0 z-20 bg-neutral-900/95 backdrop-blur-sm text-right py-3 px-2 font-medium border-b border-neutral-700">Gross Salary</th>
-                    </>
-                  ) : (
-                    <th className="sticky top-0 z-20 bg-neutral-900/95 backdrop-blur-sm text-right py-3 px-2 font-medium text-orange-400 border-b border-neutral-700">Late Days</th>
                   )}
                 </tr>
               </thead>
               <tbody>
                 {filteredReport.map((r) => {
+                  const internalId = empIdToInternalId.get(r.employeeId);
                   const salary = salaryByEmployeeId.get(r.employeeId) || { perDaySalary: r.perDaySalary, netSalary: r.netSalary };
                   const ddCount = ddCountByEmployeeId.get(r.employeeId) || 0;
                   const payableSalary = salary.netSalary + ddCount * salary.perDaySalary;
@@ -886,7 +872,7 @@ export default function ReportTab() {
                         }
 
                         // Check explicit leave records for the employee/date
-                        const internalEmpId = empIdToInternalId.get(r.employeeId);
+                        const internalEmpId = internalId;
                         const isLeave = internalEmpId
                           ? leaveSet.has(`${internalEmpId}-${dateStr}`)
                           : false;
@@ -961,69 +947,61 @@ export default function ReportTab() {
                         );
                       })}
 
-                      <td className="py-2 px-2 text-right text-neutral-300 border-b border-neutral-800">{r.totalDays}</td>
-                      <td className="py-2 px-2 text-right text-orange-400 border-b border-neutral-800">{r.weekOffs}</td>
-                      <td className="py-2 px-2 text-right text-purple-400 border-b border-neutral-800">{r.holidays}</td>
-                      <td className="py-2 px-2 text-right text-yellow-400 border-b border-neutral-800">{r.leaves}</td>
-                      <td className="py-2 px-2 text-right text-red-400 border-b border-neutral-800">{r.absences}</td>
-                      {reportType === 'totals' ? (
-                        <td className="py-2 px-2 text-right text-emerald-400 font-medium border-b border-neutral-800">
-                          {presentDays}
-                        </td>
-                      ) : (
-                        <td className="py-2 px-2 text-right text-emerald-400 font-medium border-b border-neutral-800">
-                          {r.workingDays}
-                        </td>
-                      )}
-                      
-                      {reportType !== 'totals' && (
-                        <td className="py-2 px-2 text-neutral-400 text-xs border-b border-neutral-800">{r.shiftInfo}</td>
-                      )}
-                      
-                      <td className="py-2 px-2 text-right text-blue-400 font-medium border-b border-neutral-800">
-                        {ddCount}
-                      </td>
+                      {reportType !== 'attendance' && (
+                        <>
+                          <td className="py-2 px-2 text-right text-neutral-300 border-b border-neutral-800">{r.totalDays}</td>
+                          <td className="py-2 px-2 text-right text-orange-400 border-b border-neutral-800">{r.weekOffs}</td>
+                          <td className="py-2 px-2 text-right text-purple-400 border-b border-neutral-800">{r.holidays}</td>
+                          <td className="py-2 px-2 text-right text-yellow-400 border-b border-neutral-800">{r.leaves}</td>
+                          <td className="py-2 px-2 text-right text-red-400 border-b border-neutral-800">{r.absences}</td>
+                          {reportType === 'totals' ? (
+                            <td className="py-2 px-2 text-right text-emerald-400 font-medium border-b border-neutral-800">
+                              {presentDays}
+                            </td>
+                          ) : (
+                            <td className="py-2 px-2 text-right text-emerald-400 font-medium border-b border-neutral-800">
+                              {r.workingDays}
+                            </td>
+                          )}
+                          
+                          {reportType !== 'totals' && (
+                            <td className="py-2 px-2 text-neutral-400 text-xs border-b border-neutral-800">{r.shiftInfo}</td>
+                          )}
+                          
+                          <td className="py-2 px-2 text-right text-blue-400 font-medium border-b border-neutral-800">
+                            {ddCount}
+                          </td>
 
-                      {reportType === 'attendance' ? (
-                        <>
-                          <td className="py-2 px-2 text-right text-neutral-300 border-b border-neutral-800">
-                            ₹{r.basicSalary.toLocaleString()}
-                          </td>
-                          <td className="py-2 px-2 text-right text-neutral-400 border-b border-neutral-800">
-                            ₹{salary.perDaySalary.toLocaleString()}
-                          </td>
-                          <td className="py-2 px-2 text-right text-emerald-400 font-semibold border-b border-neutral-800">
-                            ₹{payableSalary.toLocaleString()}
-                          </td>
+                          {reportType === 'totals' ? (
+                            <>
+                              <td className="py-2 px-2 text-right text-orange-400 font-bold border-b border-neutral-800">
+                                {totalLateDays}
+                              </td>
+                              <td className="py-2 px-2 text-right text-neutral-300 border-b border-neutral-800">
+                                ₹{r.basicSalary.toLocaleString()}
+                              </td>
+                              <td className="py-2 px-2 text-right border-b border-neutral-800">
+                                <input 
+                                  type="number" 
+                                  className="w-16 bg-neutral-800 border border-neutral-700 rounded px-1 py-1 text-xs text-white text-right"
+                                  value={deductions[r.employeeId]?.advance || ""}
+                                  onChange={(e) => handleDeductionChange(r.employeeId, 'advance', e.target.value)}
+                                  placeholder="0"
+                                />
+                              </td>
+                              <td className="py-2 px-2 text-right text-red-400 border-b border-neutral-800">
+                                ₹{lateDeduction.toLocaleString()}
+                              </td>
+                              <td className="py-2 px-2 text-right text-emerald-400 font-semibold border-b border-neutral-800">
+                                ₹{(payableSalary - (deductions[r.employeeId]?.advance || 0) - lateDeduction).toLocaleString()}
+                              </td>
+                            </>
+                          ) : (
+                            <td className="py-2 px-2 text-right text-orange-400 font-bold border-b border-neutral-800">
+                              {totalLateDays}
+                            </td>
+                          )}
                         </>
-                      ) : reportType === 'totals' ? (
-                        <>
-                          <td className="py-2 px-2 text-right text-orange-400 font-bold border-b border-neutral-800">
-                            {totalLateDays}
-                          </td>
-                          <td className="py-2 px-2 text-right text-neutral-300 border-b border-neutral-800">
-                            ₹{r.basicSalary.toLocaleString()}
-                          </td>
-                          <td className="py-2 px-2 text-right border-b border-neutral-800">
-                            <input 
-                              type="number" 
-                              className="w-16 bg-neutral-800 border border-neutral-700 rounded px-1 py-1 text-xs text-white text-right"
-                              value={deductions[r.employeeId]?.advance || ""}
-                              onChange={(e) => handleDeductionChange(r.employeeId, 'advance', e.target.value)}
-                              placeholder="0"
-                            />
-                          </td>
-                          <td className="py-2 px-2 text-right text-red-400 border-b border-neutral-800">
-                            ₹{lateDeduction.toLocaleString()}
-                          </td>
-                          <td className="py-2 px-2 text-right text-emerald-400 font-semibold border-b border-neutral-800">
-                            ₹{(payableSalary - (deductions[r.employeeId]?.advance || 0) - lateDeduction).toLocaleString()}
-                          </td>
-                        </>
-                      ) : (
-                        <td className="py-2 px-2 text-right text-orange-400 font-bold border-b border-neutral-800">
-                          {totalLateDays}
-                        </td>
                       )}
                     </tr>
                   );
@@ -1031,16 +1009,12 @@ export default function ReportTab() {
               </tbody>
               <tfoot className="sticky bottom-0 z-20 bg-neutral-900 shadow-[0_-1px_0_rgba(64,64,64,1)]">
                 <tr>
-                  <td colSpan={reportType === 'totals' ? 14 : 11} className="py-3 px-2 text-right text-neutral-400 font-medium">
-                    {reportType === 'attendance' || reportType === 'totals' ? 'Total Net Salary' : 'Summary'}
+                  <td colSpan={reportType === 'attendance' ? 3 + days.length : (reportType === 'totals' ? 14 : 11)} className="py-3 px-2 text-right text-neutral-400 font-medium">
+                    {reportType === 'attendance' ? '' : (reportType === 'late' ? 'Summary' : 'Total Net Salary')}
                   </td>
-                  {reportType === 'attendance' || reportType === 'totals' ? (
-                    <td colSpan={reportType === 'totals' ? 1 : 1} className="py-3 px-2 text-right text-emerald-400 font-bold text-base">
-                      ₹{Math.round(currentTotalNetSalary).toLocaleString()}
-                    </td>
-                  ) : (
-                    <td className="py-3 px-2 text-right text-neutral-400 italic">
-                      -
+                  {reportType !== 'attendance' && (
+                    <td colSpan={1} className="py-3 px-2 text-right text-emerald-400 font-bold text-base">
+                      {reportType === 'totals' ? `₹${Math.round(currentTotalNetSalary).toLocaleString()}` : '-'}
                     </td>
                   )}
                 </tr>
