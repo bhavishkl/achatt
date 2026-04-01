@@ -35,18 +35,18 @@ function normalizeDate(d: string): string {
 // ─── Section splitter ──────────────────────────────────────────────────────────
 
 const SECTION_HEADERS: Record<string, RegExp> = {
-  finalDiagnosis: /^(final\s*diagnosis|diagnosis)\s*[-:/~]?\s*$/i,
+  finalDiagnosis: /^(final\s*diagnosis|diagnosis)\s*[-:/~]?\s*\.?\s*$/i,
   clinicalPresentation:
-    /^(clinical\s*presentation|presenting\s*complaints?|chief\s*complaints?|history|clinical\s*history)\s*[-:/~]?\s*$/i,
-  investigations: /^(investigation|investigations|lab|laboratory)\s*[-:/~]?\s*$/i,
+    /^(clinical\s*presentation|presenting\s*complaints?|chief\s*complaints?|history|clinical\s*history)\s*[-:/~]?\s*\.?\s*$/i,
+  investigations: /^(investigation|investigations|lab|laboratory)\s*[-:/~]?\s*\.?\s*$/i,
   treatmentGiven:
-    /^(treatment\s*given|treatment|medications?\s*given|medications?|drugs?\s*given)\s*[-:/~]?\s*$/i,
+    /^(treatment\s*given|treatment|medications?\s*given|medications?|drugs?\s*given)\s*[-:/~]?\s*\.?\s*$/i,
   hospitalCourse:
-    /^(course\s*in\s*the?\s*hospital|hospital\s*course|surgical\s*procedure|course|management)\s*[-:\/~]?\s*$/i,
+    /^(course\s*in\s*the?\s*hospital|hospital\s*course|surgical\s*procedure|course|management)\s*[-:\/~]?\s*\.?\s*$/i,
   dischargeAdvice:
-    /^(advice?\s*on\s*discharge|discharge\s*advice?|advice?\s*at\s*discharge|advise\s*on\s*discharge|advice)\s*[-:/~]?\s*$/i,
+    /^(advice?\s*on\s*discharge|discharge\s*advice?|advice?\s*at\s*discharge|advise\s*on\s*discharge|advice)\s*[-:/~]?\s*\.?\s*$/i,
   followUp:
-    /^(next\s*follow\s*up|follow\s*up|f\/u|follow-up)\s*[-:/~]?\s*$/i,
+    /^(next\s*follow\s*up|follow\s*up|f\/u|follow-up)\s*[-:/~]?\s*\.?\s*$/i,
 };
 
 function detectSectionKey(line: string): string | null {
@@ -87,7 +87,7 @@ function parsePatientHeader(headerLines: string[]): PatientInfo {
   const tryExtractAgeGender = (text: string): boolean => {
     // Allow optional "Age" label, then digits, then any separator (/ , space), then gender word
     const m = text.match(
-      /(?:age\s*[-:/~]?\s*)?(\d{1,3})\s*[\/,]\s*(male|female|m\b|f\b)/i
+      /(?:age\s*[-:/~]?\s*)?(\d{1,3})\s*(?:y|yr|yrs|year|years)?\s*[\/,]\s*(male|female|m\b|f\b)/i
     );
     if (m) {
       age = m[1];
@@ -96,7 +96,7 @@ function parsePatientHeader(headerLines: string[]): PatientInfo {
     }
     // Also handle "Age : 64 Male" (space separator, no slash)
     const m2 = text.match(
-      /age\s*[-:/~]?\s*(\d{1,3})\s+(male|female)\b/i
+      /age\s*[-:/~]?\s*(\d{1,3})\s*(?:y|yr|yrs|year|years)?\s+(male|female)\b/i
     );
     if (m2) {
       age = m2[1];
@@ -150,12 +150,13 @@ function parsePatientHeader(headerLines: string[]): PatientInfo {
 
     // Patient Name line — may contain "Age: 64/ Male" embedded on the same line
     // e.g. "Patient Name - Mallanna  . Age : 64/ Male"
-    if (/^(patient\s*name|name)\s*[-:/~]/i.test(line)) {
-      const rest = line.replace(/^(?:patient\s*name|name)\s*[-:/~]\s*/i, '').trim();
+    const nameMatch = line.match(/(?:patient\s*name|name)\s*[-:/~]/i);
+    if (nameMatch && nameMatch.index !== undefined) {
+      const rest = line.slice(nameMatch.index + nameMatch[0].length).trim();
 
       // Look for an "Age" keyword or a "digits/gender" pattern within the rest
-      // Search for "Age" boundary marker: preceded by . or , or whitespace
-      const ageMarkerRe = /(?:[.,]\s*|\s{2,})(age\s*[-:/~]?\s*\d|\d{1,3}\s*[\/]\s*(?:male|female|m\b|f\b))/i;
+      // Search for "Age" boundary marker: preceded by . , / or whitespace
+      const ageMarkerRe = /(?:[.,\/]\s*|\s{2,})(age\s*[-:/~]?\s*\d|\d{1,3}\s*[\/]\s*(?:male|female|m\b|f\b)|\d{1,3}\s*years?)/i;
       const markerMatch = rest.match(ageMarkerRe);
       if (markerMatch && markerMatch.index !== undefined) {
         patientName = rest.slice(0, markerMatch.index).replace(/[.,\s]+$/, '').trim();
@@ -211,9 +212,7 @@ const KNOWN_CATEGORIES = [
 
 function isCategoryHeader(line: string): boolean {
   const l = line.trim().toLowerCase();
-  return KNOWN_CATEGORIES.some(
-    (cat) => l === cat || l.startsWith(cat + ' ') || l.startsWith(cat + '\t')
-  );
+  return KNOWN_CATEGORIES.includes(l);
 }
 
 function normalizeCategoryName(line: string): string {
