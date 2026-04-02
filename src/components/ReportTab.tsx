@@ -182,18 +182,64 @@ export default function ReportTab() {
     return m;
   }, [employees]);
 
+  const { effectiveLeaveSet, effectiveAbsentSet } = useMemo(() => {
+    const adjustedLeaveSet = new Set<string>(leaveSet);
+    const adjustedAbsentSet = new Set<string>(absentSet);
+
+    filteredReport.forEach((r) => {
+      const internalId = empIdToInternalId.get(r.employeeId);
+      if (!internalId) return;
+
+      const empLeaveGroup = leaveGroups.find((g) => g.employeeIds.includes(internalId));
+      if (!empLeaveGroup) return;
+
+      const existingLeaveCount = Array.from(leaveSet).filter((key) => key.startsWith(`${internalId}-`)).length;
+      const leaveAllowance = Math.max(0, empLeaveGroup.leavesPerMonth - existingLeaveCount);
+      if (leaveAllowance <= 0) return;
+
+      const holidaySet = new Set(r.holidayDates ?? []);
+      const weekOffSet = new Set(r.weekOffDates ?? []);
+
+      const absentCandidates: string[] = [];
+      for (let d = 1; d <= daysInMonth; d++) {
+        const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+        const absenceKey = `${internalId}-${dateStr}`;
+
+        if (holidaySet.has(dateStr) || weekOffSet.has(dateStr)) continue;
+        if (leaveSet.has(absenceKey) || presentSet.has(absenceKey)) continue;
+
+        const hasPunch = Boolean(punchesMap.get(`${r.employeeId}-${dateStr}`));
+        if (absentSet.has(absenceKey) || !hasPunch) {
+          absentCandidates.push(absenceKey);
+        }
+      }
+
+      let converted = 0;
+      for (const key of absentCandidates) {
+        if (converted >= leaveAllowance) break;
+        if (adjustedLeaveSet.has(key)) continue;
+        adjustedLeaveSet.add(key);
+        adjustedAbsentSet.delete(key);
+        converted += 1;
+      }
+    });
+
+    return { effectiveLeaveSet: adjustedLeaveSet, effectiveAbsentSet: adjustedAbsentSet };
+  }, [filteredReport, empIdToInternalId, leaveGroups, leaveSet, absentSet, presentSet, punchesMap, year, month, daysInMonth]);
+
   const ddCountByEmployeeId = useMemo(() => {
     const m = new Map<string, number>();
     filteredReport.forEach((r) => {
       const internalId = empIdToInternalId.get(r.employeeId);
       if (!internalId) {
-        m.set(r.employeeId, 0);
+        m.set(r.employeeId, r.autoDoubleDuty || 0);
         return;
       }
-      const count = Array.from(doubleDutySet).filter((key) =>
+      const explicitCount = Array.from(doubleDutySet).filter((key) =>
         key.startsWith(`${internalId}-`),
       ).length;
-      m.set(r.employeeId, count);
+      const autoCount = r.autoDoubleDuty || 0;
+      m.set(r.employeeId, explicitCount + autoCount);
     });
     return m;
   }, [filteredReport, empIdToInternalId, doubleDutySet]);
@@ -233,8 +279,8 @@ export default function ReportTab() {
       days.forEach((d) => {
         const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
         const leaveKey = `${internalId}-${dateStr}`;
-        const hasLeave = leaveSet.has(leaveKey);
-        const hasAbsent = absentSet.has(leaveKey);
+        const hasLeave = effectiveLeaveSet.has(leaveKey);
+        const hasAbsent = effectiveAbsentSet.has(leaveKey);
         const hasPresentOverride = presentSet.has(leaveKey);
 
         if (hasLeave || hasAbsent || hasPresentOverride) return;
@@ -251,7 +297,7 @@ export default function ReportTab() {
       m.set(r.employeeId, totalLateDays);
     });
     return m;
-  }, [filteredReport, empIdToInternalId, days, year, month, leaveSet, absentSet, presentSet, punchesMap, shiftRotations, shiftGroups]);
+  }, [filteredReport, empIdToInternalId, days, year, month, effectiveLeaveSet, effectiveAbsentSet, presentSet, punchesMap, shiftRotations, shiftGroups]);
 
   const presentDaysByEmployeeId = useMemo(() => {
     const m = new Map<string, number>();
@@ -267,8 +313,8 @@ export default function ReportTab() {
       days.forEach((d) => {
         const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
         const leaveKey = `${internalId}-${dateStr}`;
-        const hasLeave = leaveSet.has(leaveKey);
-        const hasAbsent = absentSet.has(leaveKey);
+        const hasLeave = effectiveLeaveSet.has(leaveKey);
+        const hasAbsent = effectiveAbsentSet.has(leaveKey);
         const hasPresentOverride = presentSet.has(leaveKey);
 
         if (hasLeave || hasAbsent) return;
@@ -284,7 +330,7 @@ export default function ReportTab() {
       m.set(r.employeeId, presentDays);
     });
     return m;
-  }, [filteredReport, empIdToInternalId, days, year, month, leaveSet, absentSet, presentSet, punchesMap]);
+  }, [filteredReport, empIdToInternalId, days, year, month, effectiveLeaveSet, effectiveAbsentSet, presentSet, punchesMap]);
 
   const currentTotalNetSalary = useMemo(() => {
     return filteredReport.reduce((sum, r) => {
@@ -459,12 +505,12 @@ export default function ReportTab() {
           if (r.weekOffDates?.includes(dateStr)) return "WO";
 
           const isLeave = internalEmpId
-            ? leaveSet.has(`${internalEmpId}-${dateStr}`)
+            ? effectiveLeaveSet.has(`${internalEmpId}-${dateStr}`)
             : false;
           if (isLeave) return "L";
 
           const isAbsent = internalEmpId
-            ? absentSet.has(`${internalEmpId}-${dateStr}`)
+            ? effectiveAbsentSet.has(`${internalEmpId}-${dateStr}`)
             : false;
           if (isAbsent) return "A";
 
@@ -582,7 +628,7 @@ export default function ReportTab() {
       const headers = [
         "ID", "Name", "Dept",
         "Total", "W.Off", "Hol", "Leave", "Abs", "Present", "DD", "Late",
-        "Basic", "Advance Ded.", "Late Ded. (25%)", "Gross Salary"
+        "Basic", "Advance Ded.", "SLD", "Late Ded. (25%)", "Gross Salary"
       ];
 
       const rowInputs = filteredReport.map((r) => {
@@ -595,7 +641,8 @@ export default function ReportTab() {
 
         const empDeds = deductions[r.employeeId] || { advance: 0 };
         const lateDeduction = totalLateDays * salary.perDaySalary * LATE_DEDUCTION_RATE;
-        const finalGrossSalary = payableSalary - empDeds.advance - lateDeduction;
+        const salaryWithoutLateDeduction = payableSalary - empDeds.advance;
+        const finalGrossSalary = salaryWithoutLateDeduction - lateDeduction;
 
         return {
           department: r.department,
@@ -613,6 +660,7 @@ export default function ReportTab() {
             totalLateDays,
             r.basicSalary.toLocaleString(),
             empDeds.advance.toLocaleString(),
+            salaryWithoutLateDeduction.toLocaleString(),
             lateDeduction.toLocaleString(),
             finalGrossSalary.toLocaleString(),
           ],
@@ -635,8 +683,8 @@ export default function ReportTab() {
           9: { textColor: [37, 99, 235], fontStyle: 'bold' }, // DD
           10: { textColor: [217, 119, 6], fontStyle: 'bold' }, // Late
           12: { textColor: [220, 38, 38] }, // Advance Ded
-          13: { textColor: [220, 38, 38] }, // Late Ded
-          14: { textColor: [5, 150, 105], fontStyle: 'bold' } // Gross Salary
+          14: { textColor: [220, 38, 38] }, // Late Ded
+          15: { textColor: [5, 150, 105], fontStyle: 'bold' } // Gross Salary
         }
       });
     }
@@ -810,6 +858,7 @@ export default function ReportTab() {
                           <th className="sticky top-0 z-20 bg-neutral-900/95 backdrop-blur-sm text-right py-3 px-2 font-medium text-orange-400 border-b border-neutral-700">Late Entry</th>
                           <th className="sticky top-0 z-20 bg-neutral-900/95 backdrop-blur-sm text-right py-3 px-2 font-medium border-b border-neutral-700">Basic</th>
                           <th className="sticky top-0 z-20 bg-neutral-900/95 backdrop-blur-sm text-right py-3 px-2 font-medium border-b border-neutral-700">Advance Ded.</th>
+                          <th className="sticky top-0 z-20 bg-neutral-900/95 backdrop-blur-sm text-right py-3 px-2 font-medium border-b border-neutral-700">SLD</th>
                           <th className="sticky top-0 z-20 bg-neutral-900/95 backdrop-blur-sm text-right py-3 px-2 font-medium border-b border-neutral-700">Late Ded. (25%)</th>
                           <th className="sticky top-0 z-20 bg-neutral-900/95 backdrop-blur-sm text-right py-3 px-2 font-medium border-b border-neutral-700">Gross Salary</th>
                         </>
@@ -871,10 +920,10 @@ export default function ReportTab() {
                           );
                         }
 
-                        // Check explicit leave records for the employee/date
+                        // Check explicit or converted leave records for the employee/date
                         const internalEmpId = internalId;
                         const isLeave = internalEmpId
-                          ? leaveSet.has(`${internalEmpId}-${dateStr}`)
+                          ? effectiveLeaveSet.has(`${internalEmpId}-${dateStr}`)
                           : false;
 
                         if (isLeave) {
@@ -887,7 +936,7 @@ export default function ReportTab() {
                         }
 
                         const isAbsent = internalEmpId
-                          ? absentSet.has(`${internalEmpId}-${dateStr}`)
+                          ? effectiveAbsentSet.has(`${internalEmpId}-${dateStr}`)
                           : false;
                         if (isAbsent) {
                           return (
@@ -989,6 +1038,9 @@ export default function ReportTab() {
                                   placeholder="0"
                                 />
                               </td>
+                              <td className="py-2 px-2 text-right text-neutral-300 border-b border-neutral-800">
+                                ₹{(payableSalary - (deductions[r.employeeId]?.advance || 0)).toLocaleString()}
+                              </td>
                               <td className="py-2 px-2 text-right text-red-400 border-b border-neutral-800">
                                 ₹{lateDeduction.toLocaleString()}
                               </td>
@@ -1009,7 +1061,7 @@ export default function ReportTab() {
               </tbody>
               <tfoot className="sticky bottom-0 z-20 bg-neutral-900 shadow-[0_-1px_0_rgba(64,64,64,1)]">
                 <tr>
-                  <td colSpan={reportType === 'attendance' ? 3 + days.length : (reportType === 'totals' ? 14 : 11)} className="py-3 px-2 text-right text-neutral-400 font-medium">
+                  <td colSpan={reportType === 'attendance' ? 3 + days.length : (reportType === 'totals' ? 15 : 11)} className="py-3 px-2 text-right text-neutral-400 font-medium">
                     {reportType === 'attendance' ? '' : (reportType === 'late' ? 'Summary' : 'Total Net Salary')}
                   </td>
                   {reportType !== 'attendance' && (

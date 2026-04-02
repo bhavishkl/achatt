@@ -536,9 +536,11 @@ export function computeAttendanceReport(
     const holidayDates = Array.from(holidayDateSet).sort();
 
     // Leaves – count actual leave records for this employee in the month
-    const leaves = leaveRecords.filter(
-      (r) => r.employeeId === emp.id && r.date.startsWith(monthPrefix),
-    ).length;
+    const leaveDates = leaveRecords
+      .filter((r) => r.employeeId === emp.id && r.date.startsWith(monthPrefix))
+      .map((r) => r.date);
+    const leaves = leaveDates.length;
+
     const absentDateSet = new Set(
       absentRecords
         .filter((r) => r.employeeId === emp.id && r.date.startsWith(monthPrefix))
@@ -550,12 +552,9 @@ export function computeAttendanceReport(
         .map((r) => r.date),
     );
 
-    // Also check leave group allowance (for reference, but actual count from records)
-    const empLeaveGroup = leaveGroups.find((g) =>
-      g.employeeIds.includes(emp.id),
-    );
-    const _leaveAllowance = empLeaveGroup ? empLeaveGroup.leavesPerMonth : 0;
-    void _leaveAllowance; // available for future use
+    const empLeaveGroup = leaveGroups.find((g) => g.employeeIds.includes(emp.id));
+    const leaveAllowance = empLeaveGroup ? empLeaveGroup.leavesPerMonth : 0;
+    const remainingLeaveAllowance = Math.max(0, leaveAllowance - leaves);
 
     // Build a set of dates (YYYY-MM-DD) where we have any punch record for this employee
     const punchDateSet = new Set<string>();
@@ -569,21 +568,31 @@ export function computeAttendanceReport(
     });
 
     // Count absences: days that are NOT (holiday | week-off | leave | have a punch)
-    let absences = 0;
+    let rawAbsences = 0;
+    const rawAbsentDates = new Set<string>();
     for (let d = 1; d <= daysInMonth; d++) {
       const dateObj = new Date(year, month, d);
       const dateStr = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, "0")}-${String(dateObj.getDate()).padStart(2, "0")}`;
 
       const isHoliday = holidayDateSet.has(dateStr);
       const isWeekOff = weekOffDateSet.has(dateStr);
-      const isLeave = leaveRecords.some((lr) => lr.employeeId === emp.id && lr.date === dateStr);
+      const isLeave = leaveDates.includes(dateStr);
       const isPresentOverride = presentDateSet.has(dateStr);
       const isAbsentOverride = absentDateSet.has(dateStr);
       const hasPunch = punchDateSet.has(dateStr);
 
       if (isHoliday || isWeekOff || isLeave || isPresentOverride) continue;
-      if (isAbsentOverride || !hasPunch) absences++;
+      if (isAbsentOverride || !hasPunch) {
+        rawAbsences++;
+        rawAbsentDates.add(dateStr);
+      }
     }
+
+    const convertedAbsences = Math.min(remainingLeaveAllowance, rawAbsences);
+    const absences = rawAbsences - convertedAbsences;
+    const effectiveLeaves = leaves + convertedAbsences;
+    const remainingLeaveAfterConversion = Math.max(0, leaveAllowance - effectiveLeaves);
+    const autoDoubleDuty = absences === 0 ? remainingLeaveAfterConversion : 0;
 
     // Shift
     const empShift = shiftGroups.find((g) =>
@@ -609,8 +618,12 @@ export function computeAttendanceReport(
       weekOffDates,
       holidays,
       holidayDates,
-      leaves,
+      leaves: effectiveLeaves,
       absences,
+      convertedAbsences,
+      leaveAllowance,
+      remainingLeaveAfterConversion,
+      autoDoubleDuty,
       workingDays,
       perDaySalary: Math.round(perDaySalary * 100) / 100,
       netSalary: Math.round(netSalary * 100) / 100,
