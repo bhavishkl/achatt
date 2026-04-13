@@ -201,7 +201,7 @@ export const EditorForm: React.FC<EditorFormProps> = ({ data, onChange }) => {
                   <label className="block text-sm font-medium text-gray-700">Category</label>
                   <select
                     className="w-full rounded-md border-gray-300 border p-2 text-sm focus:ring-2 focus:ring-teal-500 outline-none"
-                    value={INVESTIGATION_CATEGORIES.includes(inv.category as InvestigationCategory) ? inv.category : 'Other'}
+                    value={INVESTIGATION_CATEGORIES.includes(inv.category as (typeof INVESTIGATION_CATEGORIES)[number]) ? inv.category : 'Other'}
                     onChange={(e) => {
                       const value = e.target.value as InvestigationCategory;
                       updateInvestigation(inv.id, 'category', value === 'Other' ? '' : value);
@@ -214,7 +214,7 @@ export const EditorForm: React.FC<EditorFormProps> = ({ data, onChange }) => {
                     ))}
                     <option value="Other">Other</option>
                   </select>
-                  {(!INVESTIGATION_CATEGORIES.includes(inv.category as InvestigationCategory)) && (
+                  {(!INVESTIGATION_CATEGORIES.includes(inv.category as (typeof INVESTIGATION_CATEGORIES)[number])) && (
                     <input
                       type="text"
                       className="w-full rounded border-gray-300 border p-2 text-sm focus:ring-2 focus:ring-teal-500 outline-none"
