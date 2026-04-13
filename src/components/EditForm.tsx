@@ -1,5 +1,5 @@
 import React from 'react';
-import { DischargeData, InvestigationEntry, TreatmentEntry } from '../types';
+import { DischargeData, InvestigationEntry, InvestigationCategory, INVESTIGATION_CATEGORIES, TreatmentEntry } from '../types';
 import { FileText, Activity, Pill, CalendarClock, ClipboardList, Plus, Trash2, AlertTriangle } from 'lucide-react';
 
 interface EditorFormProps {
@@ -20,7 +20,7 @@ export const EditorForm: React.FC<EditorFormProps> = ({ data, onChange }) => {
     const newInv: InvestigationEntry = {
       id: Date.now().toString() + Math.random(),
       date: new Date().toISOString().split('T')[0],
-      category: '',
+      category: 'Radiology',
       name: '',
       result: ''
     };
@@ -196,28 +196,41 @@ export const EditorForm: React.FC<EditorFormProps> = ({ data, onChange }) => {
         <div className="space-y-4">
           {data.investigations.map((inv) => (
             <div key={inv.id} className="p-4 bg-gray-50 border border-gray-200 rounded-md">
-              <div className="space-y-2">
-                <input
-                  type="text"
-                  className="w-full rounded border-gray-300 border p-2 text-sm focus:ring-2 focus:ring-teal-500 outline-none"
-                  placeholder="Category (e.g., RADIOLOGY)"
-                  value={inv.category}
-                  onChange={(e) => updateInvestigation(inv.id, 'category', e.target.value)}
-                />
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">Category</label>
+                  <select
+                    className="w-full rounded-md border-gray-300 border p-2 text-sm focus:ring-2 focus:ring-teal-500 outline-none"
+                    value={INVESTIGATION_CATEGORIES.includes(inv.category as InvestigationCategory) ? inv.category : 'Other'}
+                    onChange={(e) => {
+                      const value = e.target.value as InvestigationCategory;
+                      updateInvestigation(inv.id, 'category', value === 'Other' ? '' : value);
+                    }}
+                  >
+                    {INVESTIGATION_CATEGORIES.map((category) => (
+                      <option key={category} value={category}>
+                        {category}
+                      </option>
+                    ))}
+                    <option value="Other">Other</option>
+                  </select>
+                  {(!INVESTIGATION_CATEGORIES.includes(inv.category as InvestigationCategory)) && (
+                    <input
+                      type="text"
+                      className="w-full rounded border-gray-300 border p-2 text-sm focus:ring-2 focus:ring-teal-500 outline-none"
+                      placeholder="Custom category"
+                      value={inv.category}
+                      onChange={(e) => updateInvestigation(inv.id, 'category', e.target.value)}
+                    />
+                  )}
+                </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                <div className="grid grid-cols-1 gap-2">
                   <input
                     type="date"
                     className="w-full rounded border-gray-300 border p-2 text-sm focus:ring-2 focus:ring-teal-500 outline-none"
                     value={inv.date}
                     onChange={(e) => updateInvestigation(inv.id, 'date', e.target.value)}
-                  />
-                  <input
-                    type="text"
-                    className="w-full sm:col-span-2 rounded border-gray-300 border p-2 text-sm focus:ring-2 focus:ring-teal-500 outline-none"
-                    placeholder="Investigation Name (e.g., CXR)"
-                    value={inv.name}
-                    onChange={(e) => updateInvestigation(inv.id, 'name', e.target.value)}
                   />
                 </div>
 
@@ -260,20 +273,13 @@ export const EditorForm: React.FC<EditorFormProps> = ({ data, onChange }) => {
           {data.treatmentGiven.map((tx) => (
             <div key={tx.id} className="p-4 bg-gray-50 border border-gray-200 rounded-md">
               <div className="space-y-2">
-                <input
-                  type="text"
-                  className="w-full rounded border-gray-300 border p-2 text-sm focus:ring-2 focus:ring-teal-500 outline-none"
-                  placeholder="Treatment/Medicine Name"
-                  value={tx.name}
-                  onChange={(e) => updateTreatment(tx.id, 'name', e.target.value)}
-                />
                 <div className="flex gap-2">
                   <input
                     type="text"
                     className="flex-1 rounded border-gray-300 border p-2 text-sm focus:ring-2 focus:ring-teal-500 outline-none"
-                    placeholder="Dosage/Frequency"
-                    value={tx.dosage}
-                    onChange={(e) => updateTreatment(tx.id, 'dosage', e.target.value)}
+                    placeholder="Treatment / Dosage / Frequency"
+                    value={tx.name}
+                    onChange={(e) => updateTreatment(tx.id, 'name', e.target.value)}
                   />
                   <button
                     onClick={() => removeTreatment(tx.id)}

@@ -12,9 +12,9 @@ export const blankTemplate: DischargeData = {
   clinicalPresentation: '',
   investigations: [],
   treatmentGiven: [],
-  hospitalCourse: '',
-  dischargeAdvice: '',
-  followUp: ''
+  hospitalCourse: 'Conservative management.',
+  dischargeAdvice: 'Attached to file',
+  followUp: 'After one month'
 };
 
 export const standardTemplate: DischargeData = {

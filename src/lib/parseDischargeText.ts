@@ -1,4 +1,4 @@
-import { DischargeData, InvestigationEntry, TreatmentEntry } from '../types';
+import { DischargeData, InvestigationEntry, TreatmentEntry, INVESTIGATION_CATEGORIES } from '../types';
 
 // ─── Utilities ────────────────────────────────────────────────────────────────
 
@@ -189,15 +189,11 @@ function parsePatientHeader(headerLines: string[]): PatientInfo {
 // ─── Investigation parser ─────────────────────────────────────────────────────
 
 const KNOWN_CATEGORIES = [
-  'radiology',
-  'cardiology',
+  ...INVESTIGATION_CATEGORIES.map((category) => category.toLowerCase()),
   'haematology',
-  'hematology',
-  'microbiology',
   'pathology',
   'biochemistry',
   'urine',
-  'abg',
   'serology',
   'culture',
   'biopsy',
@@ -217,9 +213,12 @@ function isCategoryHeader(line: string): boolean {
 
 function normalizeCategoryName(line: string): string {
   const l = line.trim();
-  if (/^abg$/i.test(l)) return 'ABG';
-  if (/^usg$/i.test(l)) return 'USG';
-  if (/^ecg$/i.test(l)) return 'ECG';
+  const lower = l.toLowerCase();
+  if (lower === 'abg') return 'ABG';
+  if (lower === 'usg') return 'USG';
+  if (lower === 'ecg') return 'ECG';
+  const matched = INVESTIGATION_CATEGORIES.find((category) => category.toLowerCase() === lower);
+  if (matched) return matched;
   return l.charAt(0).toUpperCase() + l.slice(1).toLowerCase();
 }
 
@@ -289,19 +288,7 @@ function parseTreatment(lines: string[]): TreatmentEntry[] {
   return lines
     .map((l) => l.trim())
     .filter(Boolean)
-    .map((line) => {
-      const doseMatch = line.match(
-        /^(.+?)\s+(\d+\.?\d*\s*(?:mg|gm|ml|mcg|units?|IU|vials?|amp|tabs?|caps?|iu)\b.*)/i
-      );
-      if (doseMatch) {
-        return { id: uid(), name: doseMatch[1].trim(), dosage: doseMatch[2].trim() };
-      }
-      const parenMatch = line.match(/^(.+?)\s*(\([\d\/-]+\))\s*$/);
-      if (parenMatch) {
-        return { id: uid(), name: parenMatch[1].trim(), dosage: parenMatch[2].trim() };
-      }
-      return { id: uid(), name: line, dosage: '' };
-    });
+    .map((line) => ({ id: uid(), name: line, dosage: '' }));
 }
 
 // ─── Main parser ──────────────────────────────────────────────────────────────

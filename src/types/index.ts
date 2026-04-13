@@ -1,7 +1,18 @@
+export const INVESTIGATION_CATEGORIES = [
+  'Radiology',
+  'Cardiology',
+  'Hematology',
+  'Microbiology',
+  'ABG',
+] as const;
+
+export type InvestigationCategory = (typeof INVESTIGATION_CATEGORIES)[number] | 'Other';
+export type InvestigationCategoryValue = InvestigationCategory | string;
+
 export interface InvestigationEntry {
   id: string;
   date: string;
-  category: string;
+  category: InvestigationCategoryValue;
   name: string;
   result: string;
 }

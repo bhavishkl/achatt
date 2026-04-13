@@ -74,7 +74,9 @@ export const Preview: React.FC<PreviewProps> = ({ data }) => {
             <ul className="list-disc pl-5 space-y-1 text-gray-700">
               {data.treatmentGiven.map((tx) => (
                 <li key={tx.id}>
-                  <span className="font-medium text-gray-900">{tx.name}</span> - {tx.dosage}
+                  <span className="font-medium text-gray-900">
+                    {tx.dosage ? `${tx.name} ${tx.dosage}` : tx.name}
+                  </span>
                 </li>
               ))}
             </ul>
