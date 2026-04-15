@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { EditorForm } from '../../components/EditForm';
 import { Preview } from '../../components/Preview';
 import { DischargeData } from '../../types';
@@ -11,9 +11,29 @@ import { parseDischargeText } from '../../lib/parseDischargeText';
 
 type Tab = 'paste' | 'edit' | 'preview';
 
+const FORM_STORAGE_KEY = 'dcard-form-data';
+const TEMPLATE_STORAGE_KEY = 'dcard-template-key';
+
 export default function DischargeCardPage() {
-  const [selectedTemplateKey, setSelectedTemplateKey] = useState<string>('blank');
-  const [data, setData] = useState<DischargeData>(dischargeTemplates.blank.data);
+  const [selectedTemplateKey, setSelectedTemplateKey] = useState<string>(() => {
+    if (typeof window === 'undefined') return 'blank';
+    return window.localStorage.getItem(TEMPLATE_STORAGE_KEY) ?? 'blank';
+  });
+
+  const [data, setData] = useState<DischargeData>(() => {
+    if (typeof window === 'undefined') return dischargeTemplates.blank.data;
+    const savedData = window.localStorage.getItem(FORM_STORAGE_KEY);
+    if (savedData) {
+      try {
+        return JSON.parse(savedData) as DischargeData;
+      } catch {
+        return dischargeTemplates.blank.data;
+      }
+    }
+    const savedTemplate = window.localStorage.getItem(TEMPLATE_STORAGE_KEY);
+    return dischargeTemplates[savedTemplate ?? 'blank']?.data ?? dischargeTemplates.blank.data;
+  });
+
   const [tab, setTab] = useState<Tab>('paste');
   const [rawText, setRawText] = useState('');
   const [parseStatus, setParseStatus] = useState<'idle' | 'success' | 'error'>('idle');
@@ -23,6 +43,12 @@ export default function DischargeCardPage() {
     const key = e.target.value;
     setSelectedTemplateKey(key);
     setData(JSON.parse(JSON.stringify(dischargeTemplates[key].data)));
+  };
+
+  const resetForm = () => {
+    const resetData = JSON.parse(JSON.stringify(dischargeTemplates[selectedTemplateKey]?.data ?? dischargeTemplates.blank.data));
+    setData(resetData);
+    window.localStorage.removeItem(FORM_STORAGE_KEY);
   };
 
   const handlePrint = () => window.print();
@@ -48,6 +74,14 @@ export default function DischargeCardPage() {
       setParseMsg(`Parse error: ${e instanceof Error ? e.message : String(e)}`);
     }
   };
+
+  useEffect(() => {
+    window.localStorage.setItem(FORM_STORAGE_KEY, JSON.stringify(data));
+  }, [data]);
+
+  useEffect(() => {
+    window.localStorage.setItem(TEMPLATE_STORAGE_KEY, selectedTemplateKey);
+  }, [selectedTemplateKey]);
 
   return (
     <div className="min-h-screen bg-gray-100 py-8 px-4 sm:px-6 lg:px-8">
@@ -151,7 +185,7 @@ export default function DischargeCardPage() {
 
         {/* ── Edit Form Tab ── */}
         <div className={tab === 'edit' ? 'block print:hidden' : 'hidden'}>
-          <EditorForm data={data} onChange={setData} />
+          <EditorForm data={data} onChange={setData} onReset={resetForm} />
         </div>
 
         {/* ── Preview Tab ── */}

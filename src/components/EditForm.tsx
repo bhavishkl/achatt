@@ -5,9 +5,10 @@ import { FileText, Activity, Pill, CalendarClock, ClipboardList, Plus, Trash2, A
 interface EditorFormProps {
   data: DischargeData;
   onChange: (newData: DischargeData) => void;
+  onReset?: () => void;
 }
 
-export const EditorForm: React.FC<EditorFormProps> = ({ data, onChange }) => {
+export const EditorForm: React.FC<EditorFormProps> = ({ data, onChange, onReset }) => {
 
   const handleChange = (field: keyof DischargeData, value: any) => {
     onChange({ ...data, [field]: value });
@@ -348,6 +349,18 @@ export const EditorForm: React.FC<EditorFormProps> = ({ data, onChange }) => {
           </div>
         </div>
       </section>
+
+      {onReset && (
+        <div className="flex justify-end pt-4 print:hidden">
+          <button
+            type="button"
+            onClick={onReset}
+            className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-300 transition-colors"
+          >
+            <Trash2 size={16} /> Reset Form
+          </button>
+        </div>
+      )}
     </div>
   );
 };
