@@ -118,6 +118,12 @@ export default function AppHeader() {
             >
               Company Profile
             </Link>
+            <Link
+              href="/apt"
+              className="px-4 py-2 text-sm font-medium text-white bg-neutral-800 rounded-lg hover:bg-neutral-700"
+            >
+              Appointments
+            </Link>
             <button
               onClick={handleSignOut}
               className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700"

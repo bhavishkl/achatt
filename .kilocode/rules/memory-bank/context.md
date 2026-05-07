@@ -1,6 +1,17 @@
 # Context
 
 ## Recent Changes
+- Implemented backend for appointments:
+  - Added `GET/POST` in `src/app/api/appointments/route.ts`
+  - Added transfer update `PUT` in `src/app/api/appointments/[id]/route.ts`
+- Updated `src/app/apt/page.tsx` to use backend APIs with `companyId` (instead of localStorage) while keeping duplicate detection and modal-based transfer flow.
+- Updated `schema.json` with an `appointments` table definition (`id`, `company_id`, `name`, `phone`, `place`, `appointment_date`, timestamps).
+- Replaced browser `window.confirm` transfer prompt on `src/app/apt/page.tsx` with an in-page modal for duplicate appointment date transfer confirmation (`Cancel` / `Transfer` actions), preserving existing duplicate rules and localStorage behavior.
+- Added new frontend-only appointments page at `src/app/apt/page.tsx` with fields `name`, `phone number`, `place`, and `appointment date`.
+- Implemented duplicate detection on patient identity (`name + phone + place`) using localStorage persistence:
+  - same patient + same date is blocked as duplicate
+  - same patient + different date prompts transfer confirmation and updates existing entry date if confirmed
+- Added a header navigation link to `/apt` in `src/components/AppHeader.tsx`.
 - Updated `src/components/ReportTab.tsx` totals calculations to auto-deduct late salary as `25% of per-day salary` for each late punch-in day, and removed manual late-deduction entry in the totals table.
 - Applied the same automatic `Late Ded. (25%)` value in totals PDF export and total net salary/footer calculations for consistency between UI and export.
 - Verified the change with `npm run typecheck` (passes).
