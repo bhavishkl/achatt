@@ -129,6 +129,14 @@
       },
       {
         "ordinal_position": 7,
+        "column_name": "status",
+        "data_type": "text",
+        "max_length": null,
+        "is_nullable": "NO",
+        "column_default": "'pending'::text"
+      },
+      {
+        "ordinal_position": 8,
         "column_name": "created_at",
         "data_type": "timestamp with time zone",
         "max_length": null,

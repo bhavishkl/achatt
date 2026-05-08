@@ -5,6 +5,11 @@
   - Added `GET/POST` in `src/app/api/appointments/route.ts`
   - Added transfer update `PUT` in `src/app/api/appointments/[id]/route.ts`
 - Updated `src/app/apt/page.tsx` to use backend APIs with `companyId` (instead of localStorage) while keeping duplicate detection and modal-based transfer flow.
+- Updated `src/app/apt/page.tsx` saved appointments display to group records by `appointment.date` and render only saved dates as selectable tabs, showing appointments for the active date instead of one flat table across all dates.
+- Added per-date `Export PDF` and `Share` actions to `src/app/apt/page.tsx`, generating a date-specific appointments PDF from the active tab and using Web Share file sharing when supported.
+- Added stricter phone-number handling to `src/app/apt/page.tsx` with field-level and submit-time validation for empty, letter, invalid-character, too-short, too-long, repeated-digit, and malformed mobile numbers, while normalizing common formatted input and `91` country-code values before save/duplicate checks.
+- Extended appointments with persisted `status` support (`pending`, `confirmed`, `cancelled`, `not_confirmed`) across `src/app/api/appointments/route.ts`, `src/app/api/appointments/[id]/route.ts`, `src/app/apt/page.tsx`, `schema.json`, and `sql_command.sql`.
+- Added row-level appointment actions in `src/app/apt/page.tsx`: `Transfer` with inline date selection, plus `Confirm`, `Cancel`, and `Not Confirm` buttons that update the saved appointment status and display a status badge in the date-tab table.
 - Updated `schema.json` with an `appointments` table definition (`id`, `company_id`, `name`, `phone`, `place`, `appointment_date`, timestamps).
 - Replaced browser `window.confirm` transfer prompt on `src/app/apt/page.tsx` with an in-page modal for duplicate appointment date transfer confirmation (`Cancel` / `Transfer` actions), preserving existing duplicate rules and localStorage behavior.
 - Added new frontend-only appointments page at `src/app/apt/page.tsx` with fields `name`, `phone number`, `place`, and `appointment date`.

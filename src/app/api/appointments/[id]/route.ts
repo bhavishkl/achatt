@@ -8,6 +8,7 @@ type AppointmentRow = {
   phone: string;
   place: string;
   appointment_date: string;
+  status: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -24,6 +25,7 @@ function mapAppointment(row: AppointmentRow) {
     phone: row.phone,
     place: row.place,
     date: row.appointment_date,
+    status: row.status ?? "pending",
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -38,10 +40,11 @@ export async function PUT(
     const body = (await request.json()) as {
       companyId?: string;
       date?: string;
+      status?: string;
     };
 
-    if (!body.companyId || !body.date) {
-      return NextResponse.json({ message: "Company ID and date are required" }, { status: 400 });
+    if (!body.companyId || (!body.date && !body.status)) {
+      return NextResponse.json({ message: "Company ID and an update field are required" }, { status: 400 });
     }
 
     const { data: current, error: fetchError } = await supabaseAdmin
@@ -69,25 +72,43 @@ export async function PUT(
       return NextResponse.json({ message: "Error checking duplicates", error: listError.message }, { status: 500 });
     }
 
-    const conflict = (rows ?? []).find((row: any) => {
-      return (
-        normalize(String(row.name ?? "")) === normalizedName &&
-        normalize(String(row.phone ?? "")) === normalizedPhone &&
-        normalize(String(row.place ?? "")) === normalizedPlace &&
-        String(row.appointment_date) === body.date
-      );
-    });
+    if (body.date) {
+      const conflict = (rows ?? []).find((row: any) => {
+        return (
+          normalize(String(row.name ?? "")) === normalizedName &&
+          normalize(String(row.phone ?? "")) === normalizedPhone &&
+          normalize(String(row.place ?? "")) === normalizedPlace &&
+          String(row.appointment_date) === body.date
+        );
+      });
 
-    if (conflict) {
-      return NextResponse.json(
-        { message: "Same appointment already exists on this date", code: "DUPLICATE_DATE" },
-        { status: 409 }
-      );
+      if (conflict) {
+        return NextResponse.json(
+          { message: "Same appointment already exists on this date", code: "DUPLICATE_DATE" },
+          { status: 409 }
+        );
+      }
+    }
+
+    const allowedStatuses = new Set(["pending", "confirmed", "cancelled", "not_confirmed"]);
+
+    if (body.status && !allowedStatuses.has(body.status)) {
+      return NextResponse.json({ message: "Invalid appointment status" }, { status: 400 });
+    }
+
+    const payload: Record<string, string> = {};
+
+    if (body.date) {
+      payload.appointment_date = body.date;
+    }
+
+    if (body.status) {
+      payload.status = body.status;
     }
 
     const { data: updated, error: updateError } = await supabaseAdmin
       .from("appointments")
-      .update({ appointment_date: body.date })
+      .update(payload)
       .eq("id", id)
       .eq("company_id", body.companyId)
       .select("*")

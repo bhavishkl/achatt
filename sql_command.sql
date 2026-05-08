@@ -1,1 +1,2 @@
 ALTER TABLE employees ADD COLUMN advance_amount NUMERIC DEFAULT 0;
+ALTER TABLE appointments ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'pending';

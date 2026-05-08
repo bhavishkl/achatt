@@ -8,6 +8,7 @@ type AppointmentRow = {
   phone: string;
   place: string;
   appointment_date: string;
+  status: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -24,6 +25,7 @@ function mapAppointment(row: AppointmentRow) {
     phone: row.phone,
     place: row.place,
     date: row.appointment_date,
+    status: row.status ?? "pending",
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -113,6 +115,7 @@ export async function POST(request: Request) {
       phone: appointment.phone.trim(),
       place: appointment.place.trim(),
       appointment_date: appointment.date,
+      status: "pending",
     };
 
     const { data, error } = await supabaseAdmin.from("appointments").insert([payload]).select("*").single();
