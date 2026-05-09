@@ -205,13 +205,13 @@ export default function DischargedPatientsTable({
                                     Patient <SortIcon field="name" sortField={sortField} sortDir={sortDir} />
                                 </th>
                                 <th className="p-4 cursor-pointer select-none hover:text-white transition-colors" onClick={() => handleSort('wardDetails')}>
-                                    Ward Details <SortIcon field="wardDetails" />
+                                    Ward Details <SortIcon field="wardDetails" sortField={sortField} sortDir={sortDir} />
                                 </th>
                                 <th className="p-4 cursor-pointer select-none hover:text-white transition-colors" onClick={() => handleSort('admissionDate')}>
-                                    Admitted <SortIcon field="admissionDate" />
+                                    Admitted <SortIcon field="admissionDate" sortField={sortField} sortDir={sortDir} />
                                 </th>
                                 <th className="p-4 cursor-pointer select-none hover:text-white transition-colors" onClick={() => handleSort('dischargeDate')}>
-                                    Discharged <SortIcon field="dischargeDate" />
+                                    Discharged <SortIcon field="dischargeDate" sortField={sortField} sortDir={sortDir} />
                                 </th>
                                 <th className="p-4 cursor-pointer select-none hover:text-white transition-colors" onClick={() => handleSort('totalBill')}>
                                     Total Bill <SortIcon field="totalBill" sortField={sortField} sortDir={sortDir} />
