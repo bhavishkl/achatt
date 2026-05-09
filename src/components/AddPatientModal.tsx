@@ -41,6 +41,7 @@ export default function AddPatientModal({
     useEffect(() => {
         if (isOpen) {
             if (existingPatient) {
+                // eslint-disable-next-line react-hooks/set-state-in-effect
                 setFormData({
                     prefix: existingPatient.prefix,
                     name: existingPatient.name,

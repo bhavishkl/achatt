@@ -559,8 +559,8 @@ export default function AppointmentPage() {
   };
 
   return (
-    <main className="min-h-screen bg-neutral-950 text-white p-6">
-      <div className="max-w-4xl mx-auto">
+    <main className="min-h-screen bg-neutral-950 px-4 py-4 text-white sm:px-6 sm:py-6">
+      <div className="mx-auto max-w-5xl">
         <AppointmentForm
           name={name}
           phone={phone}
@@ -577,7 +577,7 @@ export default function AppointmentPage() {
 
         <AppointmentAlerts error={error} message={message} isLoading={isLoading} />
 
-        <div className="rounded-lg border border-neutral-800 bg-neutral-900 overflow-hidden">
+        <div className="overflow-hidden rounded-lg border border-neutral-800 bg-neutral-900">
           <AppointmentTabs
             appointmentDates={appointmentDates}
             activeDateTab={activeDateTab}

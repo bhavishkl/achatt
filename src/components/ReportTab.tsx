@@ -694,9 +694,9 @@ export default function ReportTab() {
 
   return (
     <div>
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
+      <div className="flex flex-col items-start justify-between gap-4 mb-6 xl:flex-row xl:items-center">
         <h2 className="text-xl font-semibold text-white">Monthly Reports</h2>
-        <div className="flex flex-wrap gap-2">
+        <div className="grid w-full grid-cols-1 gap-2 sm:grid-cols-2 xl:flex xl:w-auto xl:flex-wrap">
           <button
             onClick={handlePrint}
             className="bg-neutral-700 hover:bg-neutral-600 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors no-print"
@@ -719,12 +719,12 @@ export default function ReportTab() {
             </button>
           )}
 
-          <div className="h-6 w-px bg-neutral-700 mx-1 self-center hidden sm:block no-print"></div>
+          <div className="h-6 w-px bg-neutral-700 mx-1 self-center hidden xl:block no-print"></div>
 
           <select
             value={selectedDept}
             onChange={(e) => setSelectedDept(e.target.value)}
-            className="bg-neutral-800 border border-neutral-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 no-print"
+            className="bg-neutral-800 border border-neutral-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 no-print w-full xl:w-auto"
           >
             {departments.map((dept) => (
               <option key={dept} value={dept}>
@@ -737,13 +737,13 @@ export default function ReportTab() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search by name, ID, or dept..."
-            className="bg-neutral-800 border border-neutral-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-neutral-500 no-print"
+            className="bg-neutral-800 border border-neutral-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-neutral-500 no-print w-full xl:w-auto xl:min-w-56"
           />
 
           <select
             value={reportType}
             onChange={(e) => setReportType(e.target.value as 'attendance' | 'late' | 'totals')}
-            className="bg-neutral-800 border border-neutral-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 no-print"
+            className="bg-neutral-800 border border-neutral-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 no-print w-full xl:w-auto"
           >
             <option value="attendance">Attendance Report</option>
             <option value="late">Late Entry Report</option>
@@ -752,7 +752,7 @@ export default function ReportTab() {
           <select
             value={month}
             onChange={(e) => setMonth(Number(e.target.value))}
-            className="bg-neutral-800 border border-neutral-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 no-print"
+            className="bg-neutral-800 border border-neutral-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 no-print w-full xl:w-auto"
           >
             {MONTH_NAMES.map((name, idx) => (
               <option key={idx} value={idx}>
@@ -766,7 +766,7 @@ export default function ReportTab() {
             onChange={(e) => setYear(Number(e.target.value))}
             min={2020}
             max={2040}
-            className="w-24 bg-neutral-800 border border-neutral-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 no-print"
+            className="w-full bg-neutral-800 border border-neutral-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 no-print sm:w-24"
           />
         </div>
       </div>
@@ -817,6 +817,7 @@ export default function ReportTab() {
           </div>
 
           {/* Report table */}
+          <div className="mb-3 text-xs text-neutral-500 md:hidden">Swipe horizontally to view the full report grid.</div>
           <div className="overflow-auto max-h-[calc(100vh-160px)] border border-neutral-700 rounded-xl bg-neutral-900/20">
             <table className="w-full text-sm border-separate border-spacing-0">
               <thead>

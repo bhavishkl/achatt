@@ -222,7 +222,7 @@ export default function Home() {
   };
 
   return (
-    <main className="min-h-screen bg-neutral-950 text-white p-6">
+    <main className="min-h-screen bg-neutral-950 text-white p-4 sm:p-6 md:p-8">
       <div className="max-w-7xl mx-auto">
         
         {/* Tabs */}
@@ -232,10 +232,10 @@ export default function Home() {
           </div>
         )}
 
-        <div className="flex border-b border-neutral-800 mb-6">
+        <div className="flex overflow-x-auto border-b border-neutral-800 mb-4 sm:mb-6 no-scrollbar">
           <button
             onClick={() => setActiveTab('admission')}
-            className={`px-6 py-3 font-medium transition-colors ${activeTab === 'admission'
+            className={`whitespace-nowrap px-4 sm:px-6 py-3 font-medium transition-colors ${activeTab === 'admission'
               ? 'border-b-2 border-blue-600 text-blue-500'
               : 'text-neutral-400 hover:text-white'
               }`}
@@ -244,7 +244,7 @@ export default function Home() {
           </button>
           <button
             onClick={() => setActiveTab('discharged')}
-            className={`px-6 py-3 font-medium transition-colors ${activeTab === 'discharged'
+            className={`whitespace-nowrap px-4 sm:px-6 py-3 font-medium transition-colors ${activeTab === 'discharged'
               ? 'border-b-2 border-green-600 text-green-500'
               : 'text-neutral-400 hover:text-white'
               }`}

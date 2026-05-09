@@ -175,12 +175,12 @@ export default function WeekOffTab() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h2 className="text-xl font-semibold text-white">Week-Off Groups</h2>
         {!showForm && (
           <button
             onClick={() => setShowForm(true)}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors w-full sm:w-auto"
           >
             + Add Group
           </button>
@@ -224,7 +224,7 @@ export default function WeekOffTab() {
               ))}
             </div>
           </div>
-          <div className="flex gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:flex">
             <button
               type="submit"
               disabled={loading}
@@ -266,7 +266,7 @@ export default function WeekOffTab() {
                 key={g.id}
                 className="bg-neutral-800 border border-neutral-700 rounded-xl overflow-hidden"
               >
-                <div className="flex items-center justify-between p-4">
+                <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
                   <div
                     className="flex-1 cursor-pointer"
                     onClick={() => setExpandedId(isExpanded ? null : g.id)}
@@ -277,7 +277,7 @@ export default function WeekOffTab() {
                       {g.employeeIds.length} employee(s)
                     </p>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2">
                     {confirmDeleteId === g.id ? (
                       <>
                         <span className="text-xs text-neutral-400">Delete?</span>

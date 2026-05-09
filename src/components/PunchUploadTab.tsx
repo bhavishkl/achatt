@@ -201,8 +201,8 @@ export default function PunchUploadTab() {
   }, [clearPunchRecords]);
 
   return (
-    <div className="max-w-7xl mx-auto p-6">
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+    <div className="mx-auto max-w-7xl px-0 py-2 sm:py-4">
+      <div className="mb-6 rounded-lg border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Upload Biometric Punch Data</h2>
         
         <div className="mb-4">
@@ -222,7 +222,7 @@ export default function PunchUploadTab() {
           )}
         </div>
 
-        <div className="flex gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:flex">
           <button
             onClick={handleUpload}
             disabled={!file || status === "processing"}
@@ -255,12 +255,54 @@ export default function PunchUploadTab() {
       </div>
 
       {processedPunches.length > 0 && (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">
             Processed Punch Records ({processedPunches.length})
           </h3>
-          
-          <div className="overflow-x-auto">
+
+          <div className="space-y-3 md:hidden">
+            {processedPunches.map((punch, index) => {
+              const employee = employees.find(emp => emp.employeeId === punch.employeeId);
+              return (
+                <div key={index} className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="truncate text-base font-semibold text-gray-900">
+                        {employee?.name || punch.employeeId}
+                      </p>
+                      <p className="mt-1 text-sm text-gray-500">{punch.employeeId}</p>
+                    </div>
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                      punch.status === 'present' ? 'bg-green-100 text-green-800' :
+                      punch.status === 'missed' ? 'bg-yellow-100 text-yellow-800' :
+                      'bg-red-100 text-red-800'
+                    }`}>
+                      {punch.status === 'present' ? 'Present' :
+                       punch.status === 'missed' ? 'Missed Punch' :
+                       'Absent'}
+                    </span>
+                  </div>
+
+                  <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
+                    <div className="rounded-lg bg-white px-3 py-2">
+                      <p className="text-xs uppercase tracking-wide text-gray-500">Date</p>
+                      <p className="mt-1 text-gray-900">{punch.date}</p>
+                    </div>
+                    <div className="rounded-lg bg-white px-3 py-2">
+                      <p className="text-xs uppercase tracking-wide text-gray-500">Punch In</p>
+                      <p className="mt-1 text-gray-900">{punch.punchIn || "-"}</p>
+                    </div>
+                    <div className="rounded-lg bg-white px-3 py-2">
+                      <p className="text-xs uppercase tracking-wide text-gray-500">Punch Out</p>
+                      <p className="mt-1 text-gray-900">{punch.punchOut || "-"}</p>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="hidden overflow-x-auto md:block">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>

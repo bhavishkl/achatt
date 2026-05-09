@@ -1,74 +1,103 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import CreateCompanyModal from "@/components/CreateCompanyModal";
 import { useAppStore } from "@/lib/store";
 import type { Company } from "@/lib/types";
-import CreateCompanyModal from "@/components/CreateCompanyModal";
 
-export default function AppHeader() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [userEmail, setUserEmail] = useState<string | null>(null);
-  const [userId, setUserId] = useState<string | null>(null);
+type AppHeaderProps = {
+  children: React.ReactNode;
+};
+
+const NAV_LINKS = [
+  { href: "/attendance", label: "Attendance", description: "Employees, shifts, and reports", icon: "⏱" },
+  { href: "/", label: "Inpatients", description: "Admissions, bills, and discharge history", icon: "🛏" },
+  { href: "/apt", label: "Appointments", description: "Daily OP queue and follow-ups", icon: "🗓" },
+  { href: "/dcard", label: "Discharge Card", description: "Templates and exported summaries", icon: "📄" },
+];
+
+export default function AppHeader({ children }: AppHeaderProps) {
   const [company, setCompany] = useState<Company | null>(null);
   const [isCompanyModalOpen, setIsCompanyModalOpen] = useState(false);
+  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
   const setCompanyId = useAppStore((s) => s.setCompanyId);
+  const authState =
+    typeof window === "undefined"
+      ? { isAuthenticated: false, userEmail: null as string | null, userId: null as string | null }
+      : {
+          isAuthenticated:
+            (sessionStorage.getItem("isAuthenticated") ?? localStorage.getItem("isAuthenticated")) === "true",
+          userEmail: sessionStorage.getItem("userEmail") ?? localStorage.getItem("userEmail"),
+          userId: sessionStorage.getItem("userId") ?? localStorage.getItem("userId"),
+        };
 
   useEffect(() => {
-    // Skip auth check on login page to avoid redirect loops or weird behavior
-    // But we still might want to check if they ARE logged in to redirect them OUT of login (though the login page handles that)
-    const session = sessionStorage.getItem('isAuthenticated') ?? localStorage.getItem('isAuthenticated');
-    const email = sessionStorage.getItem('userEmail') ?? localStorage.getItem('userEmail');
-    const uid = sessionStorage.getItem('userId') ?? localStorage.getItem('userId');
-
-    if (session === 'true') {
-      setIsAuthenticated(true);
-      setUserEmail(email);
-      setUserId(uid);
-
-      if (uid) {
-        fetch(`/api/user/company?userId=${uid}`)
-          .then((res) => res.json())
-          .then((data) => {
-            if (data.company) {
-              setCompany(data.company);
-              setCompanyId(data.company.id);
-            } else {
-              // Only open modal if we are securely logged in and not on a public page (though all are protected except login)
-              if (pathname !== '/login' && pathname !== '/company-profile') {
-                setIsCompanyModalOpen(true);
-              }
-            }
-          })
-          .catch((err) => console.error("Error fetching company:", err));
+    if (!authState.isAuthenticated) {
+      if (pathname !== "/login") {
+        router.push("/login");
       }
-    } else {
-      if (pathname !== '/login') {
-        router.push('/login');
-      }
-      setIsAuthenticated(false);
-      setUserEmail(null);
-      setUserId(null);
-      setCompany(null);
-      setCompanyId(null);
+      return;
     }
-  }, [pathname, router, setCompanyId]); // Re-run on path change to re-validate if needed
+
+    if (!authState.userId) {
+      return;
+    }
+
+    let isCancelled = false;
+
+    fetch(`/api/user/company?userId=${authState.userId}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (isCancelled) {
+          return;
+        }
+
+        if (data.company) {
+          setCompany(data.company);
+          setCompanyId(data.company.id);
+          setIsCompanyModalOpen(false);
+        } else {
+          setCompany(null);
+          setCompanyId(null);
+          if (pathname !== "/login" && pathname !== "/company-profile") {
+            setIsCompanyModalOpen(true);
+          }
+        }
+      })
+      .catch((err) => console.error("Error fetching company:", err));
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [authState.isAuthenticated, authState.userId, pathname, router, setCompanyId]);
+
+  useEffect(() => {
+    if (!isMobileNavOpen) {
+      document.body.style.overflow = "";
+      return;
+    }
+
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isMobileNavOpen]);
 
   const handleSignOut = () => {
-    sessionStorage.removeItem('isAuthenticated');
-    sessionStorage.removeItem('userEmail');
-    sessionStorage.removeItem('userId');
-    localStorage.removeItem('isAuthenticated');
-    localStorage.removeItem('userEmail');
-    localStorage.removeItem('userId');
+    sessionStorage.removeItem("isAuthenticated");
+    sessionStorage.removeItem("userEmail");
+    sessionStorage.removeItem("userId");
+    localStorage.removeItem("isAuthenticated");
+    localStorage.removeItem("userEmail");
+    localStorage.removeItem("userId");
     setCompanyId(null);
-    setIsAuthenticated(false);
-    setUserEmail(null);
     setCompany(null);
-    router.push('/login');
+    setIsMobileNavOpen(false);
+    router.push("/login");
   };
 
   const handleCompanyCreated = (newCompany: Company) => {
@@ -77,62 +106,137 @@ export default function AppHeader() {
     setIsCompanyModalOpen(false);
   };
 
-  // Do not render header on login page
-  if (pathname === '/login') {
+  if (pathname === "/login") {
+    return <>{children}</>;
+  }
+
+  if (!authState.isAuthenticated) {
     return null;
   }
 
-  // If not authenticated and not on login page, we might want to redirect
-  // But this component is just the header. The page protection logic is technically separate, 
-  // but originally was bundled. We'll leave strict protection to the pages or a separate wrapper.
-  // For now, if not authenticated, we'll render a minimal header or nothing.
-  if (!isAuthenticated) {
-     return null; 
-  }
+  const companyName = company?.name || "Presently";
+
+  const navContent = (
+    <div className="flex h-full flex-col">
+      <div className="border-b border-neutral-800 px-4 py-4">
+        <p className="text-xs font-semibold uppercase tracking-[0.24em] text-neutral-500">Workspace</p>
+        <p className="mt-2 text-lg font-semibold text-white">{companyName}</p>
+        <p className="mt-1 text-sm text-neutral-400">Core navigation for attendance, patients, and appointments.</p>
+      </div>
+
+      <nav className="flex-1 space-y-2 overflow-y-auto px-3 py-4">
+        {NAV_LINKS.map((link) => {
+          const isActive = pathname === link.href;
+
+          return (
+            <Link
+              key={link.href}
+              href={link.href}
+              onClick={() => setIsMobileNavOpen(false)}
+              className={`block rounded-2xl border px-4 py-3 transition-colors ${
+                isActive
+                  ? "border-blue-500/40 bg-blue-500/10 text-white"
+                  : "border-transparent bg-neutral-900 text-neutral-300 hover:border-neutral-800 hover:bg-neutral-800 hover:text-white"
+              }`}
+            >
+              <div className="flex items-start gap-3">
+                <span className="mt-0.5 text-lg">{link.icon}</span>
+                <div className="min-w-0">
+                  <p className="text-sm font-medium">{link.label}</p>
+                  <p className="mt-1 text-xs text-neutral-500">{link.description}</p>
+                </div>
+              </div>
+            </Link>
+          );
+        })}
+      </nav>
+
+      <div className="border-t border-neutral-800 px-4 py-4">
+        <p className="truncate text-sm text-neutral-300">{authState.userEmail}</p>
+        <button
+          onClick={handleSignOut}
+          className="mt-3 w-full rounded-xl bg-red-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-red-700"
+        >
+          Sign Out
+        </button>
+      </div>
+    </div>
+  );
 
   return (
     <>
       <CreateCompanyModal
         isOpen={isCompanyModalOpen}
-        userId={userId}
+        userId={authState.userId}
         onCompanyCreated={handleCompanyCreated}
       />
-      
-      <header className="bg-neutral-900 border-b border-neutral-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-          <Link href="/attendance">
-            <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-white hover:text-blue-400 transition-colors">
-                {company ? `📋 ${company.name}` : "📋 PRESENTLY"}
-              </h1>
-              <p className="text-sm text-neutral-400 mt-1">
-                Manage hospital, employees, patients, and generate monthly reports
-              </p>
+
+      <div className="min-h-screen bg-neutral-950 text-white">
+        <header className="app-header sticky top-0 z-40 border-b border-neutral-800 bg-neutral-950/95 backdrop-blur">
+          <div className="mx-auto flex max-w-[1600px] items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8">
+            <div className="flex min-w-0 items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setIsMobileNavOpen(true)}
+                className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-neutral-800 bg-neutral-900 text-neutral-200 lg:hidden"
+                aria-label="Open navigation"
+              >
+                <span className="text-lg">☰</span>
+              </button>
+
+              <Link href="/attendance" className="min-w-0">
+                <p className="truncate text-base font-semibold text-white sm:text-lg">{companyName}</p>
+                <p className="hidden text-sm text-neutral-400 sm:block">Hospital operations dashboard</p>
+              </Link>
             </div>
-          </Link>
-          <div className="flex items-center gap-4">
-            {userEmail && <p className="text-sm text-neutral-300">{userEmail}</p>}
-            <Link
-              href="/company-profile"
-              className="px-4 py-2 text-sm font-medium text-white bg-neutral-800 rounded-lg hover:bg-neutral-700"
-            >
-              Company Profile
-            </Link>
-            <Link
-              href="/apt"
-              className="px-4 py-2 text-sm font-medium text-white bg-neutral-800 rounded-lg hover:bg-neutral-700"
-            >
-              Appointments
-            </Link>
-            <button
-              onClick={handleSignOut}
-              className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700"
-            >
-              Sign Out
-            </button>
+
+            <div className="flex items-center gap-2 sm:gap-3">
+              {authState.userEmail ? (
+                <p className="hidden max-w-56 truncate text-sm text-neutral-400 md:block">{authState.userEmail}</p>
+              ) : null}
+              <button
+                onClick={handleSignOut}
+                className="rounded-xl border border-neutral-800 bg-neutral-900 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-neutral-800 sm:px-4"
+              >
+                Sign Out
+              </button>
+            </div>
           </div>
+        </header>
+
+        <div className="mx-auto flex max-w-[1600px]">
+          <aside className="sticky top-[var(--app-header-height)] hidden h-[calc(100vh-var(--app-header-height))] w-80 shrink-0 border-r border-neutral-800 bg-neutral-950 lg:block">
+            {navContent}
+          </aside>
+
+          <main className="min-w-0 flex-1">{children}</main>
         </div>
-      </header>
+
+        {isMobileNavOpen ? (
+          <div className="fixed inset-0 z-50 lg:hidden" aria-modal="true" role="dialog">
+            <button
+              type="button"
+              className="absolute inset-0 bg-black/70"
+              onClick={() => setIsMobileNavOpen(false)}
+              aria-label="Close navigation"
+            />
+            <aside className="absolute left-0 top-0 h-full w-[min(20rem,88vw)] border-r border-neutral-800 bg-neutral-950 shadow-2xl">
+              <div className="flex items-center justify-between border-b border-neutral-800 px-4 py-3">
+                <p className="text-sm font-semibold uppercase tracking-[0.24em] text-neutral-400">Navigation</p>
+                <button
+                  type="button"
+                  onClick={() => setIsMobileNavOpen(false)}
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-neutral-800 bg-neutral-900 text-neutral-200"
+                  aria-label="Close navigation"
+                >
+                  <span className="text-lg">×</span>
+                </button>
+              </div>
+              {navContent}
+            </aside>
+          </div>
+        ) : null}
+      </div>
     </>
   );
 }

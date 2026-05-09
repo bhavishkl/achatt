@@ -28,7 +28,7 @@ export function AppointmentForm({
   return (
     <form
       onSubmit={onSubmit}
-      className="mb-6 space-y-4 rounded-lg border border-neutral-800 bg-neutral-900 p-5"
+      className="mb-6 space-y-4 rounded-lg border border-neutral-800 bg-neutral-900 p-4 sm:p-5"
     >
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <label className="text-sm">
@@ -90,7 +90,7 @@ export function AppointmentForm({
 
       <button
         type="submit"
-        className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium hover:bg-blue-700"
+        className="w-full rounded-md bg-blue-600 px-4 py-2 text-sm font-medium hover:bg-blue-700 sm:w-auto"
       >
         Save Appointment
       </button>

@@ -54,16 +54,25 @@ export default function AddBillModal({
   useEffect(() => {
     if (!isOpen) return;
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setBillItems(toDraftItemsFromBill(existingBill));
+     
     setInputDesc("");
+     
     setInputRate("");
+     
     setInputQty(1);
+     
     setPackageQty(1);
+     
     setConcession(existingBill?.concession ?? 0);
+     
     setDischargeDate(existingBill?.dischargeDate ?? patient?.dischargeDate ?? "");
+     
     setIsIpFinalBill(existingBill?.ipBillType === "final");
 
     const packageFromWard = patient ? getPackageByWard(patient.wardName) : null;
+     
     setSelectedPackageId(packageFromWard?.id ?? WARD_BILL_PACKAGES[0]?.id ?? "");
   }, [isOpen, existingBill, patient]);
 
@@ -72,6 +81,7 @@ export default function AddBillModal({
 
     const userId = getStoredUserId();
     if (!userId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setCompanyProfile(null);
       return;
     }

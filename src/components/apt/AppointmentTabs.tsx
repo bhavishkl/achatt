@@ -33,9 +33,9 @@ export function AppointmentTabs({
   }
 
   return (
-    <div className="border-b border-neutral-800 bg-neutral-950/70 px-3 pt-3">
+    <div className="border-b border-neutral-800 bg-neutral-950/70 px-3 pt-3 sm:px-4">
       <div className="flex flex-col gap-3 pb-3 md:flex-row md:items-start md:justify-between">
-        <div className="flex flex-wrap gap-2">
+        <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 scrollbar-hide md:mx-0 md:flex-wrap md:overflow-visible md:px-0">
           {appointmentDates.map((appointmentDate) => {
             const isActive = appointmentDate === activeDateTab;
 
@@ -44,7 +44,7 @@ export function AppointmentTabs({
                 key={appointmentDate}
                 type="button"
                 onClick={() => onDateTabChange(appointmentDate)}
-                className={`rounded-t-md border px-4 py-2 text-sm transition ${
+                className={`shrink-0 rounded-md border px-3 py-2 text-sm transition sm:px-4 ${
                   isActive
                     ? "border-neutral-700 border-b-neutral-900 bg-neutral-900 text-white"
                     : "border-transparent bg-neutral-800/70 text-neutral-400 hover:bg-neutral-800 hover:text-white"
@@ -56,7 +56,7 @@ export function AppointmentTabs({
           })}
         </div>
 
-        <div className="flex flex-wrap gap-2">
+        <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
           <button
             type="button"
             onClick={onExportPdf}

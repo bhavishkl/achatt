@@ -205,19 +205,19 @@ export default function EmployeesTab() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h2 className="text-xl font-semibold text-white">Employees</h2>
         {!showForm && !showAdvanceForm && (
-          <div className="flex gap-2">
+          <div className="grid grid-cols-1 gap-2 sm:flex">
             <button
               onClick={() => setShowAdvanceForm(true)}
-              className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+              className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors w-full sm:w-auto"
             >
               + Add Advance
             </button>
             <button
               onClick={() => setShowForm(true)}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors w-full sm:w-auto"
             >
               + Add Employee
             </button>
@@ -256,7 +256,7 @@ export default function EmployeesTab() {
                   required
                 />
               </div>
-              <div className="flex gap-3 pt-4 border-t border-neutral-800">
+              <div className="grid grid-cols-1 gap-3 pt-4 border-t border-neutral-800 sm:grid-cols-2">
                 <button
                   type="submit"
                   disabled={loading || !advanceEmpId || !advanceAmount}
@@ -338,7 +338,7 @@ export default function EmployeesTab() {
               </select>
             </div>
           </div>
-          <div className="flex gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:flex">
             <button
               type="submit"
               disabled={loading}
@@ -365,7 +365,72 @@ export default function EmployeesTab() {
           <p className="text-sm">Add your first employee to get started.</p>
         </div>
       ) : (
-        <div className="overflow-x-auto">
+        <>
+          <div className="space-y-3 md:hidden">
+            {employees.map((emp) => (
+              <div
+                key={emp.id}
+                className="rounded-xl border border-neutral-800 bg-neutral-900 p-4"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="font-mono text-xs text-neutral-500">{emp.employeeId}</p>
+                    <p className="truncate text-base font-medium text-white">{emp.name}</p>
+                    <p className="mt-1 text-sm text-neutral-400">{emp.department}</p>
+                  </div>
+                  {confirmDeleteId === emp.id ? (
+                    <div className="shrink-0 text-right">
+                      <p className="text-xs text-neutral-400">Delete?</p>
+                      <div className="mt-1 flex justify-end gap-2">
+                        <button
+                          onClick={() => handleDelete(emp.id)}
+                          className="text-red-400 hover:text-red-300 text-xs font-medium"
+                        >
+                          Yes
+                        </button>
+                        <button
+                          onClick={() => setConfirmDeleteId(null)}
+                          className="text-neutral-400 hover:text-neutral-300 text-xs font-medium"
+                        >
+                          No
+                        </button>
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
+
+                <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
+                  <div className="rounded-lg bg-neutral-950 px-3 py-2">
+                    <p className="text-xs uppercase tracking-wide text-neutral-500">Basic Salary</p>
+                    <p className="mt-1 text-neutral-200">₹{emp.basicSalary.toLocaleString()}</p>
+                  </div>
+                  <div className="rounded-lg bg-neutral-950 px-3 py-2">
+                    <p className="text-xs uppercase tracking-wide text-neutral-500">Advance</p>
+                    <p className="mt-1 text-purple-400">₹{(emp.advanceAmount || 0).toLocaleString()}</p>
+                  </div>
+                </div>
+
+                {confirmDeleteId !== emp.id ? (
+                  <div className="mt-4 grid grid-cols-2 gap-2">
+                    <button
+                      onClick={() => startEdit(emp)}
+                      className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => setConfirmDeleteId(emp.id)}
+                      className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                ) : null}
+              </div>
+            ))}
+          </div>
+
+          <div className="hidden overflow-x-auto md:block">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-neutral-700 text-neutral-400">
@@ -430,7 +495,8 @@ export default function EmployeesTab() {
               ))}
             </tbody>
           </table>
-        </div>
+          </div>
+        </>
       )}
     </div>
   );

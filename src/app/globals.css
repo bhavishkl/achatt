@@ -1,5 +1,15 @@
 @import "tailwindcss";
 
+:root {
+  --app-header-height: 65px;
+}
+
+@media (min-width: 640px) {
+  :root {
+    --app-header-height: 73px;
+  }
+}
+
 /* Hide scrollbar for tab navigation */
 .scrollbar-hide {
   -ms-overflow-style: none;
@@ -33,7 +43,7 @@ select option {
   }
 
   /* Hide navigation, buttons, inputs */
-  header, nav, button, input, select, .no-print {
+  header, nav, aside, button, input, select, .no-print {
     display: none !important;
   }
 

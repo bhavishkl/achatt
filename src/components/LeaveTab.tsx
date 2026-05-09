@@ -428,10 +428,10 @@ export default function LeaveTab() {
 
   return (
     <div>
-      <div className="flex gap-4 mb-6 border-b border-neutral-700">
+      <div className="-mx-1 mb-6 flex gap-3 overflow-x-auto border-b border-neutral-700 px-1 scrollbar-hide">
         <button
           onClick={() => setActiveSubTab("daily")}
-          className={`pb-2 px-1 text-sm font-medium transition-colors ${activeSubTab === "daily"
+          className={`shrink-0 pb-2 px-1 text-sm font-medium transition-colors ${activeSubTab === "daily"
             ? "text-blue-400 border-b-2 border-blue-400"
             : "text-neutral-400 hover:text-neutral-200"
             }`}
@@ -440,7 +440,7 @@ export default function LeaveTab() {
         </button>
         <button
           onClick={() => setActiveSubTab("groups")}
-          className={`pb-2 px-1 text-sm font-medium transition-colors ${activeSubTab === "groups"
+          className={`shrink-0 pb-2 px-1 text-sm font-medium transition-colors ${activeSubTab === "groups"
             ? "text-blue-400 border-b-2 border-blue-400"
             : "text-neutral-400 hover:text-neutral-200"
             }`}
@@ -462,7 +462,7 @@ export default function LeaveTab() {
               type="date"
               value={selectedDate}
               onChange={(e) => setSelectedDate(e.target.value)}
-              className="bg-neutral-800 border border-neutral-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full bg-neutral-800 border border-neutral-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 sm:w-auto"
             />
           </div>
 
@@ -568,7 +568,7 @@ export default function LeaveTab() {
                         )}
                       </div>
 
-                      <div className="flex flex-wrap gap-2">
+                      <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
                         <button
                           onClick={() => markLeave(emp.id)}
                           className="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors bg-orange-600 hover:bg-orange-700 text-white"
@@ -614,12 +614,12 @@ export default function LeaveTab() {
         </>
       ) : (
         <>
-          <div className="flex items-center justify-between mb-6">
+          <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <h2 className="text-xl font-semibold text-white">Leave Groups</h2>
             {!showGroupForm && (
               <button
                 onClick={() => setShowGroupForm(true)}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors w-full sm:w-auto"
               >
                 + Add Group
               </button>
@@ -654,7 +654,7 @@ export default function LeaveTab() {
                   className="w-full bg-neutral-900 border border-neutral-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
-              <div className="flex gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:flex">
                 <button
                   type="submit"
                   disabled={loading}
@@ -694,7 +694,7 @@ export default function LeaveTab() {
                     key={g.id}
                     className="bg-neutral-800 border border-neutral-700 rounded-xl overflow-hidden"
                   >
-                    <div className="flex items-center justify-between p-4">
+                    <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
                       <div
                         className="flex-1 cursor-pointer"
                         onClick={() => setExpandedGroupId(isExpanded ? null : g.id)}
@@ -704,7 +704,7 @@ export default function LeaveTab() {
                           {g.leavesPerMonth} leaves/month · {g.employeeIds.length} employee(s)
                         </p>
                       </div>
-                      <div className="flex gap-2">
+                      <div className="flex flex-wrap gap-2">
                         {confirmDeleteGroupId === g.id ? (
                           <>
                             <span className="text-xs text-neutral-400">Delete?</span>

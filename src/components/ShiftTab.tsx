@@ -269,12 +269,12 @@ export default function ShiftTab() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h2 className="text-xl font-semibold text-white">Shift Groups</h2>
         {!showForm && (
           <button
             onClick={() => setShowForm(true)}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors w-full sm:w-auto"
           >
             + Add Group
           </button>
@@ -319,7 +319,7 @@ export default function ShiftTab() {
               />
             </div>
           </div>
-          <div className="flex gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:flex">
             <button
               type="submit"
               disabled={loading}
@@ -361,7 +361,7 @@ export default function ShiftTab() {
                 key={g.id}
                 className="bg-neutral-800 border border-neutral-700 rounded-xl overflow-hidden"
               >
-                <div className="flex items-center justify-between p-4">
+                <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
                   <div
                     className="flex-1 cursor-pointer"
                     onClick={() => setExpandedId(isExpanded ? null : g.id)}
@@ -371,7 +371,7 @@ export default function ShiftTab() {
                       {g.startTime} – {g.endTime} · {g.employeeIds.length} employee(s)
                     </p>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2">
                     {confirmDeleteId === g.id ? (
                       <>
                         <span className="text-xs text-neutral-400">Delete?</span>
@@ -459,12 +459,12 @@ export default function ShiftTab() {
 
       {/* --- Rotational Shifts Section --- */}
       <div className="mt-12 pt-8 border-t border-neutral-700">
-        <div className="flex items-center justify-between mb-6">
+        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h2 className="text-xl font-semibold text-white">Rotational Shifts</h2>
           {!showRotationForm && (
             <button
               onClick={() => setShowRotationForm(true)}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors w-full sm:w-auto"
             >
               + Add Rotation
             </button>
@@ -541,7 +541,7 @@ export default function ShiftTab() {
                 />
               </div>
             </div>
-            <div className="flex gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:flex">
               <button
                 type="submit"
                 disabled={rotationLoading}
@@ -568,7 +568,51 @@ export default function ShiftTab() {
             No rotational shifts assigned yet.
           </div>
         ) : (
-          <div className="overflow-x-auto bg-neutral-800 border border-neutral-700 rounded-xl">
+          <>
+          <div className="space-y-3 md:hidden">
+            {shiftRotations.map((rot) => {
+              const emp = employees.find((e) => e.id === rot.employeeId);
+              return (
+                <div key={rot.id} className="rounded-xl border border-neutral-700 bg-neutral-800 p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="truncate text-base font-medium text-white">{emp?.name || "Unknown"}</p>
+                      <p className="mt-1 text-sm capitalize text-neutral-400">
+                        {rot.shiftType} shift
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => handleDeleteRotation(rot.id)}
+                      className="shrink-0 rounded-lg bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700"
+                    >
+                      Delete
+                    </button>
+                  </div>
+
+                  <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
+                    <div className="rounded-lg bg-neutral-900 px-3 py-2">
+                      <p className="text-xs uppercase tracking-wide text-neutral-500">Start Time</p>
+                      <p className="mt-1 text-neutral-200">{rot.startTime || "-"}</p>
+                    </div>
+                    <div className="rounded-lg bg-neutral-900 px-3 py-2">
+                      <p className="text-xs uppercase tracking-wide text-neutral-500">End Time</p>
+                      <p className="mt-1 text-neutral-200">{rot.endTime || "-"}</p>
+                    </div>
+                    <div className="rounded-lg bg-neutral-900 px-3 py-2">
+                      <p className="text-xs uppercase tracking-wide text-neutral-500">Start Date</p>
+                      <p className="mt-1 text-neutral-200">{rot.startDate}</p>
+                    </div>
+                    <div className="rounded-lg bg-neutral-900 px-3 py-2">
+                      <p className="text-xs uppercase tracking-wide text-neutral-500">End Date</p>
+                      <p className="mt-1 text-neutral-200">{rot.endDate}</p>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="hidden overflow-x-auto bg-neutral-800 border border-neutral-700 rounded-xl md:block">
             <table className="w-full text-left text-sm text-neutral-300">
               <thead className="bg-neutral-900 border-b border-neutral-700 text-neutral-400">
                 <tr>
@@ -609,6 +653,7 @@ export default function ShiftTab() {
               </tbody>
             </table>
           </div>
+          </>
         )}
       </div>
     </div>

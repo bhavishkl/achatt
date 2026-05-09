@@ -13,6 +13,11 @@ type SortDir = 'asc' | 'desc';
 
 const PAGE_SIZE = 10;
 
+const SortIcon = ({ field, sortField, sortDir }: { field: SortField, sortField: SortField, sortDir: SortDir }) => {
+    if (sortField !== field) return <span className="text-neutral-600 ml-1">↕</span>;
+    return <span className="text-blue-400 ml-1">{sortDir === 'asc' ? '↑' : '↓'}</span>;
+};
+
 export default function DischargedPatientsTable({
     patients,
     onViewBill,
@@ -106,11 +111,6 @@ export default function DischargedPatientsTable({
         setPage(1);
     };
 
-    const SortIcon = ({ field }: { field: SortField }) => {
-        if (sortField !== field) return <span className="text-neutral-600 ml-1">↕</span>;
-        return <span className="text-blue-400 ml-1">{sortDir === 'asc' ? '↑' : '↓'}</span>;
-    };
-
     const clearFilters = () => {
         setSearch('');
         setDateFrom('');
@@ -199,10 +199,10 @@ export default function DischargedPatientsTable({
                         <thead className="bg-neutral-800 text-neutral-400">
                             <tr>
                                 <th className="p-4 cursor-pointer select-none hover:text-white transition-colors" onClick={() => handleSort('regNo')}>
-                                    Reg No <SortIcon field="regNo" />
+                                    Reg No <SortIcon field="regNo" sortField={sortField} sortDir={sortDir} />
                                 </th>
                                 <th className="p-4 cursor-pointer select-none hover:text-white transition-colors" onClick={() => handleSort('name')}>
-                                    Patient <SortIcon field="name" />
+                                    Patient <SortIcon field="name" sortField={sortField} sortDir={sortDir} />
                                 </th>
                                 <th className="p-4 cursor-pointer select-none hover:text-white transition-colors" onClick={() => handleSort('wardDetails')}>
                                     Ward Details <SortIcon field="wardDetails" />
@@ -214,7 +214,7 @@ export default function DischargedPatientsTable({
                                     Discharged <SortIcon field="dischargeDate" />
                                 </th>
                                 <th className="p-4 cursor-pointer select-none hover:text-white transition-colors" onClick={() => handleSort('totalBill')}>
-                                    Total Bill <SortIcon field="totalBill" />
+                                    Total Bill <SortIcon field="totalBill" sortField={sortField} sortDir={sortDir} />
                                 </th>
                             </tr>
                         </thead>

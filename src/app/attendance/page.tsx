@@ -26,14 +26,14 @@ export default function AttendancePage() {
   return (
     <main className="min-h-screen bg-neutral-950">
       {/* Tab navigation */}
-      <nav className="bg-neutral-900/50 border-b border-neutral-800 sticky top-0 z-10 backdrop-blur-sm">
+      <nav className="sticky top-[var(--app-header-height)] z-10 border-b border-neutral-800 bg-neutral-900/50 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex gap-1 overflow-x-auto py-2 scrollbar-hide">
+          <div className="-mx-1 flex gap-1 overflow-x-auto px-1 py-2 scrollbar-hide">
             {TABS.map((tab) => (
               <button
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key)}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
+                className={`flex shrink-0 items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium whitespace-nowrap transition-colors sm:px-4 ${
                   activeTab === tab.key
                     ? "bg-blue-600 text-white"
                     : "text-neutral-400 hover:text-white hover:bg-neutral-800"
@@ -48,7 +48,7 @@ export default function AttendancePage() {
       </nav>
 
       {/* Tab content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
         {activeTab === "employees" && <EmployeesTab />}
         {activeTab === "weekoff" && <WeekOffTab />}
         {activeTab === "holiday" && <HolidayTab />}

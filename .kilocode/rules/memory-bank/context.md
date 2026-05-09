@@ -1,6 +1,23 @@
 # Context
 
 ## Recent Changes
+- Improved `/attendance` mobile responsiveness across `src/app/attendance/page.tsx` and the attendance tab components:
+  - kept the main attendance tab switcher horizontally scrollable on small screens
+  - converted dense employee, shift-rotation, and punch-upload tables into mobile card layouts while preserving desktop tables
+  - stacked tab headers, forms, filters, and action buttons for `Employees`, `Week Off`, `Holiday`, `Leave`, `Shift`, `Report`, and `Punch Upload`
+  - added a mobile hint and safer stacked controls for the wide monthly report grid
+- Improved `/apt` mobile responsiveness across `src/app/apt/page.tsx` and `src/components/apt/`:
+  - reduced outer page/form padding for narrow screens
+  - made date tabs horizontally scrollable instead of forcing page overflow
+  - switched the appointments list to stacked mobile cards below `md` while keeping the table on larger screens
+  - kept export/share actions and inline transfer controls usable on small screens
+- Reworked the authenticated app shell in `src/components/AppHeader.tsx` and `src/app/layout.tsx`:
+  - decluttered the top header into a compact sticky bar with brand, user email, and sign-out
+  - moved primary route links into a dedicated desktop sidebar plus a mobile slide-out drawer
+  - added route entries for Attendance, Inpatients, Appointments, Company Profile, and Discharge Card
+- Updated responsive layout support in `src/app/globals.css` and `src/app/attendance/page.tsx`:
+  - introduced `--app-header-height` so sticky page-level nav can sit below the global header
+  - adjusted the Attendance tabs sticky offset to work inside the new shell on desktop and mobile
 - Center-aligned appointments PDF table cell content in `src/app/apt/page.tsx` by setting both horizontal and vertical alignment for header and body cells.
 - Adjusted appointments PDF table styling in `src/app/apt/page.tsx` to use uniform `0.2` cell padding on all sides and explicit all-side cell borders for both header and body cells.
 - Updated `/apt` appointment row actions to use icon-only buttons instead of text labels in `src/components/apt/AppointmentTable.tsx`, with accessible `aria-label` and `title` text preserved.
