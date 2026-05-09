@@ -1,6 +1,25 @@
 # Context
 
 ## Recent Changes
+- Center-aligned appointments PDF table cell content in `src/app/apt/page.tsx` by setting both horizontal and vertical alignment for header and body cells.
+- Adjusted appointments PDF table styling in `src/app/apt/page.tsx` to use uniform `0.2` cell padding on all sides and explicit all-side cell borders for both header and body cells.
+- Updated `/apt` appointment row actions to use icon-only buttons instead of text labels in `src/components/apt/AppointmentTable.tsx`, with accessible `aria-label` and `title` text preserved.
+- Tightened appointments PDF row spacing in `src/app/apt/page.tsx` by removing vertical cell padding from exported table rows while keeping horizontal padding.
+- Updated appointments list ordering and numbering:
+  - added `S.No` serial numbering to the appointments table on `/apt` and to the exported/shared PDF
+  - changed per-date sorting so `cancelled` appointments are rendered at the bottom of each date list while other statuses remain above them
+- Enhanced the appointments date-tab summary and PDF export:
+  - active date header now shows total, confirmed, cancelled, and not-confirmed counts above the appointments table
+  - exported/shared appointments PDF now includes the same count summary plus a `Status` column with status-specific visual highlighting for confirmed, cancelled, and not confirmed rows
+- Refactored `src/app/apt/page.tsx` to reduce page size by extracting the appointments UI into focused components under `src/components/apt/`:
+  - `AppointmentForm.tsx`
+  - `AppointmentAlerts.tsx`
+  - `AppointmentTabs.tsx`
+  - `AppointmentTable.tsx`
+  - `TransferConfirmModal.tsx`
+  - shared `types.ts` and `utils.ts`
+- Kept `src/app/apt/page.tsx` as the owner of appointments state, derived data, API calls, validation, export/share handlers, and transfer/status actions while moving presentation into reusable components.
+- Verified the refactor with `npm run -s typecheck` (passes).
 - Implemented backend for appointments:
   - Added `GET/POST` in `src/app/api/appointments/route.ts`
   - Added transfer update `PUT` in `src/app/api/appointments/[id]/route.ts`

@@ -3,31 +3,19 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { AppointmentAlerts } from "@/components/apt/AppointmentAlerts";
+import { AppointmentForm } from "@/components/apt/AppointmentForm";
+import { AppointmentTable } from "@/components/apt/AppointmentTable";
+import { AppointmentTabs } from "@/components/apt/AppointmentTabs";
+import { TransferConfirmModal } from "@/components/apt/TransferConfirmModal";
+import { Appointment, AppointmentStatus, PendingTransfer } from "@/components/apt/types";
+import { formatStatusLabel, formatTabDate, getAppointmentStats } from "@/components/apt/utils";
 import { useAppStore } from "@/lib/store";
-
-type Appointment = {
-  id: string;
-  companyId: string;
-  name: string;
-  phone: string;
-  place: string;
-  date: string;
-  status: "pending" | "confirmed" | "cancelled" | "not_confirmed";
-  createdAt: string;
-  updatedAt: string;
-};
-
-type PendingTransfer = {
-  appointmentIndex: number;
-  fromDate: string;
-  toDate: string;
-};
-
-type AppointmentStatus = Appointment["status"];
 
 const normalize = (value: string) => value.trim().toLowerCase();
 const PHONE_ALLOWED_PATTERN = /^[\d+\-\s()]+$/;
 const SAME_DIGIT_PHONE_PATTERN = /^(\d)\1{9}$/;
+const getStatusSortWeight = (status: AppointmentStatus) => (status === "cancelled" ? 1 : 0);
 
 const getToday = () => new Date().toISOString().split("T")[0];
 
@@ -131,10 +119,16 @@ export default function AppointmentPage() {
   const sortedAppointments = useMemo(
     () =>
       [...appointments].sort((a, b) => {
-        if (a.date === b.date) {
-          return b.createdAt.localeCompare(a.createdAt);
+        if (a.date !== b.date) {
+          return a.date.localeCompare(b.date);
         }
-        return a.date.localeCompare(b.date);
+
+        const statusWeightDiff = getStatusSortWeight(a.status) - getStatusSortWeight(b.status);
+        if (statusWeightDiff !== 0) {
+          return statusWeightDiff;
+        }
+
+        return b.createdAt.localeCompare(a.createdAt);
       }),
     [appointments]
   );
@@ -180,41 +174,12 @@ export default function AppointmentPage() {
     setPhoneError("");
   };
 
-  const formatTabDate = (value: string) =>
-    new Date(`${value}T00:00:00`).toLocaleDateString(undefined, {
-      weekday: "short",
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
-
   const getActiveDateLabel = () => (activeDateTab ? formatTabDate(activeDateTab) : "");
 
-  const formatStatusLabel = (status: AppointmentStatus) => {
-    switch (status) {
-      case "confirmed":
-        return "Confirmed";
-      case "cancelled":
-        return "Cancelled";
-      case "not_confirmed":
-        return "Not Confirmed";
-      default:
-        return "Pending";
-    }
-  };
-
-  const getStatusClasses = (status: AppointmentStatus) => {
-    switch (status) {
-      case "confirmed":
-        return "border-emerald-700/40 bg-emerald-900/20 text-emerald-300";
-      case "cancelled":
-        return "border-red-700/40 bg-red-900/20 text-red-300";
-      case "not_confirmed":
-        return "border-amber-700/40 bg-amber-900/20 text-amber-300";
-      default:
-        return "border-neutral-700 bg-neutral-800 text-neutral-300";
-    }
-  };
+  const activeAppointmentStats = useMemo(
+    () => getAppointmentStats(activeAppointments),
+    [activeAppointments]
+  );
 
   const buildAppointmentsPdf = () => {
     const doc = new jsPDF();
@@ -222,17 +187,66 @@ export default function AppointmentPage() {
 
     doc.setFontSize(16);
     doc.text(title, 14, 18);
+    doc.setFontSize(10);
+    doc.text(`Total: ${activeAppointmentStats.total}`, 14, 26);
+    doc.text(`Confirmed: ${activeAppointmentStats.confirmed}`, 52, 26);
+    doc.text(`Cancelled: ${activeAppointmentStats.cancelled}`, 102, 26);
+    doc.text(`Not Confirmed: ${activeAppointmentStats.notConfirmed}`, 150, 26);
 
     autoTable(doc, {
-      startY: 26,
-      head: [["Name", "Phone", "Place"]],
-      body: activeAppointments.map((appointment) => [
+      startY: 32,
+      head: [["S.No", "Name", "Phone", "Place", "Status"]],
+      body: activeAppointments.map((appointment, index) => [
+        index + 1,
         appointment.name,
         appointment.phone,
         appointment.place,
+        formatStatusLabel(appointment.status),
       ]),
-      styles: { fontSize: 10, cellPadding: 3 },
-      headStyles: { fillColor: [23, 23, 23] },
+      styles: {
+        fontSize: 10,
+        cellPadding: 0.2,
+        lineWidth: 0.1,
+        lineColor: [0, 0, 0],
+        halign: "center",
+        valign: "middle",
+      },
+      headStyles: {
+        fillColor: [23, 23, 23],
+        lineWidth: 0.1,
+        lineColor: [0, 0, 0],
+        halign: "center",
+        valign: "middle",
+      },
+      didParseCell: (data) => {
+        if (data.section !== "body" || data.column.index !== 4) {
+          return;
+        }
+
+        const appointment = activeAppointments[data.row.index];
+        if (!appointment) {
+          return;
+        }
+
+        switch (appointment.status) {
+          case "confirmed":
+            data.cell.styles.fillColor = [220, 252, 231];
+            data.cell.styles.textColor = [22, 101, 52];
+            break;
+          case "cancelled":
+            data.cell.styles.fillColor = [254, 226, 226];
+            data.cell.styles.textColor = [153, 27, 27];
+            break;
+          case "not_confirmed":
+            data.cell.styles.fillColor = [254, 243, 199];
+            data.cell.styles.textColor = [146, 64, 14];
+            break;
+          default:
+            data.cell.styles.fillColor = [229, 229, 229];
+            data.cell.styles.textColor = [38, 38, 38];
+            break;
+        }
+      },
     });
 
     return doc;
@@ -547,262 +561,53 @@ export default function AppointmentPage() {
   return (
     <main className="min-h-screen bg-neutral-950 text-white p-6">
       <div className="max-w-4xl mx-auto">
-        <form
+        <AppointmentForm
+          name={name}
+          phone={phone}
+          place={place}
+          date={date}
+          phoneError={phoneError}
           onSubmit={handleSubmit}
-          className="rounded-lg border border-neutral-800 bg-neutral-900 p-5 mb-6 space-y-4"
-        >
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <label className="text-sm">
-              <span className="block text-neutral-300 mb-1">Name</span>
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-                className="w-full rounded-md bg-neutral-950 border border-neutral-700 px-3 py-2 outline-none focus:border-blue-500"
-              />
-            </label>
+          onNameChange={setName}
+          onPhoneChange={handlePhoneChange}
+          onPhoneBlur={handlePhoneBlur}
+          onPlaceChange={setPlace}
+          onDateChange={setDate}
+        />
 
-            <label className="text-sm">
-              <span className="block text-neutral-300 mb-1">Phone Number</span>
-              <input
-                type="tel"
-                value={phone}
-                onChange={(e) => handlePhoneChange(e.target.value)}
-                onBlur={handlePhoneBlur}
-                required
-                inputMode="numeric"
-                autoComplete="tel"
-                placeholder="10-digit mobile number"
-                className={`w-full rounded-md bg-neutral-950 border px-3 py-2 outline-none focus:border-blue-500 ${
-                  phoneError ? "border-red-500" : "border-neutral-700"
-                }`}
-              />
-              {phoneError && <span className="mt-1 block text-xs text-red-400">{phoneError}</span>}
-              {!phoneError && (
-                <span className="mt-1 block text-xs text-neutral-500">
-                  Accepts 10-digit mobile numbers and auto-handles `91` country code.
-                </span>
-              )}
-            </label>
-
-            <label className="text-sm">
-              <span className="block text-neutral-300 mb-1">Place</span>
-              <input
-                type="text"
-                value={place}
-                onChange={(e) => setPlace(e.target.value)}
-                required
-                className="w-full rounded-md bg-neutral-950 border border-neutral-700 px-3 py-2 outline-none focus:border-blue-500"
-              />
-            </label>
-
-            <label className="text-sm">
-              <span className="block text-neutral-300 mb-1">Appointment Date</span>
-              <input
-                type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                required
-                className="w-full rounded-md bg-neutral-950 border border-neutral-700 px-3 py-2 outline-none focus:border-blue-500"
-              />
-            </label>
-          </div>
-
-          <button
-            type="submit"
-            className="px-4 py-2 text-sm font-medium rounded-md bg-blue-600 hover:bg-blue-700"
-          >
-            Save Appointment
-          </button>
-        </form>
-
-        {error && (
-          <div className="mb-4 rounded-md border border-red-700/40 bg-red-900/20 px-3 py-2 text-sm text-red-300">
-            {error}
-          </div>
-        )}
-        {message && (
-          <div className="mb-4 rounded-md border border-emerald-700/40 bg-emerald-900/20 px-3 py-2 text-sm text-emerald-300">
-            {message}
-          </div>
-        )}
-        {isLoading && <div className="mb-4 text-sm text-neutral-400">Loading appointments...</div>}
+        <AppointmentAlerts error={error} message={message} isLoading={isLoading} />
 
         <div className="rounded-lg border border-neutral-800 bg-neutral-900 overflow-hidden">
-          {appointmentDates.length > 0 && (
-            <div className="border-b border-neutral-800 bg-neutral-950/70 px-3 pt-3">
-              <div className="flex flex-col gap-3 pb-3 md:flex-row md:items-start md:justify-between">
-                <div className="flex flex-wrap gap-2">
-                  {appointmentDates.map((appointmentDate) => {
-                    const isActive = appointmentDate === activeDateTab;
+          <AppointmentTabs
+            appointmentDates={appointmentDates}
+            activeDateTab={activeDateTab}
+            isExporting={isExporting}
+            hasActiveAppointments={activeAppointments.length > 0}
+            activeStats={activeAppointmentStats}
+            onDateTabChange={setActiveDateTab}
+            onExportPdf={() => void handleExportPdf()}
+            onSharePdf={() => void handleSharePdf()}
+          />
 
-                    return (
-                      <button
-                        key={appointmentDate}
-                        type="button"
-                        onClick={() => setActiveDateTab(appointmentDate)}
-                        className={`rounded-t-md border px-4 py-2 text-sm transition ${
-                          isActive
-                            ? "border-neutral-700 border-b-neutral-900 bg-neutral-900 text-white"
-                            : "border-transparent bg-neutral-800/70 text-neutral-400 hover:bg-neutral-800 hover:text-white"
-                        }`}
-                      >
-                        {formatTabDate(appointmentDate)}
-                      </button>
-                    );
-                  })}
-                </div>
-
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    onClick={handleExportPdf}
-                    disabled={isExporting || activeAppointments.length === 0}
-                    className="rounded-md bg-blue-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    {isExporting ? "Working..." : "Export PDF"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleSharePdf}
-                    disabled={isExporting || activeAppointments.length === 0}
-                    className="rounded-md bg-neutral-700 px-3 py-2 text-sm font-medium text-white transition hover:bg-neutral-600 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    Share
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          <table className="w-full text-sm">
-            <thead className="bg-neutral-800/70 text-neutral-300">
-              <tr>
-                <th className="text-left px-4 py-3">Name</th>
-                <th className="text-left px-4 py-3">Phone</th>
-                <th className="text-left px-4 py-3">Place</th>
-                <th className="text-left px-4 py-3">Status</th>
-                <th className="text-left px-4 py-3">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {activeAppointments.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="px-4 py-6 text-neutral-400 text-center">
-                    No appointments yet.
-                  </td>
-                </tr>
-              ) : (
-                activeAppointments.map((appointment) => (
-                  <tr key={appointment.id} className="border-t border-neutral-800">
-                    <td className="px-4 py-3">{appointment.name}</td>
-                    <td className="px-4 py-3">{appointment.phone}</td>
-                    <td className="px-4 py-3">{appointment.place}</td>
-                    <td className="px-4 py-3">
-                      <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-medium ${getStatusClasses(appointment.status)}`}>
-                        {formatStatusLabel(appointment.status)}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex flex-wrap gap-2">
-                        <button
-                          type="button"
-                          onClick={() => startTransfer(appointment)}
-                          disabled={updatingAppointmentId === appointment.id}
-                          className="rounded-md bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700 disabled:opacity-50"
-                        >
-                          Transfer
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => void handleStatusUpdate(appointment, "confirmed")}
-                          disabled={updatingAppointmentId === appointment.id}
-                          className="rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
-                        >
-                          Confirm
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => void handleStatusUpdate(appointment, "cancelled")}
-                          disabled={updatingAppointmentId === appointment.id}
-                          className="rounded-md bg-red-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-700 disabled:opacity-50"
-                        >
-                          Cancel
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => void handleStatusUpdate(appointment, "not_confirmed")}
-                          disabled={updatingAppointmentId === appointment.id}
-                          className="rounded-md bg-amber-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-amber-700 disabled:opacity-50"
-                        >
-                          Not Confirm
-                        </button>
-                      </div>
-                      {transferAppointmentId === appointment.id && (
-                        <div className="mt-3 flex flex-wrap items-center gap-2">
-                          <input
-                            type="date"
-                            value={transferDate}
-                            onChange={(e) => setTransferDate(e.target.value)}
-                            className="rounded-md border border-neutral-700 bg-neutral-950 px-3 py-1.5 text-xs text-white outline-none focus:border-blue-500"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => void handleRowTransfer(appointment)}
-                            disabled={updatingAppointmentId === appointment.id}
-                            className="rounded-md bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700 disabled:opacity-50"
-                          >
-                            Apply
-                          </button>
-                          <button
-                            type="button"
-                            onClick={cancelRowTransfer}
-                            disabled={updatingAppointmentId === appointment.id}
-                            className="rounded-md bg-neutral-700 px-3 py-1.5 text-xs font-medium text-white hover:bg-neutral-600 disabled:opacity-50"
-                          >
-                            Close
-                          </button>
-                        </div>
-                      )}
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+          <AppointmentTable
+            appointments={activeAppointments}
+            updatingAppointmentId={updatingAppointmentId}
+            transferAppointmentId={transferAppointmentId}
+            transferDate={transferDate}
+            onStartTransfer={startTransfer}
+            onTransferDateChange={setTransferDate}
+            onApplyTransfer={(appointment) => void handleRowTransfer(appointment)}
+            onCancelTransfer={cancelRowTransfer}
+            onStatusUpdate={(appointment, status) => void handleStatusUpdate(appointment, status)}
+          />
         </div>
       </div>
 
-      {pendingTransfer && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/60 p-4">
-          <div className="w-full max-w-md rounded-lg border border-neutral-800 bg-neutral-900 p-5">
-            <h2 className="text-lg font-semibold mb-2">Transfer Appointment?</h2>
-            <p className="text-sm text-neutral-300 mb-5">
-              This patient already has an appointment on{" "}
-              <span className="font-medium text-white">{pendingTransfer.fromDate}</span>.
-              Transfer it to{" "}
-              <span className="font-medium text-white">{pendingTransfer.toDate}</span>?
-            </p>
-            <div className="flex justify-end gap-3">
-              <button
-                type="button"
-                onClick={handleCancelTransfer}
-                className="px-4 py-2 text-sm font-medium rounded-md bg-neutral-700 hover:bg-neutral-600"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleConfirmTransfer}
-                className="px-4 py-2 text-sm font-medium rounded-md bg-blue-600 hover:bg-blue-700"
-              >
-                Transfer
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <TransferConfirmModal
+        pendingTransfer={pendingTransfer}
+        onCancel={handleCancelTransfer}
+        onConfirm={handleConfirmTransfer}
+      />
     </main>
   );
 }
