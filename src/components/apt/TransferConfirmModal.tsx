@@ -1,4 +1,5 @@
 import { PendingTransfer } from "./types";
+import { formatSessionLabel } from "./utils";
 
 type TransferConfirmModalProps = {
   pendingTransfer: PendingTransfer | null;
@@ -21,8 +22,8 @@ export function TransferConfirmModal({
         <h2 className="mb-2 text-lg font-semibold">Transfer Appointment?</h2>
         <p className="mb-5 text-sm text-neutral-300">
           This patient already has an appointment on{" "}
-          <span className="font-medium text-white">{pendingTransfer.fromDate}</span>. Transfer it
-          to <span className="font-medium text-white">{pendingTransfer.toDate}</span>?
+          <span className="font-medium text-white">{pendingTransfer.fromDate} ({formatSessionLabel(pendingTransfer.fromTimeSlot)})</span>. Transfer it
+          to <span className="font-medium text-white">{pendingTransfer.toDate} ({formatSessionLabel(pendingTransfer.toTimeSlot)})</span>?
         </p>
         <div className="flex justify-end gap-3">
           <button

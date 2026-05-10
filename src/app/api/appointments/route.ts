@@ -8,6 +8,7 @@ type AppointmentRow = {
   phone: string;
   place: string;
   appointment_date: string;
+  time_slot: string;
   status: string | null;
   created_at: string;
   updated_at: string;
@@ -17,6 +18,8 @@ function normalize(value: string) {
   return value.trim().toLowerCase();
 }
 
+const VALID_TIME_SLOTS = new Set(["morning", "evening"]);
+
 function mapAppointment(row: AppointmentRow) {
   return {
     id: row.id,
@@ -25,6 +28,7 @@ function mapAppointment(row: AppointmentRow) {
     phone: row.phone,
     place: row.place,
     date: row.appointment_date,
+    timeSlot: row.time_slot ?? "morning",
     status: row.status ?? "pending",
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -67,6 +71,7 @@ export async function POST(request: Request) {
         phone?: string;
         place?: string;
         date?: string;
+        timeSlot?: string;
       };
     };
     const companyId = body.companyId;
@@ -74,6 +79,11 @@ export async function POST(request: Request) {
 
     if (!companyId || !appointment?.name || !appointment.phone || !appointment.place || !appointment.date) {
       return NextResponse.json({ message: "Company ID and appointment fields are required" }, { status: 400 });
+    }
+
+    const timeSlot = appointment.timeSlot ?? "morning";
+    if (!VALID_TIME_SLOTS.has(timeSlot)) {
+      return NextResponse.json({ message: "Invalid time slot. Must be 'morning' or 'evening'" }, { status: 400 });
     }
 
     const normalizedName = normalize(appointment.name);
@@ -103,7 +113,7 @@ export async function POST(request: Request) {
           message: "Duplicate appointment identity exists",
           code: "DUPLICATE_IDENTITY",
           existingAppointment: mapAppointment(duplicate as AppointmentRow),
-          sameDate: String(duplicate.appointment_date) === appointment.date,
+          sameDate: String(duplicate.appointment_date) === appointment.date && String(duplicate.time_slot ?? "morning") === timeSlot,
         },
         { status: 409 }
       );
@@ -115,6 +125,7 @@ export async function POST(request: Request) {
       phone: appointment.phone.trim(),
       place: appointment.place.trim(),
       appointment_date: appointment.date,
+      time_slot: timeSlot,
       status: "pending",
     };
 

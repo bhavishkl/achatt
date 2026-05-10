@@ -1,8 +1,12 @@
+import { TimeSlot } from "./types";
+import { formatSessionLabel } from "./utils";
+
 type AppointmentFormProps = {
   name: string;
   phone: string;
   place: string;
   date: string;
+  timeSlot: TimeSlot;
   phoneError: string;
   onSubmit: React.FormEventHandler<HTMLFormElement>;
   onNameChange: (value: string) => void;
@@ -10,13 +14,17 @@ type AppointmentFormProps = {
   onPhoneBlur: () => void;
   onPlaceChange: (value: string) => void;
   onDateChange: (value: string) => void;
+  onTimeSlotChange: (value: TimeSlot) => void;
 };
+
+const TIME_SLOTS: TimeSlot[] = ["morning", "evening"];
 
 export function AppointmentForm({
   name,
   phone,
   place,
   date,
+  timeSlot,
   phoneError,
   onSubmit,
   onNameChange,
@@ -24,6 +32,7 @@ export function AppointmentForm({
   onPhoneBlur,
   onPlaceChange,
   onDateChange,
+  onTimeSlotChange,
 }: AppointmentFormProps) {
   return (
     <form
@@ -58,11 +67,7 @@ export function AppointmentForm({
             } bg-neutral-950`}
           />
           {phoneError && <span className="mt-1 block text-xs text-red-400">{phoneError}</span>}
-          {!phoneError && (
-            <span className="mt-1 block text-xs text-neutral-500">
-              Accepts 10-digit mobile numbers and auto-handles `91` country code.
-            </span>
-          )}
+          
         </label>
 
         <label className="text-sm">
@@ -86,6 +91,26 @@ export function AppointmentForm({
             className="w-full rounded-md border border-neutral-700 bg-neutral-950 px-3 py-2 outline-none focus:border-blue-500"
           />
         </label>
+
+        <div className="text-sm">
+          <span className="mb-1 block text-neutral-300">Session</span>
+          <div className="flex gap-2">
+            {TIME_SLOTS.map((slot) => (
+              <button
+                key={slot}
+                type="button"
+                onClick={() => onTimeSlotChange(slot)}
+                className={`flex-1 rounded-md border px-3 py-2 text-sm font-medium transition ${
+                  timeSlot === slot
+                    ? "border-blue-500 bg-blue-600 text-white"
+                    : "border-neutral-700 bg-neutral-950 text-neutral-400 hover:bg-neutral-800 hover:text-white"
+                }`}
+              >
+                {formatSessionLabel(slot)}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
 
       <button

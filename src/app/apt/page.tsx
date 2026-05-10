@@ -6,10 +6,10 @@ import autoTable from "jspdf-autotable";
 import { AppointmentAlerts } from "@/components/apt/AppointmentAlerts";
 import { AppointmentForm } from "@/components/apt/AppointmentForm";
 import { AppointmentTable } from "@/components/apt/AppointmentTable";
-import { AppointmentTabs } from "@/components/apt/AppointmentTabs";
+import { SessionHeader } from "@/components/apt/SessionHeader";
 import { TransferConfirmModal } from "@/components/apt/TransferConfirmModal";
-import { Appointment, AppointmentStatus, PendingTransfer } from "@/components/apt/types";
-import { formatStatusLabel, formatTabDate, getAppointmentStats } from "@/components/apt/utils";
+import { Appointment, AppointmentStatus, PendingTransfer, TimeSlot } from "@/components/apt/types";
+import { formatSessionLabel, formatStatusLabel, formatTabDate, getAppointmentStats } from "@/components/apt/utils";
 import { useAppStore } from "@/lib/store";
 
 const normalize = (value: string) => value.trim().toLowerCase();
@@ -69,13 +69,21 @@ const getPhoneValidationError = (value: string) => {
   return "";
 };
 
+const sortAppointments = (list: Appointment[]) =>
+  [...list].sort((a, b) => {
+    const statusWeightDiff = getStatusSortWeight(a.status) - getStatusSortWeight(b.status);
+    if (statusWeightDiff !== 0) return statusWeightDiff;
+    return b.createdAt.localeCompare(a.createdAt);
+  });
+
 export default function AppointmentPage() {
   const companyId = useAppStore((s) => s.companyId);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [place, setPlace] = useState("");
   const [date, setDate] = useState(getToday());
-  const [activeDateTab, setActiveDateTab] = useState("");
+  const [timeSlot, setTimeSlot] = useState<TimeSlot>("morning");
+  const [activeSession, setActiveSession] = useState<TimeSlot>("morning");
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
@@ -85,6 +93,7 @@ export default function AppointmentPage() {
   const [updatingAppointmentId, setUpdatingAppointmentId] = useState<string | null>(null);
   const [transferAppointmentId, setTransferAppointmentId] = useState<string | null>(null);
   const [transferDate, setTransferDate] = useState(getToday());
+  const [transferTimeSlot, setTransferTimeSlot] = useState<TimeSlot>("morning");
   const [pendingTransfer, setPendingTransfer] = useState<PendingTransfer | null>(
     null
   );
@@ -116,96 +125,67 @@ export default function AppointmentPage() {
     void loadAppointments();
   }, [companyId]);
 
-  const sortedAppointments = useMemo(
-    () =>
-      [...appointments].sort((a, b) => {
-        if (a.date !== b.date) {
-          return a.date.localeCompare(b.date);
-        }
-
-        const statusWeightDiff = getStatusSortWeight(a.status) - getStatusSortWeight(b.status);
-        if (statusWeightDiff !== 0) {
-          return statusWeightDiff;
-        }
-
-        return b.createdAt.localeCompare(a.createdAt);
-      }),
-    [appointments]
+  // Filter appointments for the selected form date and active session
+  const activeSessionAppointments = useMemo(
+    () => sortAppointments(appointments.filter((a) => a.date === date && a.timeSlot === activeSession)),
+    [appointments, date, activeSession]
   );
 
-  const appointmentDates = useMemo(
-    () => [...new Set(sortedAppointments.map((appointment) => appointment.date))],
-    [sortedAppointments]
-  );
-
-  const appointmentsByDate = useMemo(
-    () =>
-      appointmentDates.map((appointmentDate) => ({
-        date: appointmentDate,
-        appointments: sortedAppointments.filter((appointment) => appointment.date === appointmentDate),
-      })),
-    [appointmentDates, sortedAppointments]
-  );
-
-  const activeAppointments = useMemo(
-    () =>
-      appointmentsByDate.find((group) => group.date === activeDateTab)?.appointments ??
-      appointmentsByDate[0]?.appointments ??
-      [],
-    [activeDateTab, appointmentsByDate]
-  );
-
-  useEffect(() => {
-    if (appointmentDates.length === 0) {
-      setActiveDateTab("");
-      return;
-    }
-
-    if (!appointmentDates.includes(activeDateTab)) {
-      setActiveDateTab(appointmentDates[0]);
-    }
-  }, [activeDateTab, appointmentDates]);
+  const activeSessionStats = useMemo(() => getAppointmentStats(activeSessionAppointments), [activeSessionAppointments]);
 
   const clearForm = () => {
     setName("");
     setPhone("");
     setPlace("");
     setDate(getToday());
+    setTimeSlot("morning");
     setPhoneError("");
   };
 
-  const getActiveDateLabel = () => (activeDateTab ? formatTabDate(activeDateTab) : "");
-
-  const activeAppointmentStats = useMemo(
-    () => getAppointmentStats(activeAppointments),
-    [activeAppointments]
+  const allDateAppointments = useMemo(
+    () => appointments.filter((a) => a.date === date),
+    [appointments, date]
   );
 
-  const buildAppointmentsPdf = () => {
-    const doc = new jsPDF();
-    const title = `Appointments - ${getActiveDateLabel()}`;
+  const addSessionPage = (
+    doc: jsPDF,
+    sessionSlot: TimeSlot,
+    sessionAppointments: Appointment[]
+  ) => {
+    const dateLabel = formatTabDate(date);
+    const sessionLabel = formatSessionLabel(sessionSlot);
+    const title = `Appointments - ${dateLabel} - ${sessionLabel}`;
+    const stats = getAppointmentStats(sessionAppointments);
 
-    doc.setFontSize(16);
+    doc.setFontSize(18);
     doc.text(title, 14, 18);
-    doc.setFontSize(10);
-    doc.text(`Total: ${activeAppointmentStats.total}`, 14, 26);
-    doc.text(`Confirmed: ${activeAppointmentStats.confirmed}`, 52, 26);
-    doc.text(`Cancelled: ${activeAppointmentStats.cancelled}`, 102, 26);
-    doc.text(`Not Confirmed: ${activeAppointmentStats.notConfirmed}`, 150, 26);
+    doc.setFontSize(12);
+    doc.text(`Total: ${stats.total}`, 14, 26);
+    doc.text(`Confirmed: ${stats.confirmed}`, 45, 26);
+    doc.text(`Cancelled: ${stats.cancelled}`, 95, 26);
+    doc.text(`Not Confirmed: ${stats.notConfirmed}`, 140, 26);
+
+    if (sessionAppointments.length === 0) {
+      doc.setFontSize(12);
+      doc.setTextColor(120, 120, 120);
+      doc.text("No appointments.", 14, 40);
+      doc.setTextColor(0, 0, 0);
+      return;
+    }
 
     autoTable(doc, {
       startY: 32,
-      head: [["S.No", "Name", "Phone", "Place", "Status"]],
-      body: activeAppointments.map((appointment, index) => [
+      head: [["S.No", "Name", "Phone", "Place", ""]],
+      body: sessionAppointments.map((appointment, index) => [
         index + 1,
         appointment.name,
         appointment.phone,
         appointment.place,
-        formatStatusLabel(appointment.status),
+        "",
       ]),
       styles: {
-        fontSize: 10,
-        cellPadding: 0.2,
+        fontSize: 12,
+        cellPadding: 1.5,
         lineWidth: 0.1,
         lineColor: [0, 0, 0],
         halign: "center",
@@ -218,44 +198,49 @@ export default function AppointmentPage() {
         halign: "center",
         valign: "middle",
       },
+      columnStyles: {
+        4: { cellWidth: 8 },
+      },
       didParseCell: (data) => {
-        if (data.section !== "body" || data.column.index !== 4) {
-          return;
-        }
-
-        const appointment = activeAppointments[data.row.index];
-        if (!appointment) {
-          return;
-        }
+        if (data.section !== "body" || data.column.index !== 4) return;
+        const appointment = sessionAppointments[data.row.index];
+        if (!appointment) return;
 
         switch (appointment.status) {
           case "confirmed":
             data.cell.styles.fillColor = [220, 252, 231];
-            data.cell.styles.textColor = [22, 101, 52];
             break;
           case "cancelled":
             data.cell.styles.fillColor = [254, 226, 226];
-            data.cell.styles.textColor = [153, 27, 27];
             break;
           case "not_confirmed":
             data.cell.styles.fillColor = [254, 243, 199];
-            data.cell.styles.textColor = [146, 64, 14];
             break;
           default:
             data.cell.styles.fillColor = [229, 229, 229];
-            data.cell.styles.textColor = [38, 38, 38];
             break;
         }
       },
     });
+  };
+
+  const buildCombinedPdf = () => {
+    const doc = new jsPDF();
+    const morningList = sortAppointments(allDateAppointments.filter((a) => a.timeSlot === "morning"));
+    const eveningList = sortAppointments(allDateAppointments.filter((a) => a.timeSlot === "evening"));
+
+    // Page 1 — Morning
+    addSessionPage(doc, "morning", morningList);
+
+    // Page 2 — Evening
+    doc.addPage();
+    addSessionPage(doc, "evening", eveningList);
 
     return doc;
   };
 
-  const getPdfFileName = () => `appointments_${activeDateTab}.pdf`;
-
   const handleExportPdf = async () => {
-    if (!activeDateTab || activeAppointments.length === 0) {
+    if (allDateAppointments.length === 0) {
       setError("No appointments available for export.");
       return;
     }
@@ -265,9 +250,9 @@ export default function AppointmentPage() {
     setIsExporting(true);
 
     try {
-      const doc = buildAppointmentsPdf();
-      doc.save(getPdfFileName());
-      setMessage(`Exported PDF for ${getActiveDateLabel()}.`);
+      const doc = buildCombinedPdf();
+      doc.save(`appointments_${date}.pdf`);
+      setMessage(`Exported PDF for ${formatTabDate(date)}.`);
     } catch (exportError: unknown) {
       const messageText = exportError instanceof Error ? exportError.message : "Failed to export PDF";
       setError(messageText);
@@ -277,7 +262,7 @@ export default function AppointmentPage() {
   };
 
   const handleSharePdf = async () => {
-    if (!activeDateTab || activeAppointments.length === 0) {
+    if (allDateAppointments.length === 0) {
       setError("No appointments available to share.");
       return;
     }
@@ -292,12 +277,14 @@ export default function AppointmentPage() {
     setIsExporting(true);
 
     try {
-      const doc = buildAppointmentsPdf();
+      const doc = buildCombinedPdf();
       const blob = doc.output("blob");
-      const file = new File([blob], getPdfFileName(), { type: "application/pdf" });
+      const fileName = `appointments_${date}.pdf`;
+      const label = formatTabDate(date);
+      const file = new File([blob], fileName, { type: "application/pdf" });
       const shareData: ShareData = {
-        title: `Appointments - ${getActiveDateLabel()}`,
-        text: `Appointments for ${getActiveDateLabel()}`,
+        title: `Appointments - ${label}`,
+        text: `Appointments for ${label}`,
         files: [file],
       };
 
@@ -306,7 +293,7 @@ export default function AppointmentPage() {
       }
 
       await navigator.share(shareData);
-      setMessage(`Shared PDF for ${getActiveDateLabel()}.`);
+      setMessage(`Shared PDF for ${label}.`);
     } catch (shareError: unknown) {
       if (shareError instanceof DOMException && shareError.name === "AbortError") {
         setMessage("Share cancelled.");
@@ -322,7 +309,7 @@ export default function AppointmentPage() {
   const handleConfirmTransfer = () => {
     if (!pendingTransfer) return;
 
-    const { appointmentIndex, fromDate, toDate } = pendingTransfer;
+    const { appointmentIndex, toDate, toTimeSlot } = pendingTransfer;
     const existing = appointments[appointmentIndex];
     if (!existing) {
       setPendingTransfer(null);
@@ -342,6 +329,7 @@ export default function AppointmentPage() {
           body: JSON.stringify({
             companyId,
             date: toDate,
+            timeSlot: toTimeSlot,
           }),
         });
         const data = await response.json();
@@ -352,7 +340,7 @@ export default function AppointmentPage() {
         const updated = [...appointments];
         updated[appointmentIndex] = data.appointment as Appointment;
         setAppointments(updated);
-        setMessage(`Appointment transferred from ${fromDate} to ${toDate}.`);
+        setMessage(`Appointment transferred to ${toDate} (${formatSessionLabel(toTimeSlot)}).`);
         setPendingTransfer(null);
         clearForm();
       } catch (transferError: unknown) {
@@ -425,6 +413,7 @@ export default function AppointmentPage() {
   const startTransfer = (appointment: Appointment) => {
     setTransferAppointmentId(appointment.id);
     setTransferDate(appointment.date);
+    setTransferTimeSlot(appointment.timeSlot);
     setError("");
     setMessage("");
   };
@@ -432,6 +421,7 @@ export default function AppointmentPage() {
   const cancelRowTransfer = () => {
     setTransferAppointmentId(null);
     setTransferDate(getToday());
+    setTransferTimeSlot("morning");
   };
 
   const handleRowTransfer = async (appointment: Appointment) => {
@@ -445,8 +435,8 @@ export default function AppointmentPage() {
       return;
     }
 
-    if (transferDate === appointment.date) {
-      setError("Choose a different date to transfer this appointment.");
+    if (transferDate === appointment.date && transferTimeSlot === appointment.timeSlot) {
+      setError("Choose a different date or session to transfer this appointment.");
       return;
     }
 
@@ -461,6 +451,7 @@ export default function AppointmentPage() {
         body: JSON.stringify({
           companyId,
           date: transferDate,
+          timeSlot: transferTimeSlot,
         }),
       });
       const data = await response.json();
@@ -471,7 +462,8 @@ export default function AppointmentPage() {
       updateAppointmentInState(data.appointment as Appointment);
       setTransferAppointmentId(null);
       setTransferDate(getToday());
-      setMessage(`Appointment transferred to ${transferDate}.`);
+      setTransferTimeSlot("morning");
+      setMessage(`Appointment transferred to ${transferDate} (${formatSessionLabel(transferTimeSlot)}).`);
     } catch (transferError: unknown) {
       const messageText = transferError instanceof Error ? transferError.message : "Failed to transfer appointment";
       setError(messageText);
@@ -508,15 +500,17 @@ export default function AppointmentPage() {
     if (duplicateIndex >= 0) {
       const existing = appointments[duplicateIndex];
 
-      if (existing.date === date) {
-        setError("Duplicate appointment already exists for this date.");
+      if (existing.date === date && existing.timeSlot === timeSlot) {
+        setError("Duplicate appointment already exists for this date and session.");
         return;
       }
 
       setPendingTransfer({
         appointmentIndex: duplicateIndex,
         fromDate: existing.date,
+        fromTimeSlot: existing.timeSlot,
         toDate: date,
+        toTimeSlot: timeSlot,
       });
       return;
     }
@@ -538,6 +532,7 @@ export default function AppointmentPage() {
               phone: normalizedPhone,
               place: place.trim(),
               date,
+              timeSlot,
             },
           }),
         });
@@ -566,6 +561,7 @@ export default function AppointmentPage() {
           phone={phone}
           place={place}
           date={date}
+          timeSlot={timeSlot}
           phoneError={phoneError}
           onSubmit={handleSubmit}
           onNameChange={setName}
@@ -573,29 +569,45 @@ export default function AppointmentPage() {
           onPhoneBlur={handlePhoneBlur}
           onPlaceChange={setPlace}
           onDateChange={setDate}
+          onTimeSlotChange={setTimeSlot}
         />
 
         <AppointmentAlerts error={error} message={message} isLoading={isLoading} />
 
-        <div className="overflow-hidden rounded-lg border border-neutral-800 bg-neutral-900">
-          <AppointmentTabs
-            appointmentDates={appointmentDates}
-            activeDateTab={activeDateTab}
-            isExporting={isExporting}
-            hasActiveAppointments={activeAppointments.length > 0}
-            activeStats={activeAppointmentStats}
-            onDateTabChange={setActiveDateTab}
-            onExportPdf={() => void handleExportPdf()}
-            onSharePdf={() => void handleSharePdf()}
-          />
+        <div className="mb-3 flex gap-2">
+          <button
+            type="button"
+            onClick={() => void handleExportPdf()}
+            disabled={isExporting || allDateAppointments.length === 0}
+            className="rounded-md bg-blue-600 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {isExporting ? "Working..." : "Export PDF"}
+          </button>
+          <button
+            type="button"
+            onClick={() => void handleSharePdf()}
+            disabled={isExporting || allDateAppointments.length === 0}
+            className="rounded-md bg-neutral-700 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-neutral-600 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Share
+          </button>
+        </div>
 
+        <div className="overflow-hidden rounded-lg border border-neutral-800 bg-neutral-900">
+          <SessionHeader
+            activeSession={activeSession}
+            stats={activeSessionStats}
+            onSessionChange={setActiveSession}
+          />
           <AppointmentTable
-            appointments={activeAppointments}
+            appointments={activeSessionAppointments}
             updatingAppointmentId={updatingAppointmentId}
             transferAppointmentId={transferAppointmentId}
             transferDate={transferDate}
+            transferTimeSlot={transferTimeSlot}
             onStartTransfer={startTransfer}
             onTransferDateChange={setTransferDate}
+            onTransferTimeSlotChange={setTransferTimeSlot}
             onApplyTransfer={(appointment) => void handleRowTransfer(appointment)}
             onCancelTransfer={cancelRowTransfer}
             onStatusUpdate={(appointment, status) => void handleStatusUpdate(appointment, status)}

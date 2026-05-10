@@ -22,20 +22,29 @@ export default function AppHeader({ children }: AppHeaderProps) {
   const [company, setCompany] = useState<Company | null>(null);
   const [isCompanyModalOpen, setIsCompanyModalOpen] = useState(false);
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+  const [authState, setAuthState] = useState<{
+    isAuthenticated: boolean;
+    userEmail: string | null;
+    userId: string | null;
+  }>({ isAuthenticated: false, userEmail: null, userId: null });
+  const [authLoaded, setAuthLoaded] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
   const setCompanyId = useAppStore((s) => s.setCompanyId);
-  const authState =
-    typeof window === "undefined"
-      ? { isAuthenticated: false, userEmail: null as string | null, userId: null as string | null }
-      : {
-          isAuthenticated:
-            (sessionStorage.getItem("isAuthenticated") ?? localStorage.getItem("isAuthenticated")) === "true",
-          userEmail: sessionStorage.getItem("userEmail") ?? localStorage.getItem("userEmail"),
-          userId: sessionStorage.getItem("userId") ?? localStorage.getItem("userId"),
-        };
 
   useEffect(() => {
+    setAuthState({
+      isAuthenticated:
+        (sessionStorage.getItem("isAuthenticated") ?? localStorage.getItem("isAuthenticated")) === "true",
+      userEmail: sessionStorage.getItem("userEmail") ?? localStorage.getItem("userEmail"),
+      userId: sessionStorage.getItem("userId") ?? localStorage.getItem("userId"),
+    });
+    setAuthLoaded(true);
+  }, []);
+
+  useEffect(() => {
+    if (!authLoaded) return;
+
     if (!authState.isAuthenticated) {
       if (pathname !== "/login") {
         router.push("/login");
@@ -73,7 +82,7 @@ export default function AppHeader({ children }: AppHeaderProps) {
     return () => {
       isCancelled = true;
     };
-  }, [authState.isAuthenticated, authState.userId, pathname, router, setCompanyId]);
+  }, [authLoaded, authState.isAuthenticated, authState.userId, pathname, router, setCompanyId]);
 
   useEffect(() => {
     if (!isMobileNavOpen) {
@@ -108,6 +117,10 @@ export default function AppHeader({ children }: AppHeaderProps) {
 
   if (pathname === "/login") {
     return <>{children}</>;
+  }
+
+  if (!authLoaded) {
+    return null;
   }
 
   if (!authState.isAuthenticated) {

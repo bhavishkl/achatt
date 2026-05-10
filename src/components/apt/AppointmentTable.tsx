@@ -1,14 +1,18 @@
 import { ArrowRightLeft, Check, CircleX, OctagonX, X } from "lucide-react";
-import { Appointment, AppointmentStatus } from "./types";
-import { formatStatusLabel, getStatusClasses } from "./utils";
+import { Appointment, AppointmentStatus, TimeSlot } from "./types";
+import { formatSessionLabel, formatStatusLabel, getStatusClasses } from "./utils";
+
+const TIME_SLOTS: TimeSlot[] = ["morning", "evening"];
 
 type AppointmentTableProps = {
   appointments: Appointment[];
   updatingAppointmentId: string | null;
   transferAppointmentId: string | null;
   transferDate: string;
+  transferTimeSlot: TimeSlot;
   onStartTransfer: (appointment: Appointment) => void;
   onTransferDateChange: (value: string) => void;
+  onTransferTimeSlotChange: (value: TimeSlot) => void;
   onApplyTransfer: (appointment: Appointment) => void;
   onCancelTransfer: () => void;
   onStatusUpdate: (appointment: Appointment, status: AppointmentStatus) => void;
@@ -19,8 +23,10 @@ export function AppointmentTable({
   updatingAppointmentId,
   transferAppointmentId,
   transferDate,
+  transferTimeSlot,
   onStartTransfer,
   onTransferDateChange,
+  onTransferTimeSlotChange,
   onApplyTransfer,
   onCancelTransfer,
   onStatusUpdate,
@@ -107,6 +113,22 @@ export function AppointmentTable({
                     onChange={(e) => onTransferDateChange(e.target.value)}
                     className="w-full rounded-md border border-neutral-700 bg-neutral-950 px-3 py-2 text-sm text-white outline-none focus:border-blue-500"
                   />
+                  <div className="flex gap-2">
+                    {TIME_SLOTS.map((slot) => (
+                      <button
+                        key={slot}
+                        type="button"
+                        onClick={() => onTransferTimeSlotChange(slot)}
+                        className={`flex-1 rounded-md border px-3 py-2 text-xs font-medium transition ${
+                          transferTimeSlot === slot
+                            ? "border-blue-500 bg-blue-600 text-white"
+                            : "border-neutral-700 bg-neutral-900 text-neutral-400 hover:bg-neutral-800 hover:text-white"
+                        }`}
+                      >
+                        {formatSessionLabel(slot)}
+                      </button>
+                    ))}
+                  </div>
                   <div className="grid grid-cols-2 gap-2">
                     <button
                       type="button"
@@ -220,6 +242,22 @@ export function AppointmentTable({
                           onChange={(e) => onTransferDateChange(e.target.value)}
                           className="rounded-md border border-neutral-700 bg-neutral-950 px-3 py-1.5 text-xs text-white outline-none focus:border-blue-500"
                         />
+                        <div className="flex gap-1">
+                          {TIME_SLOTS.map((slot) => (
+                            <button
+                              key={slot}
+                              type="button"
+                              onClick={() => onTransferTimeSlotChange(slot)}
+                              className={`rounded-md border px-2 py-1.5 text-xs font-medium transition ${
+                                transferTimeSlot === slot
+                                  ? "border-blue-500 bg-blue-600 text-white"
+                                  : "border-neutral-700 bg-neutral-900 text-neutral-400 hover:bg-neutral-800 hover:text-white"
+                              }`}
+                            >
+                              {formatSessionLabel(slot)}
+                            </button>
+                          ))}
+                        </div>
                         <button
                           type="button"
                           onClick={() => onApplyTransfer(appointment)}

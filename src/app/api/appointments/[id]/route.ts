@@ -8,6 +8,7 @@ type AppointmentRow = {
   phone: string;
   place: string;
   appointment_date: string;
+  time_slot: string;
   status: string | null;
   created_at: string;
   updated_at: string;
@@ -17,6 +18,8 @@ function normalize(value: string) {
   return value.trim().toLowerCase();
 }
 
+const VALID_TIME_SLOTS = new Set(["morning", "evening"]);
+
 function mapAppointment(row: AppointmentRow) {
   return {
     id: row.id,
@@ -25,6 +28,7 @@ function mapAppointment(row: AppointmentRow) {
     phone: row.phone,
     place: row.place,
     date: row.appointment_date,
+    timeSlot: row.time_slot ?? "morning",
     status: row.status ?? "pending",
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -40,11 +44,16 @@ export async function PUT(
     const body = (await request.json()) as {
       companyId?: string;
       date?: string;
+      timeSlot?: string;
       status?: string;
     };
 
-    if (!body.companyId || (!body.date && !body.status)) {
+    if (!body.companyId || (!body.date && !body.status && !body.timeSlot)) {
       return NextResponse.json({ message: "Company ID and an update field are required" }, { status: 400 });
+    }
+
+    if (body.timeSlot && !VALID_TIME_SLOTS.has(body.timeSlot)) {
+      return NextResponse.json({ message: "Invalid time slot. Must be 'morning' or 'evening'" }, { status: 400 });
     }
 
     const { data: current, error: fetchError } = await supabaseAdmin
@@ -72,19 +81,23 @@ export async function PUT(
       return NextResponse.json({ message: "Error checking duplicates", error: listError.message }, { status: 500 });
     }
 
-    if (body.date) {
+    if (body.date || body.timeSlot) {
+      const targetDate = body.date ?? String(current.appointment_date);
+      const targetTimeSlot = body.timeSlot ?? String(current.time_slot ?? "morning");
+
       const conflict = (rows ?? []).find((row: any) => {
         return (
           normalize(String(row.name ?? "")) === normalizedName &&
           normalize(String(row.phone ?? "")) === normalizedPhone &&
           normalize(String(row.place ?? "")) === normalizedPlace &&
-          String(row.appointment_date) === body.date
+          String(row.appointment_date) === targetDate &&
+          String(row.time_slot ?? "morning") === targetTimeSlot
         );
       });
 
       if (conflict) {
         return NextResponse.json(
-          { message: "Same appointment already exists on this date", code: "DUPLICATE_DATE" },
+          { message: "Same appointment already exists on this date and session", code: "DUPLICATE_DATE" },
           { status: 409 }
         );
       }
@@ -100,6 +113,10 @@ export async function PUT(
 
     if (body.date) {
       payload.appointment_date = body.date;
+    }
+
+    if (body.timeSlot) {
+      payload.time_slot = body.timeSlot;
     }
 
     if (body.status) {
