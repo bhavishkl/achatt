@@ -73,7 +73,7 @@ const sortAppointments = (list: Appointment[]) =>
   [...list].sort((a, b) => {
     const statusWeightDiff = getStatusSortWeight(a.status) - getStatusSortWeight(b.status);
     if (statusWeightDiff !== 0) return statusWeightDiff;
-    return b.createdAt.localeCompare(a.createdAt);
+    return a.createdAt.localeCompare(b.createdAt);
   });
 
 export default function AppointmentPage() {
