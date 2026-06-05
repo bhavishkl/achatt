@@ -402,21 +402,25 @@ function processPunchRecords(
     });
   });
 
-  // Build lookup for night shift ranges by internal employee id.
-  const nightRangesByEmp = new Map<string, { startDate: string; endDate: string }[]>();
+  // Build lookup for night shift rotations by internal employee id.
+  const nightRotationsByEmp = new Map<string, ShiftRotation[]>();
   shiftRotations.forEach((rotation) => {
     if (rotation.shiftType !== "night") return;
-    const existing = nightRangesByEmp.get(rotation.employeeId) ?? [];
-    existing.push({ startDate: rotation.startDate, endDate: rotation.endDate });
-    nightRangesByEmp.set(rotation.employeeId, existing);
+    const existing = nightRotationsByEmp.get(rotation.employeeId) ?? [];
+    existing.push(rotation);
+    nightRotationsByEmp.set(rotation.employeeId, existing);
   });
 
-  const isNightShiftDate = (externalEmployeeId: string, date: string) => {
+  nightRotationsByEmp.forEach((rotations) => {
+    rotations.sort((a, b) => a.startDate.localeCompare(b.startDate));
+  });
+
+  const getNightShiftRotation = (externalEmployeeId: string, date: string) => {
     const internalId = externalToInternal.get(externalEmployeeId);
-    if (!internalId) return false;
-    const ranges = nightRangesByEmp.get(internalId);
-    if (!ranges || ranges.length === 0) return false;
-    return ranges.some((r) => date >= r.startDate && date <= r.endDate);
+    if (!internalId) return null;
+    const rotations = nightRotationsByEmp.get(internalId);
+    if (!rotations || rotations.length === 0) return null;
+    return rotations.find((r) => date >= r.startDate && date <= r.endDate) ?? null;
   };
 
   const nextDateString = (date: string) => {
@@ -425,7 +429,70 @@ function processPunchRecords(
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
   };
 
-  const consumedFirstPunch = new Set<string>(); // key: employeeId-date
+  const parseShiftDateTime = (date: string, time: string) => {
+    const [hours = 0, minutes = 0, seconds = 0] = time.split(":").map(Number);
+    return new Date(
+      Number(date.slice(0, 4)),
+      Number(date.slice(5, 7)) - 1,
+      Number(date.slice(8, 10)),
+      hours,
+      minutes,
+      seconds,
+    );
+  };
+
+  const getConsumedPunchKey = (employeeId: string, punchId: string) => `${employeeId}-${punchId}`;
+
+  const getNightShiftPunches = (
+    employeeId: string,
+    rotation: ShiftRotation,
+    date: string,
+    todayPunches: PunchRecord[],
+    nextDayPunches: PunchRecord[],
+    consumedPunchIds: Set<string>,
+  ) => {
+    const shiftStart = parseShiftDateTime(date, rotation.startTime);
+    const shiftEnd = parseShiftDateTime(date, rotation.endTime);
+
+    if (shiftEnd.getTime() <= shiftStart.getTime()) {
+      shiftEnd.setDate(shiftEnd.getDate() + 1);
+    }
+
+    const bufferMs = 6 * 60 * 60 * 1000;
+    const midpointMs = shiftStart.getTime() + (shiftEnd.getTime() - shiftStart.getTime()) / 2;
+    const allCandidatePunches = [...todayPunches, ...nextDayPunches]
+      .filter((punch) => !consumedPunchIds.has(getConsumedPunchKey(employeeId, punch.id)))
+      .map((punch) => ({ punch, timeMs: new Date(punch.punchTime).getTime() }))
+      .filter(
+        ({ timeMs }) =>
+          timeMs >= shiftStart.getTime() - bufferMs &&
+          timeMs <= shiftEnd.getTime() + bufferMs,
+      );
+
+    const pickClosest = (
+      candidates: typeof allCandidatePunches,
+      targetMs: number,
+      excludePunchId?: string,
+    ) => {
+      return candidates
+        .filter(({ punch }) => punch.id !== excludePunchId)
+        .sort((a, b) => Math.abs(a.timeMs - targetMs) - Math.abs(b.timeMs - targetMs))[0]?.punch;
+    };
+
+    const punchIn = pickClosest(
+      allCandidatePunches.filter(({ timeMs }) => timeMs <= midpointMs),
+      shiftStart.getTime(),
+    );
+    const punchOut = pickClosest(
+      allCandidatePunches.filter(({ timeMs }) => timeMs >= midpointMs),
+      shiftEnd.getTime(),
+      punchIn?.id,
+    );
+
+    return { punchIn, punchOut };
+  };
+
+  const consumedPunchIds = new Set<string>();
   const processed: ProcessedPunch[] = [];
 
   byEmpDate.forEach((dateMap, employeeId) => {
@@ -433,27 +500,35 @@ function processPunchRecords(
 
     sortedDates.forEach((date) => {
       const todayPunches = dateMap.get(date) ?? [];
-      const consumeTodayFirst = consumedFirstPunch.has(`${employeeId}-${date}`);
-      const usableToday = consumeTodayFirst ? todayPunches.slice(1) : todayPunches;
+      const usableToday = todayPunches.filter(
+        (punch) => !consumedPunchIds.has(getConsumedPunchKey(employeeId, punch.id)),
+      );
 
       let punchIn: string | null = null;
       let punchOut: string | null = null;
 
-      if (isNightShiftDate(employeeId, date)) {
-        // Night rotation rule:
-        // - punchIn: 2nd punch of the date
-        // - punchOut: 1st punch of the next date
-        const inSource = todayPunches[1];
-        if (inSource) {
-          punchIn = toTimeString(inSource.punchTime);
-        }
+      const nightRotation = getNightShiftRotation(employeeId, date);
 
+      if (nightRotation) {
         const nextDate = nextDateString(date);
         const nextDayPunches = dateMap.get(nextDate) ?? [];
-        const nextDayFirst = nextDayPunches[0];
-        if (nextDayFirst) {
-          punchOut = toTimeString(nextDayFirst.punchTime);
-          consumedFirstPunch.add(`${employeeId}-${nextDate}`);
+        const nightPunches = getNightShiftPunches(
+          employeeId,
+          nightRotation,
+          date,
+          todayPunches,
+          nextDayPunches,
+          consumedPunchIds,
+        );
+
+        if (nightPunches.punchIn) {
+          punchIn = toTimeString(nightPunches.punchIn.punchTime);
+          consumedPunchIds.add(getConsumedPunchKey(employeeId, nightPunches.punchIn.id));
+        }
+
+        if (nightPunches.punchOut) {
+          punchOut = toTimeString(nightPunches.punchOut.punchTime);
+          consumedPunchIds.add(getConsumedPunchKey(employeeId, nightPunches.punchOut.id));
         }
       } else if (usableToday.length >= 2) {
         punchIn = toTimeString(usableToday[0].punchTime);
@@ -463,7 +538,7 @@ function processPunchRecords(
       }
 
       const status: "present" | "absent" | "missed" =
-        punchIn && punchOut ? "present" : punchIn ? "missed" : "absent";
+        punchIn && punchOut ? "present" : punchIn || punchOut ? "missed" : "absent";
 
       processed.push({
         employeeId,
