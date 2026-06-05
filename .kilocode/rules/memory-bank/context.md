@@ -1,6 +1,7 @@
 # Context
 
 ## Recent Changes
+- Replaced the Rotational Shifts delete browser prompt in `src/components/ShiftTab.tsx` with an in-page confirmation modal that shows the employee, shift, time, and date range before deleting.
 - Improved `/attendance` mobile responsiveness across `src/app/attendance/page.tsx` and the attendance tab components:
   - kept the main attendance tab switcher horizontally scrollable on small screens
   - converted dense employee, shift-rotation, and punch-upload tables into mobile card layouts while preserving desktop tables
