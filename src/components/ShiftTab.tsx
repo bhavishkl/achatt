@@ -39,6 +39,8 @@ export default function ShiftTab() {
     endDate: "",
   });
   const [rotationLoading, setRotationLoading] = useState(false);
+  const [rotationToDeleteId, setRotationToDeleteId] = useState<string | null>(null);
+  const [rotationDeleteLoading, setRotationDeleteLoading] = useState(false);
 
   // Fetch groups and rotations
   useEffect(() => {
@@ -184,19 +186,22 @@ export default function ShiftTab() {
   }
 
   async function handleDeleteRotation(id: string) {
-    if (!confirm("Are you sure you want to delete this rotation?")) return;
+    setRotationDeleteLoading(true);
     try {
       const res = await fetch(`/api/shifts/rotations/${id}`, {
         method: 'DELETE'
       });
       if (res.ok) {
         deleteShiftRotation(id);
+        setRotationToDeleteId(null);
       } else {
         alert("Failed to delete shift rotation");
       }
     } catch (err) {
       console.error(err);
       alert("An error occurred");
+    } finally {
+      setRotationDeleteLoading(false);
     }
   }
 
@@ -266,6 +271,13 @@ export default function ShiftTab() {
     setEditingId(null);
     setShowForm(false);
   }
+
+  const rotationToDelete = rotationToDeleteId
+    ? shiftRotations.find((rotation) => rotation.id === rotationToDeleteId) ?? null
+    : null;
+  const rotationEmployeeToDelete = rotationToDelete
+    ? employees.find((employee) => employee.id === rotationToDelete.employeeId)
+    : null;
 
   return (
     <div>
@@ -582,7 +594,7 @@ export default function ShiftTab() {
                       </p>
                     </div>
                     <button
-                      onClick={() => handleDeleteRotation(rot.id)}
+                      onClick={() => setRotationToDeleteId(rot.id)}
                       className="shrink-0 rounded-lg bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700"
                     >
                       Delete
@@ -641,7 +653,7 @@ export default function ShiftTab() {
                       <td className="px-4 py-3">{rot.endDate}</td>
                       <td className="px-4 py-3 text-right">
                         <button
-                          onClick={() => handleDeleteRotation(rot.id)}
+                          onClick={() => setRotationToDeleteId(rot.id)}
                           className="text-red-400 hover:text-red-300 font-medium"
                         >
                           Delete
@@ -656,6 +668,59 @@ export default function ShiftTab() {
           </>
         )}
       </div>
+
+      {rotationToDelete && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="delete-rotation-title"
+        >
+          <div className="w-full max-w-md rounded-xl border border-neutral-700 bg-neutral-900 p-5 shadow-2xl">
+            <h3 id="delete-rotation-title" className="text-lg font-semibold text-white">
+              Delete Rotation?
+            </h3>
+            <p className="mt-2 text-sm text-neutral-300">
+              Are you sure you want to delete this rotational shift for{" "}
+              <span className="font-medium text-white">
+                {rotationEmployeeToDelete?.name || "Unknown employee"}
+              </span>
+              ? This action cannot be undone.
+            </p>
+            <div className="mt-4 rounded-lg bg-neutral-800 p-3 text-sm text-neutral-300">
+              <p className="capitalize">
+                <span className="text-neutral-500">Shift:</span> {rotationToDelete.shiftType}
+              </p>
+              <p>
+                <span className="text-neutral-500">Time:</span>{" "}
+                {rotationToDelete.startTime || "-"} – {rotationToDelete.endTime || "-"}
+              </p>
+              <p>
+                <span className="text-neutral-500">Dates:</span>{" "}
+                {rotationToDelete.startDate} to {rotationToDelete.endDate}
+              </p>
+            </div>
+            <div className="mt-5 grid grid-cols-1 gap-3 sm:flex sm:justify-end">
+              <button
+                type="button"
+                onClick={() => setRotationToDeleteId(null)}
+                disabled={rotationDeleteLoading}
+                className="rounded-lg bg-neutral-700 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-neutral-600 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => handleDeleteRotation(rotationToDelete.id)}
+                disabled={rotationDeleteLoading}
+                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:opacity-50"
+              >
+                {rotationDeleteLoading ? "Deleting..." : "Delete Rotation"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

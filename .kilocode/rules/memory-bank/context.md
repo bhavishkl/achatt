@@ -1,6 +1,7 @@
 # Context
 
 ## Recent Changes
+- Replaced the Rotational Shifts delete browser prompt in `src/components/ShiftTab.tsx` with an in-page confirmation modal that shows the employee, shift, time, and date range before deleting.
 - Improved `/attendance` mobile responsiveness across `src/app/attendance/page.tsx` and the attendance tab components:
   - kept the main attendance tab switcher horizontally scrollable on small screens
   - converted dense employee, shift-rotation, and punch-upload tables into mobile card layouts while preserving desktop tables
@@ -76,3 +77,5 @@
 - Updated reports in `src/components/ReportTab.tsx` and shared computation in `src/lib/store.ts` so leave/absent/present/double-duty records are included in totals, day cells, and DD counts.
 - Updated `schema.json` by removing `substitute_employee_id` from `leave_records` and adding `absent_records`, `present_records`, and `double_duty_records` table definitions.
 - Verified current code with `npm run -s typecheck` (passes).
+
+- Updated night-shift punch processing so rotational night shifts use the configured shift start/end timing window to choose the closest punch-in and punch-out across the shift date and next date, rather than fixed first/second punch ordering.
