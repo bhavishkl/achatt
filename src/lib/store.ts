@@ -15,6 +15,21 @@ import type {
   PunchRecord,
   ProcessedPunch,
 } from "./types";
+import type {
+  OpdPatient,
+  OpdVisit,
+  OpdVisitStatus,
+  Vitals,
+  OpdBill,
+  Prescription,
+  PrescriptionFormatConfig,
+} from "@/types/opd";
+import { DEFAULT_FORMAT_CONFIG } from "@/types/opd";
+import {
+  PULMONOLOGY_MEDICINES,
+  PULMONOLOGY_TESTS,
+  PULMONOLOGY_DIAGNOSES,
+} from "@/data/opdSeedData";
 
 // ============================================================
 // Helper – generate a short unique id
@@ -106,6 +121,40 @@ interface AppState {
     groupId: string,
     employeeId: string,
   ) => void;
+
+  // --- OPD Patient Registry ---
+  opdPatients: OpdPatient[];
+  addOpdPatient: (p: Omit<OpdPatient, "id" | "createdAt">) => OpdPatient;
+  updateOpdPatient: (id: string, data: Partial<Omit<OpdPatient, "id" | "createdAt">>) => void;
+
+  // --- OPD Visits ---
+  opdVisits: OpdVisit[];
+  createOpdVisit: (patientId: string) => OpdVisit;
+  updateOpdVisitStatus: (visitId: string, status: OpdVisitStatus) => void;
+  updateOpdVisitVitals: (visitId: string, vitals: Vitals) => void;
+  updateOpdVisitBill: (visitId: string, bill: OpdBill) => void;
+  updateOpdVisitPrescription: (visitId: string, prescription: Prescription) => void;
+
+  // --- OPD Bill Counter ---
+  opdBillCounter: Record<string, number>;
+  getNextBillNo: (date: string) => string;
+
+  // --- Prescription Format ---
+  prescriptionFormatConfig: PrescriptionFormatConfig;
+  setPrescriptionFormatConfig: (config: PrescriptionFormatConfig) => void;
+
+  // --- Custom Autocomplete Lists (user-extendable) ---
+  customMedicines: string[];
+  customTests: string[];
+  customDiagnoses: string[];
+  addCustomMedicine: (name: string) => void;
+  addCustomTest: (name: string) => void;
+  addCustomDiagnosis: (name: string) => void;
+
+  // --- Prescription Templates ---
+  prescriptionTemplates: { id: string; name: string; prescription: Prescription }[];
+  savePrescriptionTemplate: (name: string, prescription: Prescription) => void;
+  deletePrescriptionTemplate: (id: string) => void;
 }
 
 // ============================================================
@@ -340,6 +389,135 @@ export const useAppStore = create<AppState>()(
             ),
           } as Partial<AppState>;
         }),
+
+      // ---- OPD Patient Registry ----
+      opdPatients: [],
+      addOpdPatient: (p) => {
+        const newPatient: OpdPatient = {
+          ...p,
+          id: uid(),
+          createdAt: new Date().toISOString(),
+        };
+        set((s) => ({ opdPatients: [...s.opdPatients, newPatient] }));
+        return newPatient;
+      },
+      updateOpdPatient: (id, data) =>
+        set((s) => ({
+          opdPatients: s.opdPatients.map((p) =>
+            p.id === id ? { ...p, ...data } : p,
+          ),
+        })),
+
+      // ---- OPD Visits ----
+      opdVisits: [],
+      createOpdVisit: (patientId) => {
+        const today = new Date().toISOString().split("T")[0];
+        const now = new Date().toISOString();
+        let tokenNo = 1;
+        set((s) => {
+          const todayVisits = s.opdVisits.filter((v) => v.visitDate === today);
+          tokenNo = todayVisits.length + 1;
+          return {};
+        });
+        // Read current state for token
+        const currentState = useAppStore.getState();
+        const todayVisits = currentState.opdVisits.filter((v) => v.visitDate === today);
+        tokenNo = todayVisits.length + 1;
+        const newVisit: OpdVisit = {
+          id: uid(),
+          patientId,
+          visitDate: today,
+          tokenNo,
+          status: "waiting",
+          vitals: null,
+          prescription: null,
+          bill: null,
+          createdAt: now,
+          updatedAt: now,
+        };
+        set((s) => ({ opdVisits: [...s.opdVisits, newVisit] }));
+        return newVisit;
+      },
+      updateOpdVisitStatus: (visitId, status) =>
+        set((s) => ({
+          opdVisits: s.opdVisits.map((v) =>
+            v.id === visitId ? { ...v, status, updatedAt: new Date().toISOString() } : v,
+          ),
+        })),
+      updateOpdVisitVitals: (visitId, vitals) =>
+        set((s) => ({
+          opdVisits: s.opdVisits.map((v) =>
+            v.id === visitId
+              ? { ...v, vitals, status: "vitals_done" as const, updatedAt: new Date().toISOString() }
+              : v,
+          ),
+        })),
+      updateOpdVisitBill: (visitId, bill) =>
+        set((s) => ({
+          opdVisits: s.opdVisits.map((v) =>
+            v.id === visitId ? { ...v, bill, updatedAt: new Date().toISOString() } : v,
+          ),
+        })),
+      updateOpdVisitPrescription: (visitId, prescription) =>
+        set((s) => ({
+          opdVisits: s.opdVisits.map((v) =>
+            v.id === visitId ? { ...v, prescription, updatedAt: new Date().toISOString() } : v,
+          ),
+        })),
+
+      // ---- OPD Bill Counter ----
+      opdBillCounter: {},
+      getNextBillNo: (date) => {
+        const state = useAppStore.getState();
+        const current = state.opdBillCounter[date] ?? 0;
+        const next = current + 1;
+        set((s) => ({
+          opdBillCounter: { ...s.opdBillCounter, [date]: next },
+        }));
+        return `OPD-${date.replace(/-/g, "")}-${String(next).padStart(3, "0")}`;
+      },
+
+      // ---- Prescription Format ----
+      prescriptionFormatConfig: DEFAULT_FORMAT_CONFIG,
+      setPrescriptionFormatConfig: (config) =>
+        set({ prescriptionFormatConfig: config }),
+
+      // ---- Custom Autocomplete Lists ----
+      customMedicines: [],
+      customTests: [],
+      customDiagnoses: [],
+      addCustomMedicine: (name) =>
+        set((s) => {
+          const all = [...PULMONOLOGY_MEDICINES, ...s.customMedicines];
+          if (all.some((m) => m.toLowerCase() === name.toLowerCase())) return {};
+          return { customMedicines: [...s.customMedicines, name] };
+        }),
+      addCustomTest: (name) =>
+        set((s) => {
+          const all = [...PULMONOLOGY_TESTS, ...s.customTests];
+          if (all.some((t) => t.toLowerCase() === name.toLowerCase())) return {};
+          return { customTests: [...s.customTests, name] };
+        }),
+      addCustomDiagnosis: (name) =>
+        set((s) => {
+          const all = [...PULMONOLOGY_DIAGNOSES, ...s.customDiagnoses];
+          if (all.some((d) => d.toLowerCase() === name.toLowerCase())) return {};
+          return { customDiagnoses: [...s.customDiagnoses, name] };
+        }),
+
+      // ---- Prescription Templates ----
+      prescriptionTemplates: [],
+      savePrescriptionTemplate: (name, prescription) =>
+        set((s) => ({
+          prescriptionTemplates: [
+            ...s.prescriptionTemplates,
+            { id: uid(), name, prescription: JSON.parse(JSON.stringify(prescription)) },
+          ],
+        })),
+      deletePrescriptionTemplate: (id) =>
+        set((s) => ({
+          prescriptionTemplates: s.prescriptionTemplates.filter((t) => t.id !== id),
+        })),
     }),
     { name: "attendance-salary-app" },
   ),

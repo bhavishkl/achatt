@@ -1,6 +1,27 @@
 # Context
 
 ## Recent Changes
+- Implemented full Frontdesk & Doctor OPD module (frontend-only with localStorage/Zustand persistence):
+  - **Types**: Added `src/types/opd.ts` with `OpdPatient`, `OpdVisit`, `Vitals`, `OpdBill`, `Prescription`, `MedicineEntry`, `TestEntry`, `CustomSection`, `PrescriptionFormatConfig` types
+  - **Seed Data**: Added `src/data/opdSeedData.ts` with pulmonology-only generic medicine names, tests, diagnoses, and OPD billing quick services
+  - **Store**: Extended `src/lib/store.ts` with OPD slice — patients, visits, billing counter, prescription format, custom autocomplete lists, prescription templates
+  - **Frontdesk Page** (`/opd`): 4-step wizard (Search → Register → Billing → Vitals) with stepper UI, queue sidebar
+    - `src/app/opd/page.tsx` — page shell with step orchestration
+    - `src/components/opd/PatientSearch.tsx` — name/phone search with returning-patient badges
+    - `src/components/opd/PatientRegistration.tsx` — registration form with search carry-forward
+    - `src/components/opd/OpdBilling.tsx` — service line items, quick-add, concession, payment mode, print
+    - `src/components/opd/opdPrint.ts` — OPD bill print HTML builder
+    - `src/components/opd/VitalsEntry.tsx` — vital signs with color-coded normal-range indicators, auto BMI
+    - `src/components/opd/OpdQueue.tsx` — today's queue grouped by status with revenue summary
+  - **Doctor Page** (`/doctor`): Queue panel + consultation workspace with tabs
+    - `src/app/doctor/page.tsx` — page with patient queue and consultation workspace
+    - `src/components/doctor/ConsultationPad.tsx` — collapsible sections for complaints, diagnosis, tests, medicines (autocomplete), next visit, custom sections, templates
+    - `src/components/doctor/PrescriptionFormatSettings.tsx` — section reorder, visibility, rename, clinic header
+    - `src/components/doctor/PrescriptionPreview.tsx` — print-ready preview respecting format config
+    - `src/components/doctor/VisitHistory.tsx` — past visits with expand/copy-to-current
+    - `src/lib/exportPrescriptionDocx.ts` — DOCX export using `docx` library
+  - **Navigation**: Added Frontdesk and Doctor links to `src/components/AppHeader.tsx` sidebar
+  - Verified with `npm run typecheck` (passes)
 - Replaced the Rotational Shifts delete browser prompt in `src/components/ShiftTab.tsx` with an in-page confirmation modal that shows the employee, shift, time, and date range before deleting.
 - Improved `/attendance` mobile responsiveness across `src/app/attendance/page.tsx` and the attendance tab components:
   - kept the main attendance tab switcher horizontally scrollable on small screens

@@ -12,6 +12,8 @@ type AppHeaderProps = {
 };
 
 const NAV_LINKS = [
+  { href: "/opd", label: "Frontdesk", description: "OPD registration, billing, and vitals", icon: "🏥" },
+  { href: "/doctor", label: "Doctor", description: "Consultations and prescriptions", icon: "👨‍⚕️" },
   { href: "/attendance", label: "Attendance", description: "Employees, shifts, and reports", icon: "⏱" },
   { href: "/", label: "Inpatients", description: "Admissions, bills, and discharge history", icon: "🛏" },
   { href: "/apt", label: "Appointments", description: "Daily OP queue and follow-ups", icon: "🗓" },
