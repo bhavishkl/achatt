@@ -10,7 +10,7 @@ import { SessionHeader } from "@/components/apt/SessionHeader";
 import { TransferConfirmModal } from "@/components/apt/TransferConfirmModal";
 import { Appointment, AppointmentStatus, PendingTransfer, TimeSlot } from "@/components/apt/types";
 import { formatSessionLabel, formatStatusLabel, formatTabDate, getAppointmentStats } from "@/components/apt/utils";
-import { useAppStore } from "@/lib/store";
+import { useAppStore, AppState } from "@/lib/store";
 
 const normalize = (value: string) => value.trim().toLowerCase();
 const PHONE_ALLOWED_PATTERN = /^[\d+\-\s()]+$/;
@@ -77,7 +77,7 @@ const sortAppointments = (list: Appointment[]) =>
   });
 
 export default function AppointmentPage() {
-  const companyId = useAppStore((s) => s.companyId);
+  const companyId = useAppStore((s: AppState) => s.companyId);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [place, setPlace] = useState("");

@@ -43,7 +43,7 @@ function uid(): string {
 // ============================================================
 // Store interface
 // ============================================================
-interface AppState {
+export interface AppState {
   // --- Punch Records ---
   punchRecords: PunchRecord[];
   processedPunches: ProcessedPunch[];
@@ -162,7 +162,7 @@ interface AppState {
 // ============================================================
 export const useAppStore = create<AppState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       // ---- Punch Records ----
       punchRecords: [],
       processedPunches: [],
@@ -420,7 +420,7 @@ export const useAppStore = create<AppState>()(
           return {};
         });
         // Read current state for token
-        const currentState = useAppStore.getState();
+        const currentState = get();
         const todayVisits = currentState.opdVisits.filter((v) => v.visitDate === today);
         tokenNo = todayVisits.length + 1;
         const newVisit: OpdVisit = {
@@ -468,7 +468,7 @@ export const useAppStore = create<AppState>()(
       // ---- OPD Bill Counter ----
       opdBillCounter: {},
       getNextBillNo: (date) => {
-        const state = useAppStore.getState();
+        const state = get();
         const current = state.opdBillCounter[date] ?? 0;
         const next = current + 1;
         set((s) => ({
