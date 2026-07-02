@@ -123,11 +123,28 @@ export function ConsultationPad({ prescription, onChange, onSave, onComplete }: 
   const addMedicine = () => {
     update("medicines", [
       ...prescription.medicines,
-      { id: uid(), name: "", dosage: "", frequency: "1-0-1", duration: "", route: "Oral", instructions: "" },
+      { id: uid(), name: "", timing: "", routine: "", frequency: "1-0-1", duration: "", route: "Oral", instructions: "" },
     ]);
   };
   const updateMedicine = (id: string, data: Partial<MedicineEntry>) => {
-    update("medicines", prescription.medicines.map((m) => (m.id === id ? { ...m, ...data } : m)));
+    const newData = { ...data };
+    if (typeof newData.timing === 'string') {
+      const lower = newData.timing.toLowerCase();
+      if (lower === 'af') newData.timing = 'After food';
+      else if (lower === 'bf') newData.timing = 'Before food';
+    }
+    if (typeof newData.routine === 'string') {
+      const lower = newData.routine.toLowerCase();
+      if (lower === 'd') newData.routine = 'Daily';
+      else if (lower === 'ad') newData.routine = 'Alternate day';
+    }
+    if (typeof newData.duration === 'string') {
+      const lower = newData.duration.toLowerCase();
+      if (/^\d+d$/.test(lower)) newData.duration = lower.replace('d', ' days');
+      else if (/^\d+m$/.test(lower)) newData.duration = lower.replace('m', ' months');
+      else if (/^\d+w$/.test(lower)) newData.duration = lower.replace('w', ' weeks');
+    }
+    update("medicines", prescription.medicines.map((m) => (m.id === id ? { ...m, ...newData } : m)));
   };
   const removeMedicine = (id: string) => {
     update("medicines", prescription.medicines.filter((m) => m.id !== id));
@@ -146,7 +163,7 @@ export function ConsultationPad({ prescription, onChange, onSave, onComplete }: 
 
   // Test Results
   const addTestResult = () => {
-    update("testResults", [...prescription.testResults, { id: uid(), testName: "", result: "", date: new Date().toISOString().split("T")[0], notes: "" }]);
+    update("testResults", [...prescription.testResults, { id: uid(), testName: "", result: "", date: new Date().toISOString().split("T")[0] }]);
   };
   const updateTestResult = (id: string, data: Partial<TestResultEntry>) => {
     update("testResults", prescription.testResults.map((t) => (t.id === id ? { ...t, ...data } : t)));
@@ -275,6 +292,17 @@ export function ConsultationPad({ prescription, onChange, onSave, onComplete }: 
 
 
 
+      {/* Respiratory Examination */}
+      <Section title={sectionHeading("respiratoryExamination")} sectionKey="respiratoryExamination" collapsed={collapsed} onToggle={toggle}>
+        <textarea
+          value={prescription.respiratoryExamination}
+          onChange={(e) => update("respiratoryExamination", e.target.value)}
+          placeholder="Respiratory examination details..."
+          rows={3}
+          className={`${inputCls} resize-y`}
+        />
+      </Section>
+
       {/* Advice */}
       <Section title="Advice" sectionKey="testResults" collapsed={collapsed} onToggle={toggle} onAdd={addTestResult} count={prescription.testResults.length}>
         <div className="space-y-2">
@@ -292,14 +320,6 @@ export function ConsultationPad({ prescription, onChange, onSave, onComplete }: 
                 value={tr.result}
                 onChange={(e) => updateTestResult(tr.id, { result: e.target.value })}
                 placeholder="Result"
-                className={`${inputCls} w-32`}
-              />
-
-              <input
-                type="text"
-                value={tr.notes}
-                onChange={(e) => updateTestResult(tr.id, { notes: e.target.value })}
-                placeholder="Notes"
                 className={`${inputCls} flex-1`}
               />
               <button onClick={() => removeTestResult(tr.id)} className="mt-2 text-neutral-500 hover:text-red-400">
@@ -332,9 +352,9 @@ export function ConsultationPad({ prescription, onChange, onSave, onComplete }: 
                 />
                 <input
                   type="text"
-                  value={med.dosage}
-                  onChange={(e) => updateMedicine(med.id, { dosage: e.target.value })}
-                  placeholder="Dosage (e.g. 500mg)"
+                  value={med.timing || ""}
+                  onChange={(e) => updateMedicine(med.id, { timing: e.target.value })}
+                  placeholder="Timing (e.g. After food)"
                   className={inputCls}
                 />
                 <select
@@ -348,8 +368,20 @@ export function ConsultationPad({ prescription, onChange, onSave, onComplete }: 
                 </select>
                 <input
                   type="text"
+                  value={med.routine || ""}
+                  onChange={(e) => updateMedicine(med.id, { routine: e.target.value })}
+                  placeholder="Routine (e.g. Daily)"
+                  className={inputCls}
+                />
+                <input
+                  type="text"
                   value={med.duration}
-                  onChange={(e) => updateMedicine(med.id, { duration: e.target.value })}
+                  onChange={(e) => {
+                    updateMedicine(med.id, { duration: e.target.value });
+                    if (i === prescription.medicines.length - 1 && e.target.value.trim() !== '') {
+                      addMedicine();
+                    }
+                  }}
                   placeholder="Duration (e.g. 5 days)"
                   className={inputCls}
                 />

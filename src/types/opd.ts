@@ -59,7 +59,8 @@ export interface OpdBill {
 export interface MedicineEntry {
   id: string;
   name: string;
-  dosage: string;
+  timing?: string;
+  routine?: string;
   frequency: string;
   duration: string;
   route: string;
@@ -78,7 +79,6 @@ export interface TestResultEntry {
   testName: string;
   result: string;
   date: string;
-  notes: string;
 }
 
 export interface CustomSection {
@@ -98,12 +98,26 @@ export interface PrescriptionFormatConfig {
     address: string;
     phone: string;
   };
+  printOffsets?: {
+    enableAbsolutePositioning: boolean;
+    pageMargin: { top: number; right: number; bottom: number; left: number };
+    patientInfo: {
+      name: { top: number; left: number };
+      age: { top: number; left: number };
+      gender: { top: number; left: number };
+      date: { top: number; left: number };
+      weight: { top: number; left: number };
+      bp: { top: number; left: number };
+      spo2: { top: number; left: number };
+    };
+  };
 }
 
 export interface Prescription {
   chiefComplaints: string;
   diagnosis: string;
   testsAdvised: TestEntry[];
+  respiratoryExamination: string;
   testResults: TestResultEntry[];
   medicines: MedicineEntry[];
   nextVisitDate: string;
@@ -153,8 +167,9 @@ export const createEmptyPrescription = (): Prescription => ({
   chiefComplaints: "",
   diagnosis: "",
   testsAdvised: [],
-  testResults: [],
-  medicines: [],
+  respiratoryExamination: "",
+  testResults: [{ id: `tr-${Date.now()}`, testName: "", result: "", date: "" }],
+  medicines: [{ id: `rx-${Date.now()}`, name: "", timing: "", routine: "", frequency: "1-0-1", duration: "", route: "Oral", instructions: "" }],
   nextVisitDate: "",
   nextVisitReason: "",
   customSections: [],
@@ -165,6 +180,7 @@ export const DEFAULT_FORMAT_CONFIG: PrescriptionFormatConfig = {
     "chiefComplaints",
     "diagnosis",
     "testsAdvised",
+    "respiratoryExamination",
     "testResults",
     "medicines",
     "nextVisit",
@@ -176,6 +192,19 @@ export const DEFAULT_FORMAT_CONFIG: PrescriptionFormatConfig = {
     address: "",
     phone: "",
   },
+  printOffsets: {
+    enableAbsolutePositioning: false,
+    pageMargin: { top: 0, right: 0, bottom: 0, left: 0 },
+    patientInfo: {
+      name: { top: 0, left: 0 },
+      age: { top: 0, left: 0 },
+      gender: { top: 0, left: 0 },
+      date: { top: 0, left: 0 },
+      weight: { top: 0, left: 0 },
+      bp: { top: 0, left: 0 },
+      spo2: { top: 0, left: 0 },
+    },
+  },
 };
 
 export const getMergedFormatConfig = (config?: Partial<PrescriptionFormatConfig> | null): PrescriptionFormatConfig => {
@@ -186,6 +215,19 @@ export const getMergedFormatConfig = (config?: Partial<PrescriptionFormatConfig>
     hiddenSections: config?.hiddenSections || DEFAULT_FORMAT_CONFIG.hiddenSections,
     renamedHeadings: { ...DEFAULT_FORMAT_CONFIG.renamedHeadings, ...(config?.renamedHeadings || {}) },
     clinicHeader: { ...DEFAULT_FORMAT_CONFIG.clinicHeader, ...(config?.clinicHeader || {}) },
+    printOffsets: config?.printOffsets ? {
+      enableAbsolutePositioning: config.printOffsets.enableAbsolutePositioning,
+      pageMargin: { ...DEFAULT_FORMAT_CONFIG.printOffsets!.pageMargin, ...config.printOffsets.pageMargin },
+      patientInfo: {
+        name: { ...DEFAULT_FORMAT_CONFIG.printOffsets!.patientInfo.name, ...config.printOffsets.patientInfo?.name },
+        age: { ...DEFAULT_FORMAT_CONFIG.printOffsets!.patientInfo.age, ...config.printOffsets.patientInfo?.age },
+        gender: { ...DEFAULT_FORMAT_CONFIG.printOffsets!.patientInfo.gender, ...config.printOffsets.patientInfo?.gender },
+        date: { ...DEFAULT_FORMAT_CONFIG.printOffsets!.patientInfo.date, ...config.printOffsets.patientInfo?.date },
+        weight: { ...DEFAULT_FORMAT_CONFIG.printOffsets!.patientInfo.weight, ...config.printOffsets.patientInfo?.weight },
+        bp: { ...DEFAULT_FORMAT_CONFIG.printOffsets!.patientInfo.bp, ...config.printOffsets.patientInfo?.bp },
+        spo2: { ...DEFAULT_FORMAT_CONFIG.printOffsets!.patientInfo.spo2, ...config.printOffsets.patientInfo?.spo2 },
+      }
+    } : DEFAULT_FORMAT_CONFIG.printOffsets,
   };
 };
 
@@ -193,6 +235,7 @@ export const DEFAULT_SECTION_HEADINGS: Record<string, string> = {
   chiefComplaints: "Chief Complaints",
   diagnosis: "Diagnosis",
   testsAdvised: "Tests Advised",
+  respiratoryExamination: "Respiratory Examination",
   testResults: "Test Results",
   medicines: "Medicines",
   nextVisit: "Next Visit",

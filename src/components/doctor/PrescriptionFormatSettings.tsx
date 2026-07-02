@@ -50,6 +50,41 @@ export function PrescriptionFormatSettings({ onClose }: Props) {
     });
   };
 
+  const updatePageMargin = (field: keyof NonNullable<PrescriptionFormatConfig["printOffsets"]>["pageMargin"], value: string) => {
+    const val = parseInt(value, 10) || 0;
+    setLocal({
+      ...local,
+      printOffsets: {
+        ...local.printOffsets!,
+        pageMargin: { ...local.printOffsets!.pageMargin, [field]: val },
+      },
+    });
+  };
+
+  const updatePatientInfoOffset = (field: keyof NonNullable<PrescriptionFormatConfig["printOffsets"]>["patientInfo"], prop: "top" | "left", value: string) => {
+    const val = parseInt(value, 10) || 0;
+    setLocal({
+      ...local,
+      printOffsets: {
+        ...local.printOffsets!,
+        patientInfo: {
+          ...local.printOffsets!.patientInfo,
+          [field]: { ...local.printOffsets!.patientInfo[field], [prop]: val },
+        },
+      },
+    });
+  };
+
+  const toggleAbsolutePositioning = () => {
+    setLocal({
+      ...local,
+      printOffsets: {
+        ...local.printOffsets!,
+        enableAbsolutePositioning: !local.printOffsets?.enableAbsolutePositioning,
+      },
+    });
+  };
+
   const handleSave = () => {
     setConfig(local);
     onClose();
@@ -151,6 +186,88 @@ export function PrescriptionFormatSettings({ onClose }: Props) {
             );
           })}
         </div>
+      </div>
+
+      {/* Print Layout & Offsets */}
+      <div className="mb-5">
+        <div className="mb-2 flex items-center justify-between">
+          <p className="text-xs font-semibold uppercase tracking-widest text-neutral-500">
+            Print Layout & Offsets (mm)
+          </p>
+          <label className="flex items-center gap-2 text-xs font-medium text-white cursor-pointer">
+            <input
+              type="checkbox"
+              checked={local.printOffsets?.enableAbsolutePositioning || false}
+              onChange={toggleAbsolutePositioning}
+              className="rounded border-neutral-700 bg-neutral-800 text-blue-600 focus:ring-blue-600 focus:ring-offset-neutral-900"
+            />
+            Enable Custom Offsets
+          </label>
+        </div>
+
+        {local.printOffsets?.enableAbsolutePositioning && (
+          <div className="space-y-4 rounded-lg border border-neutral-700 p-3">
+            <div>
+              <p className="mb-1 text-xs text-neutral-400">Page Margins (Top, Right, Bottom, Left)</p>
+              <div className="grid grid-cols-4 gap-2">
+                <input
+                  type="number"
+                  value={local.printOffsets.pageMargin.top || ""}
+                  onChange={(e) => updatePageMargin("top", e.target.value)}
+                  placeholder="Top"
+                  className={inputCls}
+                />
+                <input
+                  type="number"
+                  value={local.printOffsets.pageMargin.right || ""}
+                  onChange={(e) => updatePageMargin("right", e.target.value)}
+                  placeholder="Right"
+                  className={inputCls}
+                />
+                <input
+                  type="number"
+                  value={local.printOffsets.pageMargin.bottom || ""}
+                  onChange={(e) => updatePageMargin("bottom", e.target.value)}
+                  placeholder="Bottom"
+                  className={inputCls}
+                />
+                <input
+                  type="number"
+                  value={local.printOffsets.pageMargin.left || ""}
+                  onChange={(e) => updatePageMargin("left", e.target.value)}
+                  placeholder="Left"
+                  className={inputCls}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <p className="text-xs text-neutral-400">Patient Info Fields (Top & Left mm)</p>
+              {Object.keys(local.printOffsets.patientInfo).map((key) => {
+                const k = key as keyof NonNullable<PrescriptionFormatConfig["printOffsets"]>["patientInfo"];
+                return (
+                  <div key={k} className="flex items-center gap-2">
+                    <span className="w-20 text-xs font-medium text-neutral-300 capitalize">{k}</span>
+                    <input
+                      type="number"
+                      value={local.printOffsets!.patientInfo[k].top || ""}
+                      onChange={(e) => updatePatientInfoOffset(k, "top", e.target.value)}
+                      placeholder="Top"
+                      className={`${inputCls} !py-1`}
+                    />
+                    <input
+                      type="number"
+                      value={local.printOffsets!.patientInfo[k].left || ""}
+                      onChange={(e) => updatePatientInfoOffset(k, "left", e.target.value)}
+                      placeholder="Left"
+                      className={`${inputCls} !py-1`}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Actions */}

@@ -20,7 +20,7 @@ const STATUS_ORDER: Record<string, number> = {
 export default function DoctorPage() {
   const [activeVisitId, setActiveVisitId] = useState<string | null>(null);
   const [prescription, setPrescription] = useState<Prescription>(createEmptyPrescription());
-  const [viewMode, setViewMode] = useState<"edit" | "preview" | "history">("edit");
+  const [viewMode, setViewMode] = useState<"edit" | "history">("edit");
 
   const opdVisits = useAppStore((s) => s.opdVisits);
   const opdPatients = useAppStore((s) => s.opdPatients);
@@ -234,12 +234,11 @@ export default function DoctorPage() {
               <div className="mb-4 flex gap-1 rounded-xl border border-neutral-800 bg-neutral-900/60 p-1 print:hidden">
                 {[
                   { key: "edit" as const, label: "Consultation", icon: "📝" },
-                  { key: "preview" as const, label: "Preview", icon: "👁" },
                   { key: "history" as const, label: `History (${patientVisitHistory.length})`, icon: "📂" },
                 ].map((tab) => (
                   <button
                     key={tab.key}
-                    onClick={() => setViewMode(tab.key)}
+                    onClick={() => setViewMode(tab.key as any)}
                     className={`flex-1 rounded-lg py-2 text-sm font-medium transition-colors ${
                       viewMode === tab.key
                         ? "bg-blue-600 text-white"
@@ -253,19 +252,24 @@ export default function DoctorPage() {
 
               {/* Content */}
               {viewMode === "edit" && (
-                <ConsultationPad
-                  prescription={prescription}
-                  onChange={setPrescription}
-                  onSave={handleSavePrescription}
-                  onComplete={handleCompleteVisit}
-                />
-              )}
-              {viewMode === "preview" && (
-                <PrescriptionPreview
-                  patient={activePatient}
-                  visit={activeVisit}
-                  prescription={prescription}
-                />
+                <div className="space-y-6">
+                  <div className="print:hidden">
+                    <ConsultationPad
+                      prescription={prescription}
+                      onChange={setPrescription}
+                      onSave={handleSavePrescription}
+                      onComplete={handleCompleteVisit}
+                    />
+                  </div>
+                  <div className="border-t border-neutral-800 pt-6">
+                    <h3 className="mb-4 text-lg font-bold text-white print:hidden">Live Preview</h3>
+                    <PrescriptionPreview
+                      patient={activePatient}
+                      visit={activeVisit}
+                      prescription={prescription}
+                    />
+                  </div>
+                </div>
               )}
               {viewMode === "history" && (
                 <VisitHistory

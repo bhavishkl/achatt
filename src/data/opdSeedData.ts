@@ -2,109 +2,24 @@
 // OPD Seed Data — Pulmonology-focused
 // ============================================================
 
-/** Pulmonologist generic medicine names only (no brand names) */
+/** Pulmonologist specific combination medicines */
 export const PULMONOLOGY_MEDICINES: string[] = [
-  // Bronchodilators
-  "Salbutamol",
-  "Ipratropium",
-  "Tiotropium",
-  "Formoterol",
-  "Salmeterol",
-  "Theophylline",
-  "Aminophylline",
-  "Levosalbutamol",
-  "Glycopyrronium",
-  "Umeclidinium",
-  "Indacaterol",
-  "Olodaterol",
-
-  // Corticosteroids
-  "Budesonide",
-  "Fluticasone",
-  "Beclomethasone",
-  "Prednisolone",
-  "Methylprednisolone",
-  "Dexamethasone",
-  "Hydrocortisone",
-  "Mometasone",
-  "Ciclesonide",
-  "Deflazacort",
-
-  // Combination inhalers (generic combos)
-  "Formoterol + Budesonide",
-  "Salmeterol + Fluticasone",
-  "Tiotropium + Olodaterol",
-  "Umeclidinium + Vilanterol",
-  "Glycopyrronium + Formoterol",
-  "Ipratropium + Salbutamol",
-
-  // Leukotriene modifiers
-  "Montelukast",
-  "Zafirlukast",
-
-  // Antihistamines
-  "Cetirizine",
-  "Levocetirizine",
-  "Fexofenadine",
-  "Loratadine",
-  "Chlorpheniramine",
-  "Desloratadine",
-  "Bilastine",
-
-  // Mucolytics / Antitussives
-  "Ambroxol",
-  "Acetylcysteine",
-  "Bromhexine",
-  "Dextromethorphan",
-  "Guaifenesin",
-  "Erdosteine",
-  "Carbocysteine",
-
-  // Antibiotics (respiratory)
-  "Azithromycin",
-  "Amoxicillin",
-  "Amoxicillin + Clavulanate",
-  "Levofloxacin",
-  "Moxifloxacin",
-  "Doxycycline",
-  "Cefpodoxime",
-  "Ceftriaxone",
-  "Cefixime",
-  "Clarithromycin",
-  "Co-trimoxazole",
-  "Linezolid",
-
-  // Anti-TB
-  "Isoniazid",
-  "Rifampicin",
-  "Pyrazinamide",
-  "Ethambutol",
-  "Streptomycin",
-  "Bedaquiline",
-  "Delamanid",
-  "Cycloserine",
-  "Ethionamide",
-
-  // Anti-fungal (pulmonary)
-  "Itraconazole",
-  "Voriconazole",
-  "Amphotericin B",
-
-  // ILD / Specialty
-  "Pirfenidone",
-  "Nintedanib",
-  "Omalizumab",
-  "Mepolizumab",
-  "Benralizumab",
-  "Roflumilast",
-  "Cromoglycate",
-
-  // Supportive
-  "Pantoprazole",
-  "Domperidone",
-  "Ondansetron",
-  "Paracetamol",
-  "Ibuprofen",
+  "Tab. Montelukast 10 mg + Fexofenadine 120 mg",
+  "Tab. Montelukast 10 mg + Levocetirizine 5 mg",
+  "Tab. Acebrophylline 200 mg + Acetylcysteine 600 mg",
+  "Cap. Doxofylline 400 mg + Ambroxol HCl 75 mg (SR)",
+  "Syp. Ambroxol HCl 30 mg + Guaifenesin 50 mg + Terbutaline Sulphate 1.25 mg/5 mL",
+  "Syp. Chlorpheniramine Maleate 2 mg + Dextromethorphan HBr 10 mg/5 mL",
+  "Respule. Levosalbutamol 1.25 mg + Ipratropium Bromide 500 mcg/2.5 mL",
+  "Neb. Budesonide 0.5 mg/2 mL",
+  "Inhaler. Budesonide 200 mcg + Formoterol Fumarate 6 mcg/dose",
+  "Inhaler. Tiotropium 9 mcg + Olodaterol 5 mcg/dose",
+  "Inhaler. Fluticasone Propionate 250 mcg + Salmeterol 50 mcg/dose",
+  "Inhaler. Budesonide 160 mcg + Glycopyrrolate 9 mcg + Formoterol Fumarate 4.8 mcg/dose",
+  "Rotacap. Formoterol Fumarate 12 mcg + Budesonide 400 mcg",
+  "DPI Cap. Tiotropium 18 mcg",
+  "Nasal Spray. Fluticasone Propionate 50 mcg/spray",
+  "Nasal Spray. Azelastine HCl 140 mcg + Fluticasone Propionate 50 mcg/spray"
 ];
 
 /** Common pulmonology-relevant tests */

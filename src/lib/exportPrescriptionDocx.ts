@@ -197,13 +197,7 @@ export async function generatePrescriptionDocx(
     }),
   );
 
-  // Rx
-  children.push(
-    new Paragraph({
-      children: [new TextRun({ text: "℞", bold: true, font: "Calibri", size: 36 })],
-      spacing: { after: 100 },
-    }),
-  );
+  // Rx is now printed in medicines section
 
   // Sections in configured order
   const sectionBuilders: Record<string, () => void> = {
@@ -217,6 +211,11 @@ export async function generatePrescriptionDocx(
       children.push(heading(getHead("diagnosis")));
       children.push(bodyText(prescription.diagnosis));
     },
+    respiratoryExamination: () => {
+      if (!prescription.respiratoryExamination) return;
+      children.push(heading(getHead("respiratoryExamination")));
+      children.push(bodyText(prescription.respiratoryExamination));
+    },
     testsAdvised: () => {
       if (prescription.testsAdvised.length === 0) return;
       children.push(heading(getHead("testsAdvised")));
@@ -225,75 +224,39 @@ export async function generatePrescriptionDocx(
       });
     },
     testResults: () => {
-      if (prescription.testResults.length === 0) return;
+      const validTestResults = prescription.testResults.filter((tr) => tr.testName.trim() !== "");
+      if (validTestResults.length === 0) return;
       children.push(heading(getHead("testResults")));
-      prescription.testResults.forEach((tr) => {
-        children.push(bulletText(`${tr.testName}: ${tr.result} (${tr.date})`));
+      validTestResults.forEach((tr) => {
+        children.push(bulletText(`${tr.testName}${tr.result ? `: ${tr.result}` : ""} (${tr.date})`));
       });
     },
     medicines: () => {
-      if (prescription.medicines.length === 0) return;
+      const validMedicines = prescription.medicines.filter((med) => med.name.trim() !== "");
+      if (validMedicines.length === 0) return;
+      
+      children.push(
+        new Paragraph({
+          children: [new TextRun({ text: "℞", bold: true, font: "Calibri", size: 36 })],
+          spacing: { after: 100 },
+        }),
+      );
+      
       children.push(heading(getHead("medicines")));
 
-      // Build table
-      const headerRow = new TableRow({
-        children: ["#", "Medicine", "Dosage", "Frequency", "Duration"].map(
-          (text) =>
-            new TableCell({
-              children: [
-                new Paragraph({
-                  children: [
-                    new TextRun({ text, bold: true, font: "Calibri", size: 20 }),
-                  ],
-                }),
-              ],
-              width: { size: text === "#" ? 5 : text === "Medicine" ? 25 : 14, type: WidthType.PERCENTAGE },
-            }),
-        ),
-      });
-
-      const dataRows = prescription.medicines.map(
-        (med, i) =>
-          new TableRow({
-            children: [
-              String(i + 1),
-              med.name,
-              med.dosage,
-              formatFrequency(med.frequency),
-              med.duration,
-            ].map(
-              (text) =>
-                new TableCell({
-                  children: [
-                    new Paragraph({
-                      children: [
-                        new TextRun({ text, font: "Calibri", size: 20 }),
-                      ],
-                    }),
-                  ],
-                }),
-            ),
-          }),
-      );
-
-      const table = new Table({
-        rows: [headerRow, ...dataRows],
-        borders: allBorders,
-        width: { size: 100, type: WidthType.PERCENTAGE },
-      });
-
-      // We can't push Table into children (Paragraph[]), so we'll use sections approach
-      // Actually docx allows Table in section children. Let's collect as (Paragraph | Table)[]
-      // But our children array is Paragraph[]. Let's workaround with text-based medicines.
-      // For simplicity, use text rows:
-      prescription.medicines.forEach((med, i) => {
+      validMedicines.forEach((med, i) => {
+        const parts = [];
+        if (med.timing) parts.push(med.timing);
+        if (med.routine) parts.push(med.routine);
+        if (med.duration) parts.push(med.duration);
+        
         children.push(
           new Paragraph({
             children: [
               new TextRun({ text: `${i + 1}. `, bold: true, font: "Calibri", size: 22 }),
               new TextRun({ text: `${med.name} `, bold: true, font: "Calibri", size: 22 }),
               new TextRun({
-                text: `${med.dosage} — ${formatFrequency(med.frequency)} × ${med.duration}`,
+                text: `${formatFrequency(med.frequency)} — ${parts.join(" - ")}`,
                 font: "Calibri",
                 size: 22,
               }),

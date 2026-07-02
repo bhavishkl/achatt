@@ -55,14 +55,21 @@ export function PrescriptionPreview({ patient, visit, prescription }: Props) {
         </div>
       ) : null,
 
+    respiratoryExamination: () =>
+      prescription.respiratoryExamination ? (
+        <div className="border-l-4 border-blue-500 pl-4 py-1">
+          <h3 className="mb-1 text-sm font-bold text-neutral-800">{getHeading("respiratoryExamination")}</h3>
+          <p className="whitespace-pre-wrap text-sm text-neutral-700">{prescription.respiratoryExamination}</p>
+        </div>
+      ) : null,
 
-
-    testResults: () =>
-      prescription.testResults.length > 0 ? (
+    testResults: () => {
+      const validTestResults = prescription.testResults.filter(tr => tr.testName.trim() !== "");
+      return validTestResults.length > 0 ? (
         <div className="px-1">
           <h3 className="mb-2 text-sm font-bold text-neutral-800 border-b border-neutral-200 pb-1">Advice</h3>
           <ul className="list-none space-y-1 text-sm">
-            {prescription.testResults.map((tr) => (
+            {validTestResults.map((tr) => (
               <li key={tr.id}>
                 <span className="font-medium text-neutral-700">{tr.testName}</span>
                 {tr.result ? <span className="text-neutral-600"> - {tr.result}</span> : null}
@@ -70,38 +77,49 @@ export function PrescriptionPreview({ patient, visit, prescription }: Props) {
             ))}
           </ul>
         </div>
-      ) : null,
+      ) : null;
+    },
 
-    medicines: () =>
-      prescription.medicines.length > 0 ? (
-        <div className="rounded-xl border border-neutral-200 overflow-hidden">
-          <div className="bg-neutral-50 px-3 py-2 border-b border-neutral-200">
-            <h3 className="text-sm font-bold text-neutral-800">{getHeading("medicines")}</h3>
-          </div>
-          <table className="w-full text-sm">
-            <thead className="bg-neutral-50/50">
-              <tr className="border-b border-neutral-200">
-                <th className="!py-1 !px-3 text-left font-semibold text-neutral-700 w-12">#</th>
-                <th className="!py-1 !px-3 text-left font-semibold text-neutral-700">Medicine</th>
-                <th className="!py-1 !px-3 text-left font-semibold text-neutral-700">Dosage</th>
-                <th className="!py-1 !px-3 text-left font-semibold text-neutral-700">Frequency</th>
-                <th className="!py-1 !px-3 text-left font-semibold text-neutral-700">Duration</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-neutral-100">
-              {prescription.medicines.map((med, i) => (
-                <tr key={med.id}>
-                  <td className="!py-1 !px-3 text-neutral-500">{i + 1}</td>
-                  <td className="!py-1 !px-3 font-medium text-neutral-800">{med.name}</td>
-                  <td className="!py-1 !px-3 text-neutral-700">{med.dosage}</td>
-                  <td className="!py-1 !px-3 text-neutral-700">{formatFrequency(med.frequency)}</td>
-                  <td className="!py-1 !px-3 text-neutral-700">{med.duration}</td>
+    medicines: () => {
+      const validMedicines = prescription.medicines.filter(med => med.name.trim() !== "");
+      return validMedicines.length > 0 ? (
+        <div className="space-y-4">
+          <div className="text-2xl font-bold text-neutral-800">℞</div>
+          <div className="rounded-xl border border-neutral-200 overflow-hidden">
+            <div className="bg-neutral-50 px-3 py-2 border-b border-neutral-200">
+              <h3 className="text-sm font-bold text-neutral-800">{getHeading("medicines")}</h3>
+            </div>
+            <table className="w-full text-sm">
+              <thead className="bg-neutral-50/50">
+                <tr className="border-b border-neutral-200">
+                  <th className="!py-1 !px-3 text-left font-semibold text-neutral-700 w-12">#</th>
+                  <th className="!py-1 !px-3 text-left font-semibold text-neutral-700">Medicine</th>
+                  <th className="!py-1 !px-3 text-left font-semibold text-neutral-700">Frequency</th>
+                  <th className="!py-1 !px-3 text-left font-semibold text-neutral-700">Timing - Routine - Duration</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-neutral-100">
+                {validMedicines.map((med, i) => {
+                  const parts = [];
+                  if (med.timing) parts.push(med.timing);
+                  if (med.routine) parts.push(med.routine);
+                  if (med.duration) parts.push(med.duration);
+                  
+                  return (
+                    <tr key={med.id}>
+                      <td className="!py-1 !px-3 text-neutral-500">{i + 1}</td>
+                      <td className="!py-1 !px-3 font-medium text-neutral-800">{med.name}</td>
+                      <td className="!py-1 !px-3 text-neutral-700">{formatFrequency(med.frequency)}</td>
+                      <td className="!py-1 !px-3 text-neutral-700">{parts.join(" - ")}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
-      ) : null,
+      ) : null;
+    },
 
     nextVisit: () =>
       prescription.nextVisitDate ? (
@@ -127,7 +145,10 @@ export function PrescriptionPreview({ patient, visit, prescription }: Props) {
     <div className="prescription-preview">
       <style>{`
         @media print {
-          @page { size: portrait; margin: 10mm; }
+          @page { 
+            size: portrait; 
+            margin: ${formatConfig.printOffsets?.enableAbsolutePositioning ? '0mm' : '10mm'}; 
+          }
           
           /* Override globals.css table styles */
           .prescription-preview table { width: 100% !important; font-size: inherit !important; }
@@ -159,55 +180,81 @@ export function PrescriptionPreview({ patient, visit, prescription }: Props) {
       </div>
 
       {/* Preview Card */}
-      <div className="rounded-2xl border border-neutral-300 bg-white p-6 shadow-sm print:m-0">
+      <div 
+        className="rounded-2xl border border-neutral-300 bg-white p-6 shadow-sm print:m-0 print:border-none print:shadow-none print:bg-transparent relative"
+        style={
+          formatConfig.printOffsets?.enableAbsolutePositioning 
+            ? { 
+                paddingTop: `${formatConfig.printOffsets.pageMargin.top}mm`,
+                paddingRight: `${formatConfig.printOffsets.pageMargin.right}mm`,
+                paddingBottom: `${formatConfig.printOffsets.pageMargin.bottom}mm`,
+                paddingLeft: `${formatConfig.printOffsets.pageMargin.left}mm`,
+              } 
+            : undefined
+        }
+      >
         {/* Patient Info */}
-        <div className="mb-4 grid grid-cols-2 gap-x-6 gap-y-2 rounded-lg bg-neutral-50 p-3 text-sm">
-          <div className="flex flex-col gap-1">
-            <div>
-              <span className="text-neutral-500">Patient: </span>
-              <span className="font-semibold text-neutral-800">{patient.name}</span>
+        {formatConfig.printOffsets?.enableAbsolutePositioning ? (
+          <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
+            <div style={{ position: 'absolute', top: `${formatConfig.printOffsets.patientInfo.name.top}mm`, left: `${formatConfig.printOffsets.patientInfo.name.left}mm` }} className="font-semibold text-black text-base">
+              {patient.name}
             </div>
-            <div>
-              <span className="text-neutral-500">Age/Gender: </span>
-              <span className="text-neutral-700">{patient.age}y / {patient.gender}</span>
+            <div style={{ position: 'absolute', top: `${formatConfig.printOffsets.patientInfo.age.top}mm`, left: `${formatConfig.printOffsets.patientInfo.age.left}mm` }} className="text-black">
+              {patient.age}y
             </div>
+            <div style={{ position: 'absolute', top: `${formatConfig.printOffsets.patientInfo.gender.top}mm`, left: `${formatConfig.printOffsets.patientInfo.gender.left}mm` }} className="text-black">
+              {patient.gender}
+            </div>
+            <div style={{ position: 'absolute', top: `${formatConfig.printOffsets.patientInfo.date.top}mm`, left: `${formatConfig.printOffsets.patientInfo.date.left}mm` }} className="text-black">
+              {formatDate(visit.visitDate)}
+            </div>
+            {visit.vitals && (
+              <>
+                {visit.vitals.weight && (
+                  <div style={{ position: 'absolute', top: `${formatConfig.printOffsets.patientInfo.weight.top}mm`, left: `${formatConfig.printOffsets.patientInfo.weight.left}mm` }} className="text-black">
+                    {visit.vitals.weight} kg
+                  </div>
+                )}
+                {visit.vitals.bloodPressureSystolic && visit.vitals.bloodPressureDiastolic && (
+                  <div style={{ position: 'absolute', top: `${formatConfig.printOffsets.patientInfo.bp.top}mm`, left: `${formatConfig.printOffsets.patientInfo.bp.left}mm` }} className="text-black">
+                    {visit.vitals.bloodPressureSystolic}/{visit.vitals.bloodPressureDiastolic} mmHg
+                  </div>
+                )}
+                {visit.vitals.spo2 && (
+                  <div style={{ position: 'absolute', top: `${formatConfig.printOffsets.patientInfo.spo2.top}mm`, left: `${formatConfig.printOffsets.patientInfo.spo2.left}mm` }} className="text-black">
+                    {visit.vitals.spo2}%
+                  </div>
+                )}
+              </>
+            )}
           </div>
-          <div className="flex flex-col gap-1 text-left">
-            <div>
-              <span className="text-neutral-500">Date: </span>
-              <span className="text-neutral-700">
-                {formatDate(visit.visitDate)}
-              </span>
-            </div>
+        ) : null}
+
+        <div className={formatConfig.printOffsets?.enableAbsolutePositioning ? "hidden" : "mb-4 flex flex-col gap-2 pb-2 text-sm"}>
+          <div className="flex items-center justify-between font-semibold text-neutral-800 text-base">
+            <span>{patient.name}</span>
+            <span>{formatDate(visit.visitDate)}</span>
           </div>
-          {visit.vitals && (
-            <div className="col-span-2 mt-1 flex flex-wrap gap-x-6 gap-y-2 border-t border-neutral-200 pt-2">
-              {visit.vitals.bloodPressureSystolic && visit.vitals.bloodPressureDiastolic && (
-                <div>
-                  <span className="text-neutral-500">BP: </span>
-                  <span className="text-neutral-700">
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-neutral-700">
+            <span>{patient.age}y / {patient.gender}</span>
+            {visit.vitals && (
+              <>
+                {visit.vitals.weight && (
+                  <span>{visit.vitals.weight} kg</span>
+                )}
+                {visit.vitals.bloodPressureSystolic && visit.vitals.bloodPressureDiastolic && (
+                  <span>
                     {visit.vitals.bloodPressureSystolic}/{visit.vitals.bloodPressureDiastolic} mmHg
                   </span>
-                </div>
-              )}
-              {visit.vitals.weight && (
-                <div>
-                  <span className="text-neutral-500">Weight: </span>
-                  <span className="text-neutral-700">{visit.vitals.weight} kg</span>
-                </div>
-              )}
-              {visit.vitals.spo2 && (
-                <div>
-                  <span className="text-neutral-500">SpO2: </span>
-                  <span className="text-neutral-700">{visit.vitals.spo2}%</span>
-                </div>
-              )}
-            </div>
-          )}
+                )}
+                {visit.vitals.spo2 && (
+                  <span>{visit.vitals.spo2}%</span>
+                )}
+              </>
+            )}
+          </div>
         </div>
 
-        {/* Rx Symbol */}
-        <div className="mb-4 text-2xl font-bold text-neutral-800">℞</div>
 
         {/* Sections */}
         <div className="space-y-6">

@@ -134,7 +134,7 @@ export function VisitHistory({ visits, patients, onLoadPrescription }: Props) {
                           {rx.medicines.map((med, i) => (
                             <p key={med.id} className="text-sm text-neutral-300">
                               {i + 1}. <span className="font-medium text-white">{med.name}</span>{" "}
-                              {med.dosage} — {med.frequency.split(" (")[0]} × {med.duration}
+                              — {med.frequency.split(" (")[0]} — {[med.timing, med.routine, med.duration].filter(Boolean).join(" - ")}
                               {med.instructions ? ` (${med.instructions})` : ""}
                             </p>
                           ))}
