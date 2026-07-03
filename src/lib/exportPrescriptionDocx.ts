@@ -173,7 +173,7 @@ export async function generatePrescriptionDocx(
     const v = visit.vitals;
     const parts: string[] = [];
     if (v.bloodPressureSystolic && v.bloodPressureDiastolic)
-      parts.push(`BP: ${v.bloodPressureSystolic}/${v.bloodPressureDiastolic} mmHg`);
+      parts.push(`BP: ${v.bloodPressureSystolic}/${v.bloodPressureDiastolic}`);
     if (v.pulse) parts.push(`Pulse: ${v.pulse} bpm`);
     if (v.temperature) parts.push(`Temp: ${v.temperature}°${v.temperatureUnit}`);
     if (v.spo2) parts.push(`SpO2: ${v.spo2}%`);

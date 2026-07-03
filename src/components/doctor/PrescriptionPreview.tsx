@@ -29,6 +29,11 @@ export function PrescriptionPreview({ patient, visit, prescription }: Props) {
     return `${dd}/${mm}/${yyyy}`;
   };
 
+  const formatBloodPressure = (systolic?: number | "", diastolic?: number | "") => {
+    if (!systolic || !diastolic) return "";
+    return `${systolic}/${diastolic}`;
+  };
+
   const formatFrequency = (freq: string) => {
     if (!freq) return "";
     if (freq.startsWith("OD")) return "1-0-0";
@@ -63,6 +68,23 @@ export function PrescriptionPreview({ patient, visit, prescription }: Props) {
         </div>
       ) : null,
 
+    testsAdvised: () => {
+      const validTestsAdvised = prescription.testsAdvised.filter((test) => test.name.trim() !== "");
+      return validTestsAdvised.length > 0 ? (
+        <div className="border-l-4 border-blue-500 pl-4 py-1">
+          <h3 className="mb-1 text-sm font-bold text-neutral-800">{getHeading("testsAdvised")}</h3>
+          <ul className="list-none space-y-1 text-sm text-neutral-700">
+            {validTestsAdvised.map((test) => (
+              <li key={test.id}>
+                <span className="font-medium text-neutral-700">{test.name}</span>
+                {test.notes ? <span className="text-neutral-600"> — {test.notes}</span> : null}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null;
+    },
+
     testResults: () => {
       const validTestResults = prescription.testResults.filter(tr => tr.testName.trim() !== "");
       return validTestResults.length > 0 ? (
@@ -83,13 +105,13 @@ export function PrescriptionPreview({ patient, visit, prescription }: Props) {
     medicines: () => {
       const validMedicines = prescription.medicines.filter(med => med.name.trim() !== "");
       return validMedicines.length > 0 ? (
-        <div className="space-y-4">
+        <div className="space-y-4 text-xs">
           <div className="text-2xl font-bold text-neutral-800">℞</div>
           <div className="rounded-xl border border-neutral-200 overflow-hidden">
             <div className="bg-neutral-50 px-3 py-2 border-b border-neutral-200">
-              <h3 className="text-sm font-bold text-neutral-800">{getHeading("medicines")}</h3>
+              <h3 className="text-xs font-bold text-neutral-800">{getHeading("medicines")}</h3>
             </div>
-            <table className="w-full text-sm">
+            <table className="w-full text-xs">
               <thead className="bg-neutral-50/50">
                 <tr className="border-b border-neutral-200">
                   <th className="!py-1 !px-3 text-left font-semibold text-neutral-700 w-12">#</th>
@@ -217,7 +239,7 @@ export function PrescriptionPreview({ patient, visit, prescription }: Props) {
                 )}
                 {visit.vitals.bloodPressureSystolic && visit.vitals.bloodPressureDiastolic && (
                   <div style={{ position: 'absolute', top: `${formatConfig.printOffsets.patientInfo.bp.top}mm`, left: `${formatConfig.printOffsets.patientInfo.bp.left}mm` }} className="text-black">
-                    {visit.vitals.bloodPressureSystolic}/{visit.vitals.bloodPressureDiastolic} mmHg
+                    {formatBloodPressure(visit.vitals.bloodPressureSystolic, visit.vitals.bloodPressureDiastolic)}
                   </div>
                 )}
                 {visit.vitals.spo2 && (
@@ -244,7 +266,7 @@ export function PrescriptionPreview({ patient, visit, prescription }: Props) {
                 )}
                 {visit.vitals.bloodPressureSystolic && visit.vitals.bloodPressureDiastolic && (
                   <span>
-                    {visit.vitals.bloodPressureSystolic}/{visit.vitals.bloodPressureDiastolic} mmHg
+                    {formatBloodPressure(visit.vitals.bloodPressureSystolic, visit.vitals.bloodPressureDiastolic)}
                   </span>
                 )}
                 {visit.vitals.spo2 && (

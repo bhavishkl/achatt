@@ -208,10 +208,26 @@ export const DEFAULT_FORMAT_CONFIG: PrescriptionFormatConfig = {
 };
 
 export const getMergedFormatConfig = (config?: Partial<PrescriptionFormatConfig> | null): PrescriptionFormatConfig => {
+  const mergedSectionOrder = (() => {
+    const customOrder = config?.sectionOrder || [];
+    const seen = new Set<string>();
+    const normalized = customOrder.filter((key) => {
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+
+    DEFAULT_FORMAT_CONFIG.sectionOrder.forEach((key) => {
+      if (!seen.has(key)) normalized.push(key);
+    });
+
+    return normalized;
+  })();
+
   return {
     ...DEFAULT_FORMAT_CONFIG,
     ...(config || {}),
-    sectionOrder: config?.sectionOrder || DEFAULT_FORMAT_CONFIG.sectionOrder,
+    sectionOrder: mergedSectionOrder,
     hiddenSections: config?.hiddenSections || DEFAULT_FORMAT_CONFIG.hiddenSections,
     renamedHeadings: { ...DEFAULT_FORMAT_CONFIG.renamedHeadings, ...(config?.renamedHeadings || {}) },
     clinicHeader: { ...DEFAULT_FORMAT_CONFIG.clinicHeader, ...(config?.clinicHeader || {}) },
