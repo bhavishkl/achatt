@@ -34,6 +34,13 @@ export function PrescriptionPreview({ patient, visit, prescription }: Props) {
     return `${systolic}/${diastolic}`;
   };
 
+  const formatSingleLineText = (value: string) =>
+    value
+      .split(/\r?\n+/)
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .join(", ");
+
   const formatFrequency = (freq: string) => {
     if (!freq) return "";
     if (freq.startsWith("OD")) return "1-0-0";
@@ -46,34 +53,34 @@ export function PrescriptionPreview({ patient, visit, prescription }: Props) {
   const sectionRenderers: Record<string, () => React.ReactNode> = {
     chiefComplaints: () =>
       prescription.chiefComplaints ? (
-        <div className="border-l-4 border-blue-500 pl-4 py-1">
-          <h3 className="mb-1 text-sm font-bold text-neutral-800">{getHeading("chiefComplaints")}</h3>
-          <p className="whitespace-pre-wrap text-sm text-neutral-700">{prescription.chiefComplaints}</p>
+        <div className="border-l-4 border-neutral-300 pl-3 py-0.5">
+          <h3 className="mb-0.5 text-sm font-bold text-neutral-800">{getHeading("chiefComplaints")}</h3>
+          <p className="whitespace-normal text-sm text-neutral-700">{formatSingleLineText(prescription.chiefComplaints)}</p>
         </div>
       ) : null,
 
     diagnosis: () =>
       prescription.diagnosis ? (
-        <div className="rounded-xl bg-blue-50/50 p-4 border border-blue-100">
-          <h3 className="mb-1 text-sm font-bold text-blue-900">{getHeading("diagnosis")}</h3>
-          <p className="text-sm text-blue-800">{prescription.diagnosis}</p>
+        <div className="rounded-lg border border-neutral-300 bg-white p-3">
+          <h3 className="mb-0.5 text-sm font-bold text-neutral-800">{getHeading("diagnosis")}</h3>
+          <p className="text-sm text-neutral-800">{prescription.diagnosis}</p>
         </div>
       ) : null,
 
     respiratoryExamination: () =>
       prescription.respiratoryExamination ? (
-        <div className="border-l-4 border-blue-500 pl-4 py-1">
-          <h3 className="mb-1 text-sm font-bold text-neutral-800">{getHeading("respiratoryExamination")}</h3>
-          <p className="whitespace-pre-wrap text-sm text-neutral-700">{prescription.respiratoryExamination}</p>
+        <div className="border-l-4 border-neutral-300 pl-3 py-0.5">
+          <h3 className="mb-0.5 text-sm font-bold text-neutral-800">{getHeading("respiratoryExamination")}</h3>
+          <p className="whitespace-normal text-sm text-neutral-700">{prescription.respiratoryExamination}</p>
         </div>
       ) : null,
 
     testsAdvised: () => {
       const validTestsAdvised = prescription.testsAdvised.filter((test) => test.name.trim() !== "");
       return validTestsAdvised.length > 0 ? (
-        <div className="border-l-4 border-blue-500 pl-4 py-1">
-          <h3 className="mb-1 text-sm font-bold text-neutral-800">{getHeading("testsAdvised")}</h3>
-          <ul className="list-none space-y-1 text-sm text-neutral-700">
+        <div className="border-l-4 border-neutral-300 pl-3 py-0.5">
+          <h3 className="mb-0.5 text-sm font-bold text-neutral-800">{getHeading("testsAdvised")}</h3>
+          <ul className="list-none space-y-0.5 text-sm text-neutral-700">
             {validTestsAdvised.map((test) => (
               <li key={test.id}>
                 <span className="font-medium text-neutral-700">{test.name}</span>
@@ -89,8 +96,8 @@ export function PrescriptionPreview({ patient, visit, prescription }: Props) {
       const validTestResults = prescription.testResults.filter(tr => tr.testName.trim() !== "");
       return validTestResults.length > 0 ? (
         <div className="px-1">
-          <h3 className="mb-2 text-sm font-bold text-neutral-800 border-b border-neutral-200 pb-1">Advice</h3>
-          <ul className="list-none space-y-1 text-sm">
+          <h3 className="mb-1 text-sm font-bold text-neutral-800 border-b border-neutral-200 pb-1">Advice</h3>
+          <ul className="list-none space-y-0.5 text-sm">
             {validTestResults.map((tr) => (
               <li key={tr.id}>
                 <span className="font-medium text-neutral-700">{tr.testName}</span>
@@ -105,10 +112,10 @@ export function PrescriptionPreview({ patient, visit, prescription }: Props) {
     medicines: () => {
       const validMedicines = prescription.medicines.filter(med => med.name.trim() !== "");
       return validMedicines.length > 0 ? (
-        <div className="space-y-4 text-xs">
-          <div className="text-2xl font-bold text-neutral-800">℞</div>
-          <div className="rounded-xl border border-neutral-200 overflow-hidden">
-            <div className="bg-neutral-50 px-3 py-2 border-b border-neutral-200">
+        <div className="space-y-2 text-xs">
+          <div className="text-2xl font-bold leading-none text-neutral-800">℞</div>
+          <div className="overflow-hidden rounded-lg border border-neutral-200">
+            <div className="border-b border-neutral-200 bg-neutral-50 px-2 py-1.5">
               <h3 className="text-xs font-bold text-neutral-800">{getHeading("medicines")}</h3>
             </div>
             <table className="w-full text-xs">
@@ -145,8 +152,8 @@ export function PrescriptionPreview({ patient, visit, prescription }: Props) {
 
     nextVisit: () =>
       prescription.nextVisitDate ? (
-        <div className="inline-block rounded-lg border border-dashed border-neutral-300 bg-neutral-50/50 p-3">
-          <h3 className="mb-1 text-sm font-bold text-neutral-800">{getHeading("nextVisit")}</h3>
+        <div className="inline-block rounded-lg border border-dashed border-neutral-300 bg-neutral-50/50 p-2.5">
+          <h3 className="mb-0.5 text-sm font-bold text-neutral-800">{getHeading("nextVisit")}</h3>
           <p className="text-sm text-neutral-700">
             {formatDate(prescription.nextVisitDate)}
             {prescription.nextVisitReason ? ` — ${prescription.nextVisitReason}` : ""}
@@ -169,7 +176,7 @@ export function PrescriptionPreview({ patient, visit, prescription }: Props) {
         @media print {
           @page { 
             size: portrait; 
-            margin: ${formatConfig.printOffsets?.enableAbsolutePositioning ? '0mm' : '10mm'}; 
+            margin: ${formatConfig.printOffsets?.enableAbsolutePositioning ? '0mm' : '4mm'}; 
           }
           
           /* Override globals.css table styles */
@@ -184,7 +191,7 @@ export function PrescriptionPreview({ patient, visit, prescription }: Props) {
         }
       `}</style>
       {/* Action buttons */}
-      <div className="mb-4 flex gap-2 no-print">
+      <div className="mb-3 flex gap-2 no-print">
         <button
           onClick={handlePrint}
           className="flex items-center gap-2 rounded-xl border border-neutral-700 bg-neutral-800 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-neutral-700"
@@ -203,7 +210,7 @@ export function PrescriptionPreview({ patient, visit, prescription }: Props) {
 
       {/* Preview Card */}
       <div 
-        className="rounded-2xl border border-neutral-300 bg-white p-6 shadow-sm print:m-0 print:border-none print:shadow-none print:bg-transparent relative"
+        className="relative rounded-2xl border border-neutral-300 bg-white p-4 shadow-sm print:m-0 print:border-none print:shadow-none print:bg-transparent"
         style={
           formatConfig.printOffsets?.enableAbsolutePositioning 
             ? { 
@@ -252,7 +259,7 @@ export function PrescriptionPreview({ patient, visit, prescription }: Props) {
           </div>
         ) : null}
 
-        <div className={formatConfig.printOffsets?.enableAbsolutePositioning ? "hidden" : "mb-4 flex flex-col gap-2 pb-2 text-sm"}>
+        <div className={formatConfig.printOffsets?.enableAbsolutePositioning ? "hidden" : "mb-2 flex flex-col gap-1 pb-1 text-sm"}>
           <div className="flex items-center justify-between font-semibold text-neutral-800 text-base">
             <span>{patient.name}</span>
             <span>{formatDate(visit.visitDate)}</span>
@@ -279,7 +286,7 @@ export function PrescriptionPreview({ patient, visit, prescription }: Props) {
 
 
         {/* Sections */}
-        <div className="space-y-6">
+        <div className="space-y-2.5">
           {formatConfig.sectionOrder.map((key) => {
             if (!isVisible(key)) return null;
             const render = sectionRenderers[key];
@@ -302,7 +309,7 @@ export function PrescriptionPreview({ patient, visit, prescription }: Props) {
         </div>
 
         {/* Footer */}
-        <div className="mt-8 flex justify-end border-t border-neutral-200 pt-4">
+        <div className="mt-4 flex justify-end border-t border-neutral-200 pt-3">
           <div className="text-right">
             <p className="text-sm text-neutral-500">Doctor&apos;s Signature</p>
             <div className="mt-6 w-40 border-b border-neutral-400" />

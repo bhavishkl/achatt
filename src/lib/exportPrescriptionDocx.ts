@@ -37,7 +37,7 @@ function heading(text: string): Paragraph {
         size: 22,
       }),
     ],
-    spacing: { before: 200, after: 100 },
+    spacing: { before: 80, after: 40 },
   });
 }
 
@@ -50,7 +50,7 @@ function bodyText(text: string): Paragraph {
         size: 22,
       }),
     ],
-    spacing: { after: 60 },
+    spacing: { after: 20 },
   });
 }
 
@@ -85,6 +85,13 @@ const formatDate = (isoString: string) => {
   const yyyy = d.getFullYear();
   return `${dd}/${mm}/${yyyy}`;
 };
+
+const formatSingleLineText = (value: string) =>
+  value
+    .split(/\r?\n+/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .join(", ");
 
 const formatFrequency = (freq: string) => {
   if (!freq) return "";
@@ -193,7 +200,7 @@ export async function generatePrescriptionDocx(
           color: "999999",
         }),
       ],
-      spacing: { before: 100, after: 100 },
+      spacing: { before: 40, after: 40 },
     }),
   );
 
@@ -204,7 +211,7 @@ export async function generatePrescriptionDocx(
     chiefComplaints: () => {
       if (!prescription.chiefComplaints) return;
       children.push(heading(getHead("chiefComplaints")));
-      children.push(bodyText(prescription.chiefComplaints));
+      children.push(bodyText(formatSingleLineText(prescription.chiefComplaints)));
     },
     diagnosis: () => {
       if (!prescription.diagnosis) return;
@@ -261,7 +268,7 @@ export async function generatePrescriptionDocx(
                 size: 22,
               }),
             ],
-            spacing: { after: 40 },
+            spacing: { after: 16 },
           }),
         );
       });
@@ -293,7 +300,7 @@ export async function generatePrescriptionDocx(
   // Signature
   children.push(
     new Paragraph({
-      spacing: { before: 600 },
+      spacing: { before: 260 },
       alignment: AlignmentType.RIGHT,
       children: [
         new TextRun({ text: "Doctor's Signature", font: "Calibri", size: 20, color: "666666" }),
