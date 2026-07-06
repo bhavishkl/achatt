@@ -50,6 +50,22 @@ export function PrescriptionPreview({ patient, visit, prescription }: Props) {
     return freq.split(" (")[0];
   };
 
+  const formatTimingToken = (value: string) => {
+    if (!value) return "";
+    const normalized = value.trim().toLowerCase();
+    if (normalized === "after food" || normalized === "af") return "AF";
+    if (normalized === "before food" || normalized === "bf") return "BF";
+    return value.trim();
+  };
+
+  const formatTimingRoutine = (med: { timing?: string; routine?: string; duration?: string }) => {
+    const parts = [] as string[];
+    if (med.timing) parts.push(formatTimingToken(med.timing));
+    if (med.routine) parts.push(formatTimingToken(med.routine));
+    if (med.duration) parts.push(med.duration.trim());
+    return parts.join(" - ");
+  };
+
   const sectionRenderers: Record<string, () => React.ReactNode> = {
     chiefComplaints: () =>
       prescription.chiefComplaints ? (
@@ -129,17 +145,14 @@ export function PrescriptionPreview({ patient, visit, prescription }: Props) {
               </thead>
               <tbody className="divide-y divide-neutral-100">
                 {validMedicines.map((med, i) => {
-                  const parts = [];
-                  if (med.timing) parts.push(med.timing);
-                  if (med.routine) parts.push(med.routine);
-                  if (med.duration) parts.push(med.duration);
-                  
+                  const timingRoutine = formatTimingRoutine(med);
+
                   return (
                     <tr key={med.id}>
                       <td className="!py-1 !px-3 text-neutral-500">{i + 1}</td>
                       <td className="!py-1 !px-3 font-medium text-neutral-800">{med.name}</td>
-                      <td className="!py-1 !px-3 text-neutral-700">{formatFrequency(med.frequency)}</td>
-                      <td className="!py-1 !px-3 text-neutral-700">{parts.join(" - ")}</td>
+                      <td className="!py-1 !px-3 text-center text-neutral-700">{formatFrequency(med.frequency)}</td>
+                      <td className="!py-1 !px-3 text-neutral-700">{timingRoutine}</td>
                     </tr>
                   );
                 })}

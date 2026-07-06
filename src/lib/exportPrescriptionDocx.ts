@@ -102,6 +102,22 @@ const formatFrequency = (freq: string) => {
   return freq.split(" (")[0];
 };
 
+const formatTimingToken = (value: string) => {
+  if (!value) return "";
+  const normalized = value.trim().toLowerCase();
+  if (normalized === "after food" || normalized === "af") return "AF";
+  if (normalized === "before food" || normalized === "bf") return "BF";
+  return value.trim();
+};
+
+const formatTimingRoutine = (med: { timing?: string; routine?: string; duration?: string }) => {
+  const parts = [] as string[];
+  if (med.timing) parts.push(formatTimingToken(med.timing));
+  if (med.routine) parts.push(formatTimingToken(med.routine));
+  if (med.duration) parts.push(med.duration.trim());
+  return parts.join(" - ");
+};
+
 export async function generatePrescriptionDocx(
   patient: OpdPatient,
   visit: OpdVisit,
@@ -252,18 +268,15 @@ export async function generatePrescriptionDocx(
       children.push(heading(getHead("medicines")));
 
       validMedicines.forEach((med, i) => {
-        const parts = [];
-        if (med.timing) parts.push(med.timing);
-        if (med.routine) parts.push(med.routine);
-        if (med.duration) parts.push(med.duration);
-        
+        const timingRoutine = formatTimingRoutine(med);
+
         children.push(
           new Paragraph({
             children: [
               new TextRun({ text: `${i + 1}. `, bold: true, font: "Calibri", size: 22 }),
               new TextRun({ text: `${med.name} `, bold: true, font: "Calibri", size: 22 }),
               new TextRun({
-                text: `${formatFrequency(med.frequency)} — ${parts.join(" - ")}`,
+                text: `${formatFrequency(med.frequency)} — ${timingRoutine}`,
                 font: "Calibri",
                 size: 22,
               }),
