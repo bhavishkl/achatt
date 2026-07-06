@@ -53,25 +53,25 @@ export function PrescriptionPreview({ patient, visit, prescription }: Props) {
   const sectionRenderers: Record<string, () => React.ReactNode> = {
     chiefComplaints: () =>
       prescription.chiefComplaints ? (
-        <div className="border-l-4 border-neutral-300 pl-3 py-0.5">
+        <div className="text-sm text-neutral-700">
           <h3 className="mb-0.5 text-sm font-bold text-neutral-800">{getHeading("chiefComplaints")}</h3>
-          <p className="whitespace-normal text-sm text-neutral-700">{formatSingleLineText(prescription.chiefComplaints)}</p>
+          <p className="whitespace-normal">{formatSingleLineText(prescription.chiefComplaints)}</p>
         </div>
       ) : null,
 
     diagnosis: () =>
       prescription.diagnosis ? (
-        <div className="rounded-lg border border-neutral-300 bg-white p-3">
+        <div className="text-sm text-neutral-800">
           <h3 className="mb-0.5 text-sm font-bold text-neutral-800">{getHeading("diagnosis")}</h3>
-          <p className="text-sm text-neutral-800">{prescription.diagnosis}</p>
+          <p>{prescription.diagnosis}</p>
         </div>
       ) : null,
 
     respiratoryExamination: () =>
       prescription.respiratoryExamination ? (
-        <div className="border-l-4 border-neutral-300 pl-3 py-0.5">
+        <div className="text-sm text-neutral-700">
           <h3 className="mb-0.5 text-sm font-bold text-neutral-800">{getHeading("respiratoryExamination")}</h3>
-          <p className="whitespace-normal text-sm text-neutral-700">{prescription.respiratoryExamination}</p>
+          <p className="whitespace-normal">{prescription.respiratoryExamination}</p>
         </div>
       ) : null,
 
