@@ -124,11 +124,15 @@ export interface AppState {
 
   // --- OPD Patient Registry ---
   opdPatients: OpdPatient[];
+  setOpdPatients: (patients: OpdPatient[]) => void;
   addOpdPatient: (p: Omit<OpdPatient, "id" | "createdAt">) => OpdPatient;
+  upsertOpdPatient: (patient: OpdPatient) => void;
   updateOpdPatient: (id: string, data: Partial<Omit<OpdPatient, "id" | "createdAt">>) => void;
 
   // --- OPD Visits ---
   opdVisits: OpdVisit[];
+  setOpdVisits: (visits: OpdVisit[]) => void;
+  upsertOpdVisit: (visit: OpdVisit) => void;
   createOpdVisit: (patientId: string) => OpdVisit;
   updateOpdVisitStatus: (visitId: string, status: OpdVisitStatus) => void;
   updateOpdVisitVitals: (visitId: string, vitals: Vitals) => void;
@@ -153,6 +157,7 @@ export interface AppState {
 
   // --- Prescription Templates ---
   prescriptionTemplates: { id: string; name: string; prescription: Prescription }[];
+  setTemplates: (templates: { id: string; name: string; prescription: Prescription }[]) => void;
   savePrescriptionTemplate: (name: string, prescription: Prescription) => void;
   deletePrescriptionTemplate: (id: string) => void;
 }
@@ -392,6 +397,7 @@ export const useAppStore = create<AppState>()(
 
       // ---- OPD Patient Registry ----
       opdPatients: [],
+      setOpdPatients: (patients) => set({ opdPatients: patients }),
       addOpdPatient: (p) => {
         const newPatient: OpdPatient = {
           ...p,
@@ -401,6 +407,14 @@ export const useAppStore = create<AppState>()(
         set((s) => ({ opdPatients: [...s.opdPatients, newPatient] }));
         return newPatient;
       },
+      upsertOpdPatient: (patient) =>
+        set((s) => {
+          const exists = s.opdPatients.some((p) => p.id === patient.id);
+          if (exists) {
+            return { opdPatients: s.opdPatients.map((p) => p.id === patient.id ? patient : p) };
+          }
+          return { opdPatients: [...s.opdPatients, patient] };
+        }),
       updateOpdPatient: (id, data) =>
         set((s) => ({
           opdPatients: s.opdPatients.map((p) =>
@@ -410,6 +424,15 @@ export const useAppStore = create<AppState>()(
 
       // ---- OPD Visits ----
       opdVisits: [],
+      setOpdVisits: (visits) => set({ opdVisits: visits }),
+      upsertOpdVisit: (visit) =>
+        set((s) => {
+          const exists = s.opdVisits.some((v) => v.id === visit.id);
+          if (exists) {
+            return { opdVisits: s.opdVisits.map((v) => v.id === visit.id ? visit : v) };
+          }
+          return { opdVisits: [...s.opdVisits, visit] };
+        }),
       createOpdVisit: (patientId) => {
         const today = new Date().toISOString().split("T")[0];
         const now = new Date().toISOString();
@@ -488,7 +511,8 @@ export const useAppStore = create<AppState>()(
       customDiagnoses: [],
       addCustomMedicine: (name) =>
         set((s) => {
-          const all = [...PULMONOLOGY_MEDICINES, ...s.customMedicines];
+          const seedNames = PULMONOLOGY_MEDICINES.map((m) => typeof m === "string" ? m : (m as any).name);
+          const all = [...seedNames, ...s.customMedicines];
           if (all.some((m) => m.toLowerCase() === name.toLowerCase())) return {};
           return { customMedicines: [...s.customMedicines, name] };
         }),
@@ -507,6 +531,7 @@ export const useAppStore = create<AppState>()(
 
       // ---- Prescription Templates ----
       prescriptionTemplates: [],
+      setTemplates: (templates) => set({ prescriptionTemplates: templates }),
       savePrescriptionTemplate: (name, prescription) =>
         set((s) => ({
           prescriptionTemplates: [

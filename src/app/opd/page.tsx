@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useAppStore } from "@/lib/store";
 import type { OpdPatient, OpdVisit } from "@/types/opd";
 import { PatientSearch } from "@/components/opd/PatientSearch";
@@ -8,6 +8,7 @@ import { PatientRegistration } from "@/components/opd/PatientRegistration";
 import { OpdBilling } from "@/components/opd/OpdBilling";
 import { VitalsEntry } from "@/components/opd/VitalsEntry";
 import { OpdQueue } from "@/components/opd/OpdQueue";
+import { useOpdApi } from "@/hooks/useOpdApi";
 
 type Step = "search" | "register" | "billing" | "vitals";
 
@@ -27,12 +28,40 @@ export default function OpdPage() {
   const [showQueue, setShowQueue] = useState(false);
   const [carryForwardSearch, setCarryForwardSearch] = useState({ name: "", phone: "" });
   const [editingPatient, setEditingPatient] = useState<OpdPatient | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   const opdVisits = useAppStore((s) => s.opdVisits);
   const opdPatients = useAppStore((s) => s.opdPatients);
-  const createOpdVisit = useAppStore((s) => s.createOpdVisit);
+  const setOpdPatients = useAppStore((s) => s.setOpdPatients);
+  const setOpdVisits = useAppStore((s) => s.setOpdVisits);
+
+  const { loadPatients, loadTodayVisits, companyId } = useOpdApi();
 
   const today = getToday();
+
+  // Load data from API on mount
+  useEffect(() => {
+    if (!companyId) {
+      setIsLoading(false);
+      return;
+    }
+
+    let mounted = true;
+    const load = async () => {
+      setIsLoading(true);
+      const [patients, visits] = await Promise.all([
+        loadPatients(),
+        loadTodayVisits(),
+      ]);
+      if (mounted) {
+        setOpdPatients(patients);
+        setOpdVisits(visits);
+        setIsLoading(false);
+      }
+    };
+    load();
+    return () => { mounted = false; };
+  }, [companyId, loadPatients, loadTodayVisits, setOpdPatients, setOpdVisits]);
 
   const todayVisits = useMemo(
     () => opdVisits.filter((v) => v.visitDate === today),
@@ -105,6 +134,17 @@ export default function OpdPage() {
   };
 
   const activeStepIndex = STEPS.findIndex((s) => s.key === activeStep);
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center">
+          <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-2 border-blue-500 border-t-transparent" />
+          <p className="text-sm text-neutral-400">Loading OPD data...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen p-4 sm:p-6 lg:p-8">

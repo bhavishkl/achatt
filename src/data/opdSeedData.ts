@@ -1,21 +1,33 @@
+// ============================================================
+// OPD Seed Data — Pulmonology-focused
+// ============================================================
+
+export type SeedMedicine = {
+  name: string;
+  frequency?: string;
+  timing?: string;
+  routine?: string;
+  duration?: string;
+};
+
 /** Pulmonologist specific combination medicines */
-export const PULMONOLOGY_MEDICINES: string[] = [
-  "Tab. Montelukast 10 mg + Fexofenadine 120 mg (Allegra-M, Montek-FX)",
-  "Tab. Montelukast 10 mg + Levocetirizine 5 mg (Montek-LC, Montair-LC)",
-  "Tab. Acebrophylline 200 mg + Acetylcysteine 600 mg (AB Phylline NAC, Acbro-N)",
-  "Cap. Doxofylline 400 mg + Ambroxol HCl 75 mg (SR) (Doxobid-AX SR, Jivadox-AX)",
-  "Syp. Ambroxol HCl 30 mg + Guaifenesin 50 mg + Terbutaline Sulphate 1.25 mg/5 mL (Ascoril Expectorant, Ambrolite-S)",
-  "Syp. Chlorpheniramine Maleate 2 mg + Dextromethorphan HBr 10 mg/5 mL (Benadryl DR, Chericof-DX)",
-  "Respule. Levosalbutamol 1.25 mg + Ipratropium Bromide 500 mcg/2.5 mL (Duolin Respules, Combimist-L Respules)",
-  "Neb. Budesonide 0.5 mg/2 mL (Budecort Respules, Budamate Respules)",
-  "Inhaler. Budesonide 200 mcg + Formoterol Fumarate 6 mcg/dose (Foracort 200, Symbicort 200)",
-  "Inhaler. Tiotropium 9 mcg + Olodaterol 5 mcg/dose (Spiolto Respimat)",
-  "Inhaler. Fluticasone Propionate 250 mcg + Salmeterol 50 mcg/dose (Seroflo 250, MaxiFlo 250)",
-  "Inhaler. Budesonide 160 mcg + Glycopyrrolate 9 mcg + Formoterol Fumarate 4.8 mcg/dose (Breztri Aerosphere)",
-  "Rotacap. Formoterol Fumarate 12 mcg + Budesonide 400 mcg (Foracort Rotacaps 400)",
-  "DPI Cap. Tiotropium 18 mcg (Tiova Rotacaps, Lupitrop Rotacaps)",
-  "Nasal Spray. Fluticasone Propionate 50 mcg/spray (Flomist, Flixonase)",
-  "Nasal Spray. Azelastine HCl 140 mcg + Fluticasone Propionate 50 mcg/spray (Dymista, Azeflo)"
+export const PULMONOLOGY_MEDICINES: SeedMedicine[] = [
+  { name: "Tab. Montelukast 10 mg + Fexofenadine 120 mg (Allegra-M, Montek-FX)", frequency: "0-0-1", timing: "After food", routine: "Daily", duration: "5 days" },
+  { name: "Tab. Montelukast 10 mg + Levocetirizine 5 mg (Montek-LC, Montair-LC)", frequency: "0-0-1", timing: "After food", routine: "Daily", duration: "5 days" },
+  { name: "Tab. Acebrophylline 200 mg + Acetylcysteine 600 mg (AB Phylline NAC, Acbro-N)", frequency: "1-0-1", timing: "After food", routine: "Daily", duration: "5 days" },
+  { name: "Cap. Doxofylline 400 mg + Ambroxol HCl 75 mg (SR) (Doxobid-AX SR, Jivadox-AX)", frequency: "1-0-1", timing: "After food", routine: "Daily", duration: "5 days" },
+  { name: "Syp. Ambroxol HCl 30 mg + Guaifenesin 50 mg + Terbutaline Sulphate 1.25 mg/5 mL (Ascoril Expectorant, Ambrolite-S)", frequency: "1-0-1", timing: "After food", routine: "Daily", duration: "5 days" },
+  { name: "Syp. Chlorpheniramine Maleate 2 mg + Dextromethorphan HBr 10 mg/5 mL (Benadryl DR, Chericof-DX)", frequency: "1-0-1", timing: "After food", routine: "Daily", duration: "5 days" },
+  { name: "Respule. Levosalbutamol 1.25 mg + Ipratropium Bromide 500 mcg/2.5 mL (Duolin Respules, Combimist-L Respules)", frequency: "1-0-1", timing: "As directed", routine: "SOS", duration: "5 days" },
+  { name: "Neb. Budesonide 0.5 mg/2 mL (Budecort Respules, Budamate Respules)", frequency: "1-0-1", timing: "As directed", routine: "Daily", duration: "5 days" },
+  { name: "Inhaler. Budesonide 200 mcg + Formoterol Fumarate 6 mcg/dose (Foracort 200, Symbicort 200)", frequency: "1-0-1", timing: "Before food", routine: "Daily", duration: "1 month" },
+  { name: "Inhaler. Tiotropium 9 mcg + Olodaterol 5 mcg/dose (Spiolto Respimat)", frequency: "1-0-0", timing: "Morning", routine: "Daily", duration: "1 month" },
+  { name: "Inhaler. Fluticasone Propionate 250 mcg + Salmeterol 50 mcg/dose (Seroflo 250, MaxiFlo 250)", frequency: "1-0-1", timing: "Before food", routine: "Daily", duration: "1 month" },
+  { name: "Inhaler. Budesonide 160 mcg + Glycopyrrolate 9 mcg + Formoterol Fumarate 4.8 mcg/dose (Breztri Aerosphere)", frequency: "1-0-1", timing: "Before food", routine: "Daily", duration: "1 month" },
+  { name: "Rotacap. Formoterol Fumarate 12 mcg + Budesonide 400 mcg (Foracort Rotacaps 400)", frequency: "1-0-1", timing: "Before food", routine: "Daily", duration: "1 month" },
+  { name: "DPI Cap. Tiotropium 18 mcg (Tiova Rotacaps, Lupitrop Rotacaps)", frequency: "1-0-0", timing: "Morning", routine: "Daily", duration: "1 month" },
+  { name: "Nasal Spray. Fluticasone Propionate 50 mcg/spray (Flomist, Flixonase)", frequency: "1-0-1", timing: "Night", routine: "Daily", duration: "1 month" },
+  { name: "Nasal Spray. Azelastine HCl 140 mcg + Fluticasone Propionate 50 mcg/spray (Dymista, Azeflo)", frequency: "1-0-1", timing: "Night", routine: "Daily", duration: "1 month" }
 ];
 
 /** Common pulmonology-relevant tests */

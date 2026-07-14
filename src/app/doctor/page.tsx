@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useAppStore } from "@/lib/store";
 import type { OpdVisit, OpdPatient, Prescription } from "@/types/opd";
 import { createEmptyPrescription } from "@/types/opd";
 import { ConsultationPad } from "@/components/doctor/ConsultationPad";
 import { PrescriptionPreview } from "@/components/doctor/PrescriptionPreview";
 import { VisitHistory } from "@/components/doctor/VisitHistory";
+import { useOpdApi } from "@/hooks/useOpdApi";
 
 const getToday = () => new Date().toISOString().split("T")[0];
 
@@ -17,17 +18,77 @@ const STATUS_ORDER: Record<string, number> = {
   completed: 3,
 };
 
+const getBpAlert = (sys: number | "", dia: number | "") => {
+  if (!sys || !dia) return "";
+  if (sys >= 140 || dia >= 90) return "danger";
+  if (sys >= 130 || dia >= 85) return "warning";
+  if (sys < 90 || dia < 60) return "warning";
+  return "";
+};
+const getPulseAlert = (pulse: number | "") => {
+  if (!pulse) return "";
+  if (pulse > 100 || pulse < 60) return "warning";
+  return "";
+};
+const getSpo2Alert = (spo2: number | "") => {
+  if (!spo2) return "";
+  if (spo2 <= 90) return "danger";
+  if (spo2 < 95) return "warning";
+  return "";
+};
+const getTempAlert = (temp: number | "", unit: string) => {
+  if (!temp) return "";
+  const t = unit === "C" ? (Number(temp) * 9/5) + 32 : Number(temp);
+  if (t >= 100.4) return "danger";
+  if (t > 99) return "warning";
+  return "";
+};
+
+const vitalColors = (alert: string) => {
+  if (alert === "danger") return "bg-red-500/20 text-red-400 border border-red-500/30";
+  if (alert === "warning") return "bg-amber-500/20 text-amber-400 border border-amber-500/30";
+  return "bg-neutral-800 text-neutral-300 border border-neutral-700/50";
+};
+
 export default function DoctorPage() {
   const [activeVisitId, setActiveVisitId] = useState<string | null>(null);
   const [prescription, setPrescription] = useState<Prescription>(createEmptyPrescription());
-  const [viewMode, setViewMode] = useState<"edit" | "history">("edit");
+  const [isLoading, setIsLoading] = useState(true);
 
   const opdVisits = useAppStore((s) => s.opdVisits);
   const opdPatients = useAppStore((s) => s.opdPatients);
+  const setOpdPatients = useAppStore((s) => s.setOpdPatients);
+  const setOpdVisits = useAppStore((s) => s.setOpdVisits);
   const updateOpdVisitStatus = useAppStore((s) => s.updateOpdVisitStatus);
   const updateOpdVisitPrescription = useAppStore((s) => s.updateOpdVisitPrescription);
 
+  const { loadPatients, loadTodayVisits, updateVisit, companyId } = useOpdApi();
+
   const today = getToday();
+
+  // Load data from API on mount
+  useEffect(() => {
+    if (!companyId) {
+      setIsLoading(false);
+      return;
+    }
+
+    let mounted = true;
+    const load = async () => {
+      setIsLoading(true);
+      const [patients, visits] = await Promise.all([
+        loadPatients(),
+        loadTodayVisits(),
+      ]);
+      if (mounted) {
+        setOpdPatients(patients);
+        setOpdVisits(visits);
+        setIsLoading(false);
+      }
+    };
+    load();
+    return () => { mounted = false; };
+  }, [companyId, loadPatients, loadTodayVisits, setOpdPatients, setOpdVisits]);
 
   const todayVisits = useMemo(
     () =>
@@ -61,32 +122,34 @@ export default function DoctorPage() {
 
   const getPatient = (id: string) => opdPatients.find((p) => p.id === id);
 
-  const handleSelectVisit = (visit: OpdVisit) => {
+  const handleSelectVisit = async (visit: OpdVisit) => {
     setActiveVisitId(visit.id);
     setPrescription(visit.prescription ?? createEmptyPrescription());
-    setViewMode("edit");
     if (visit.status === "vitals_done") {
+      // Optimistic update
       updateOpdVisitStatus(visit.id, "in_consultation");
+      // Sync to API
+      await updateVisit(visit.id, { status: "in_consultation" });
     }
   };
 
-  const handleSavePrescription = () => {
+  const handleSavePrescription = async () => {
     if (!activeVisitId) return;
+    // Optimistic update
     updateOpdVisitPrescription(activeVisitId, prescription);
+    // Sync to API
+    await updateVisit(activeVisitId, { prescription });
   };
 
-  const handleCompleteVisit = () => {
-    if (!activeVisitId) return;
-    updateOpdVisitPrescription(activeVisitId, prescription);
-    updateOpdVisitStatus(activeVisitId, "completed");
+  const handleCompleteVisit = async () => {
+    if (!activeVisit) return;
+    // Optimistic updates
+    updateOpdVisitPrescription(activeVisit.id, prescription);
+    updateOpdVisitStatus(activeVisit.id, "completed");
+    // Sync to API
+    await updateVisit(activeVisit.id, { prescription, status: "completed" });
     setActiveVisitId(null);
     setPrescription(createEmptyPrescription());
-    setViewMode("edit");
-  };
-
-  const handleLoadFromHistory = (pastPrescription: Prescription) => {
-    setPrescription(JSON.parse(JSON.stringify(pastPrescription)));
-    setViewMode("edit");
   };
 
   const queueCounts = useMemo(() => {
@@ -95,6 +158,17 @@ export default function DoctorPage() {
     const done = todayVisits.filter((v) => v.status === "completed").length;
     return { vitalsDone: vd, inConsultation: ic, completed: done, total: todayVisits.length };
   }, [todayVisits]);
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center">
+          <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-2 border-blue-500 border-t-transparent" />
+          <p className="text-sm text-neutral-400">Loading consultation data...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen p-4 sm:p-6 lg:p-8 print:p-0">
@@ -186,9 +260,9 @@ export default function DoctorPage() {
                     #{activeVisit.tokenNo}
                   </div>
                   <div>
-                    <p className="font-semibold text-white">{activePatient.name}</p>
+                    <p className="text-xl font-bold text-white">{activePatient.name}</p>
                     <p className="text-sm text-neutral-400">
-                      {activePatient.age}y / {activePatient.gender} · {activePatient.phone}
+                      {activePatient.age}y / {activePatient.gender}
                       {patientVisitHistory.length > 0 && (
                         <span className="ml-2 rounded-full bg-blue-500/15 px-2 py-0.5 text-[10px] font-semibold text-blue-400">
                           {patientVisitHistory.length} past visit{patientVisitHistory.length > 1 ? "s" : ""}
@@ -202,27 +276,27 @@ export default function DoctorPage() {
                 {activeVisit.vitals && (
                   <div className="flex flex-wrap gap-2">
                     {activeVisit.vitals.bloodPressureSystolic && activeVisit.vitals.bloodPressureDiastolic && (
-                      <span className="rounded-lg bg-neutral-800 px-2.5 py-1 text-xs text-neutral-300">
+                      <span className={`rounded-lg px-3 py-1.5 text-sm font-medium ${vitalColors(getBpAlert(activeVisit.vitals.bloodPressureSystolic, activeVisit.vitals.bloodPressureDiastolic))}`}>
                         BP: {activeVisit.vitals.bloodPressureSystolic}/{activeVisit.vitals.bloodPressureDiastolic}
                       </span>
                     )}
                     {activeVisit.vitals.pulse && (
-                      <span className="rounded-lg bg-neutral-800 px-2.5 py-1 text-xs text-neutral-300">
+                      <span className={`rounded-lg px-3 py-1.5 text-sm font-medium ${vitalColors(getPulseAlert(activeVisit.vitals.pulse))}`}>
                         Pulse: {activeVisit.vitals.pulse}
                       </span>
                     )}
                     {activeVisit.vitals.spo2 && (
-                      <span className="rounded-lg bg-neutral-800 px-2.5 py-1 text-xs text-neutral-300">
+                      <span className={`rounded-lg px-3 py-1.5 text-sm font-medium ${vitalColors(getSpo2Alert(activeVisit.vitals.spo2))}`}>
                         SpO2: {activeVisit.vitals.spo2}%
                       </span>
                     )}
                     {activeVisit.vitals.temperature && (
-                      <span className="rounded-lg bg-neutral-800 px-2.5 py-1 text-xs text-neutral-300">
+                      <span className={`rounded-lg px-3 py-1.5 text-sm font-medium ${vitalColors(getTempAlert(activeVisit.vitals.temperature, activeVisit.vitals.temperatureUnit))}`}>
                         Temp: {activeVisit.vitals.temperature}°{activeVisit.vitals.temperatureUnit}
                       </span>
                     )}
                     {activeVisit.vitals.weight && (
-                      <span className="rounded-lg bg-neutral-800 px-2.5 py-1 text-xs text-neutral-300">
+                      <span className="rounded-lg border border-neutral-700/50 bg-neutral-800 px-3 py-1.5 text-sm font-medium text-neutral-300">
                         Wt: {activeVisit.vitals.weight}kg
                       </span>
                     )}
@@ -230,54 +304,25 @@ export default function DoctorPage() {
                 )}
               </div>
 
-              {/* View Mode Tabs */}
-              <div className="mb-4 flex gap-1 rounded-xl border border-neutral-800 bg-neutral-900/60 p-1 print:hidden">
-                {[
-                  { key: "edit" as const, label: "Consultation", icon: "📝" },
-                  { key: "history" as const, label: `History (${patientVisitHistory.length})`, icon: "📂" },
-                ].map((tab) => (
-                  <button
-                    key={tab.key}
-                    onClick={() => setViewMode(tab.key as any)}
-                    className={`flex-1 rounded-lg py-2 text-sm font-medium transition-colors ${
-                      viewMode === tab.key
-                        ? "bg-blue-600 text-white"
-                        : "text-neutral-400 hover:text-white"
-                    }`}
-                  >
-                    {tab.icon} {tab.label}
-                  </button>
-                ))}
-              </div>
-
               {/* Content */}
-              {viewMode === "edit" && (
-                <div className="space-y-6">
-                  <div className="print:hidden">
-                    <ConsultationPad
-                      prescription={prescription}
-                      onChange={setPrescription}
-                      onSave={handleSavePrescription}
-                      onComplete={handleCompleteVisit}
-                    />
-                  </div>
-                  <div className="border-t border-neutral-800 pt-6">
-                    <h3 className="mb-4 text-lg font-bold text-white print:hidden">Live Preview</h3>
-                    <PrescriptionPreview
-                      patient={activePatient}
-                      visit={activeVisit}
-                      prescription={prescription}
-                    />
-                  </div>
+              <div className="space-y-6">
+                <div className="print:hidden">
+                  <ConsultationPad
+                    prescription={prescription}
+                    onChange={setPrescription}
+                    onSave={handleSavePrescription}
+                    onComplete={handleCompleteVisit}
+                  />
                 </div>
-              )}
-              {viewMode === "history" && (
-                <VisitHistory
-                  visits={patientVisitHistory}
-                  patients={opdPatients}
-                  onLoadPrescription={handleLoadFromHistory}
-                />
-              )}
+                <div className="border-t border-neutral-800 pt-6">
+                  <h3 className="mb-4 text-lg font-bold text-white print:hidden">Live Preview</h3>
+                  <PrescriptionPreview
+                    patient={activePatient}
+                    visit={activeVisit}
+                    prescription={prescription}
+                  />
+                </div>
+              </div>
             </div>
           )}
         </div>

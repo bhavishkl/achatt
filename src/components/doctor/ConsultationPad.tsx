@@ -8,6 +8,7 @@ import { MEDICINE_FREQUENCIES, MEDICINE_ROUTES, DEFAULT_SECTION_HEADINGS, getMer
 import { PULMONOLOGY_MEDICINES, PULMONOLOGY_TESTS, PULMONOLOGY_DIAGNOSES } from "@/data/opdSeedData";
 import { PrescriptionFormatSettings } from "@/components/doctor/PrescriptionFormatSettings";
 import { CHIEF_COMPLAINTS_TERMS, RESPIRATORY_EXAMINATION_TERMS, MEDICINE_TIMING_TERMS, MEDICINE_ROUTINE_TERMS, MEDICINE_DURATION_TERMS, NEXT_VISIT_REASON_TERMS, ADVICE_TERMS } from "@/data/consultationTerms";
+import { useOpdApi } from "@/hooks/useOpdApi";
 
 type Props = {
   prescription: Prescription;
@@ -19,6 +20,9 @@ type Props = {
 let _counter = 0;
 const uid = () => `rx-${Date.now()}-${++_counter}`;
 
+import { SeedMedicine } from "@/data/opdSeedData";
+type SuggestionOption = string | { label: string; value: string; searchStr: string; frequency?: string; timing?: string; routine?: string; duration?: string; };
+
 function AutocompleteInput({
   value,
   onChange,
@@ -26,15 +30,17 @@ function AutocompleteInput({
   placeholder,
   className = "",
   onSelect,
+  onSelectOption,
   isTextarea = false,
   multiEntryMode = "none",
 }: {
   value: string;
   onChange: (v: string) => void;
-  suggestions: string[];
+  suggestions: SuggestionOption[];
   placeholder: string;
   className?: string;
   onSelect?: (v: string) => void;
+  onSelectOption?: (s: SuggestionOption) => void;
   isTextarea?: boolean;
   multiEntryMode?: "newline" | "comma" | "none";
 }) {
@@ -43,6 +49,11 @@ function AutocompleteInput({
   const [show, setShow] = useState(false);
   const [activeIndex, setActiveIndex] = useState(isMulti ? -1 : 0);
   const [cursorPos, setCursorPos] = useState(value?.length || 0);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const getLabel = (s: SuggestionOption) => (typeof s === "string" ? s : s.label);
+  const getValue = (s: SuggestionOption) => (typeof s === "string" ? s : s.value);
+  const getSearchStr = (s: SuggestionOption) => (typeof s === "string" ? s.toLowerCase() : s.searchStr.toLowerCase());
 
   const sepChar = mode === "comma" ? "," : "\n";
   const textBeforeCursor = (value || "").substring(0, cursorPos);
@@ -53,12 +64,20 @@ function AutocompleteInput({
   const filtered = useMemo(() => {
     if (!currentLineText.trim()) return suggestions.slice(0, 8);
     const q = currentLineText.toLowerCase();
-    return suggestions.filter((s) => s.toLowerCase().includes(q)).slice(0, 8);
+    return suggestions.filter((s) => getSearchStr(s).includes(q)).slice(0, 8);
   }, [currentLineText, suggestions]);
 
   useEffect(() => setActiveIndex(isMulti ? -1 : 0), [currentLineText, isMulti]);
 
-  const handleSelectSuggestion = (s: string) => {
+  useEffect(() => {
+    if (isTextarea && textareaRef.current) {
+      textareaRef.current.style.height = "auto";
+      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+    }
+  }, [value, isTextarea]);
+
+  const handleSelectSuggestion = (s: SuggestionOption) => {
+    const val = getValue(s);
     if (isMulti) {
       const before = (value || "").substring(0, currentLineStart);
       const after = (value || "").substring(cursorPos);
@@ -66,11 +85,12 @@ function AutocompleteInput({
       if (after.trimStart().startsWith(mode === "comma" ? "," : "\n")) {
          append = "";
       }
-      onChange(before + s + append + after.trimStart());
+      onChange(before + val + append + after.trimStart());
     } else {
-      onChange(s);
+      onChange(val);
     }
-    onSelect?.(s);
+    onSelect?.(val);
+    onSelectOption?.(s);
     setShow(false);
   };
 
@@ -119,28 +139,37 @@ function AutocompleteInput({
   return (
     <div className="relative">
       {isTextarea ? (
-        <textarea {...innerProps} rows={3} className={`${className} resize-y`} />
+        <textarea
+          ref={textareaRef}
+          {...innerProps}
+          rows={2}
+          className={`${className} min-h-[60px] resize-none overflow-hidden`}
+        />
       ) : (
         <input type="text" {...innerProps} />
       )}
       {show && filtered.length > 0 && (
         <div className="absolute left-0 right-0 top-full z-30 mt-1 max-h-40 overflow-y-auto rounded-lg border border-neutral-700 bg-neutral-800 shadow-xl">
-          {filtered.map((s, i) => (
-            <button
-              key={s}
-              type="button"
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={() => handleSelectSuggestion(s)}
-              className={`flex w-full items-center justify-between px-3 py-2 text-left text-sm transition-colors ${
-                i === activeIndex ? "bg-neutral-700 text-white" : "text-neutral-300 hover:bg-neutral-700 hover:text-white"
-              }`}
-            >
-              <span>{s}</span>
-              {i === activeIndex && (
-                <span className="text-[10px] text-neutral-400">Enter ↵</span>
-              )}
-            </button>
-          ))}
+          {filtered.map((s, i) => {
+            const lbl = getLabel(s);
+            const val = getValue(s);
+            return (
+              <button
+                key={`${lbl}-${val}-${i}`}
+                type="button"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => handleSelectSuggestion(s)}
+                className={`flex w-full items-center justify-between px-3 py-2 text-left text-sm transition-colors ${
+                  i === activeIndex ? "bg-neutral-700 text-white" : "text-neutral-300 hover:bg-neutral-700 hover:text-white"
+                }`}
+              >
+                <span>{lbl}</span>
+                {i === activeIndex && (
+                  <span className="text-[10px] text-neutral-400">Enter ↵</span>
+                )}
+              </button>
+            );
+          })}
         </div>
       )}
     </div>
@@ -150,8 +179,7 @@ function AutocompleteInput({
 export function ConsultationPad({ prescription, onChange, onSave, onComplete }: Props) {
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
   const [showFormatSettings, setShowFormatSettings] = useState(false);
-  const [followUpNum, setFollowUpNum] = useState("");
-  const [followUpUnit, setFollowUpUnit] = useState("days");
+  const [followUpText, setFollowUpText] = useState("");
 
   const customMedicines = useAppStore((s) => s.customMedicines);
   const customTests = useAppStore((s) => s.customTests);
@@ -163,8 +191,35 @@ export function ConsultationPad({ prescription, onChange, onSave, onComplete }: 
   const savePrescriptionTemplate = useAppStore((s) => s.savePrescriptionTemplate);
   const deletePrescriptionTemplate = useAppStore((s) => s.deletePrescriptionTemplate);
   const formatConfig = getMergedFormatConfig(useAppStore((s) => s.prescriptionFormatConfig));
+  const { addCustomItem, saveTemplate: apiSaveTemplate, deleteTemplate: apiDeleteTemplate } = useOpdApi();
 
-  const allMedicines = useMemo(() => [...PULMONOLOGY_MEDICINES, ...customMedicines], [customMedicines]);
+  const allMedicines = useMemo(() => {
+    const opts: SuggestionOption[] = [];
+    PULMONOLOGY_MEDICINES.forEach((medObj) => {
+      // Type might be string for custom medicines if mixed, but PULMONOLOGY_MEDICINES is SeedMedicine[]
+      const medName = typeof medObj === "string" ? medObj : (medObj as SeedMedicine).name;
+      const metadata = typeof medObj === "object" ? {
+        frequency: medObj.frequency,
+        timing: medObj.timing,
+        routine: medObj.routine,
+        duration: medObj.duration
+      } : {};
+
+      const match = medName.match(/\(([^)]+)\)$/);
+      if (match) {
+        const generic = medName.substring(0, match.index).trim();
+        match[1].split(',').forEach((brand) => {
+          opts.push({ label: brand.trim(), value: generic, searchStr: brand.trim().toLowerCase(), ...metadata });
+        });
+      } else {
+        opts.push({ label: medName, value: medName, searchStr: medName.toLowerCase(), ...metadata });
+      }
+    });
+    customMedicines.forEach((med) => {
+      opts.push({ label: med, value: med, searchStr: med.toLowerCase() });
+    });
+    return opts;
+  }, [customMedicines]);
   const allTests = useMemo(() => [...PULMONOLOGY_TESTS, ...customTests], [customTests]);
   const allDiagnoses = useMemo(() => [...PULMONOLOGY_DIAGNOSES, ...customDiagnoses], [customDiagnoses]);
 
@@ -174,23 +229,32 @@ export function ConsultationPad({ prescription, onChange, onSave, onComplete }: 
     onChange({ ...prescription, [key]: value });
   };
 
-  const handleFollowUpChange = (num: string, unit: string) => {
-    setFollowUpNum(num);
-    setFollowUpUnit(unit);
-    
-    if (!num || isNaN(Number(num))) {
+  const handleFollowUpTextChange = (text: string) => {
+    setFollowUpText(text);
+    const match = text.trim().match(/^(\d+)\s*(days?|weeks?|months?|d|w|m)?$/i);
+    if (!match || !match[2]) {
       update("nextVisitDate", "");
       return;
     }
+    const amount = parseInt(match[1], 10);
+    const unitStr = match[2].toLowerCase();
     
     const d = new Date();
-    const amount = parseInt(num, 10);
-    if (unit === "days") d.setDate(d.getDate() + amount);
-    if (unit === "weeks") d.setDate(d.getDate() + amount * 7);
-    if (unit === "months") d.setMonth(d.getMonth() + amount);
+    if (unitStr.startsWith("d")) d.setDate(d.getDate() + amount);
+    if (unitStr.startsWith("w")) d.setDate(d.getDate() + amount * 7);
+    if (unitStr.startsWith("m")) d.setMonth(d.getMonth() + amount);
     
     update("nextVisitDate", d.toISOString().split("T")[0]);
   };
+
+  const followUpSuggestions = useMemo(() => {
+    const numMatch = followUpText.match(/^\d+/);
+    if (numMatch) {
+      const num = numMatch[0];
+      return [`${num} days`, `${num} weeks`, `${num} months`];
+    }
+    return ["1 week", "2 weeks", "1 month"];
+  }, [followUpText]);
 
   // Medicines
   const addMedicine = () => {
@@ -199,6 +263,15 @@ export function ConsultationPad({ prescription, onChange, onSave, onComplete }: 
       { id: uid(), name: "", timing: "", routine: "", frequency: "1-0-1", duration: "", route: "Oral", instructions: "" },
     ]);
   };
+
+  useEffect(() => {
+    if (
+      prescription.medicines.length === 0 ||
+      prescription.medicines.every((m) => m.name.trim() !== "")
+    ) {
+      addMedicine();
+    }
+  }, [prescription.medicines]);
   const updateMedicine = (id: string, data: Partial<MedicineEntry>) => {
     const newData = { ...data };
     if (typeof newData.timing === 'string') {
@@ -262,6 +335,27 @@ export function ConsultationPad({ prescription, onChange, onSave, onComplete }: 
   // Templates
   const [templateName, setTemplateName] = useState("");
   const [showTemplates, setShowTemplates] = useState(false);
+  const [showMetaActions, setShowMetaActions] = useState(false);
+  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved">("idle");
+
+  const handleSaveClick = async () => {
+    setSaveState("saving");
+    await new Promise((r) => setTimeout(r, 400));
+    onSave();
+    setSaveState("saved");
+    setTimeout(() => setSaveState("idle"), 2000);
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.key.toLowerCase() === 'm') {
+        e.preventDefault();
+        setShowMetaActions(prev => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   const handleSaveTemplate = () => {
     if (!templateName.trim()) return;
@@ -282,21 +376,23 @@ export function ConsultationPad({ prescription, onChange, onSave, onComplete }: 
   return (
     <div className="space-y-4">
       {/* Template & Format Actions */}
-      <div className="flex flex-wrap gap-2">
-        <button
-          onClick={() => setShowTemplates(!showTemplates)}
-          className="rounded-lg border border-neutral-700 bg-neutral-800 px-3 py-1.5 text-xs font-medium text-neutral-300 transition-colors hover:bg-neutral-700"
-        >
-          📋 Templates
-        </button>
-        <button
-          onClick={() => setShowFormatSettings(!showFormatSettings)}
-          className="rounded-lg border border-neutral-700 bg-neutral-800 px-3 py-1.5 text-xs font-medium text-neutral-300 transition-colors hover:bg-neutral-700"
-        >
-          <Settings className="mr-1 inline h-3 w-3" />
-          Format Settings
-        </button>
-      </div>
+      {showMetaActions && (
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={() => setShowTemplates(!showTemplates)}
+            className="rounded-lg border border-neutral-700 bg-neutral-800 px-3 py-1.5 text-xs font-medium text-neutral-300 transition-colors hover:bg-neutral-700"
+          >
+            📋 Templates
+          </button>
+          <button
+            onClick={() => setShowFormatSettings(!showFormatSettings)}
+            className="rounded-lg border border-neutral-700 bg-neutral-800 px-3 py-1.5 text-xs font-medium text-neutral-300 transition-colors hover:bg-neutral-700"
+          >
+            <Settings className="mr-1 inline h-3 w-3" />
+            Format Settings
+          </button>
+        </div>
+      )}
 
       {/* Templates Panel */}
       {showTemplates && (
@@ -361,7 +457,7 @@ export function ConsultationPad({ prescription, onChange, onSave, onComplete }: 
           suggestions={allDiagnoses}
           placeholder="Enter diagnosis..."
           className={inputCls}
-          onSelect={(v) => addCustomDiagnosis(v)}
+          onSelect={(v) => { addCustomDiagnosis(v); addCustomItem("diagnosis", v); }}
           isTextarea
           multiEntryMode="comma"
         />
@@ -422,7 +518,18 @@ export function ConsultationPad({ prescription, onChange, onSave, onComplete }: 
                   suggestions={allMedicines}
                   placeholder="Medicine name"
                   className={inputCls}
-                  onSelect={(v) => addCustomMedicine(v)}
+                  onSelect={(v) => { addCustomMedicine(v); addCustomItem("medicine", v); }}
+                  onSelectOption={(s) => {
+                    if (typeof s !== "string") {
+                      updateMedicine(med.id, {
+                        name: s.value,
+                        ...(s.timing && { timing: s.timing }),
+                        ...(s.routine && { routine: s.routine }),
+                        ...(s.frequency && { frequency: s.frequency }),
+                        ...(s.duration && { duration: s.duration })
+                      });
+                    }
+                  }}
                 />
                 <AutocompleteInput
                   value={med.timing || ""}
@@ -451,9 +558,6 @@ export function ConsultationPad({ prescription, onChange, onSave, onComplete }: 
                   value={med.duration}
                   onChange={(v) => {
                     updateMedicine(med.id, { duration: v });
-                    if (i === prescription.medicines.length - 1 && v.trim() !== '') {
-                      addMedicine();
-                    }
                   }}
                   suggestions={MEDICINE_DURATION_TERMS}
                   placeholder="Duration (e.g. 5 days)"
@@ -470,25 +574,13 @@ export function ConsultationPad({ prescription, onChange, onSave, onComplete }: 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div>
             <label className="mb-1 block text-xs text-neutral-500">Follow Up In</label>
-            <div className="flex gap-2">
-              <input
-                type="number"
-                min="1"
-                placeholder="e.g. 3"
-                value={followUpNum}
-                onChange={(e) => handleFollowUpChange(e.target.value, followUpUnit)}
-                className={`${inputCls} w-24`}
-              />
-              <select
-                value={followUpUnit}
-                onChange={(e) => handleFollowUpChange(followUpNum, e.target.value)}
-                className={inputCls}
-              >
-                <option value="days">Days</option>
-                <option value="weeks">Weeks</option>
-                <option value="months">Months</option>
-              </select>
-            </div>
+            <AutocompleteInput
+              value={followUpText}
+              onChange={handleFollowUpTextChange}
+              suggestions={followUpSuggestions}
+              placeholder="e.g. 3 days"
+              className={inputCls}
+            />
             {prescription.nextVisitDate && (
               <div className="mt-1 text-xs text-neutral-400">
                 Calculated: {new Date(prescription.nextVisitDate).toLocaleDateString("en-GB")}
@@ -550,11 +642,29 @@ export function ConsultationPad({ prescription, onChange, onSave, onComplete }: 
       {/* Action Buttons */}
       <div className="flex flex-col gap-3 sm:flex-row">
         <button
-          onClick={onSave}
-          className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-neutral-700 bg-neutral-800 py-3 text-sm font-medium text-white transition-colors hover:bg-neutral-700"
+          onClick={handleSaveClick}
+          disabled={saveState !== "idle"}
+          className={`flex flex-1 items-center justify-center gap-2 rounded-xl border py-3 text-sm font-medium transition-colors ${
+            saveState === "saved"
+              ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400"
+              : saveState === "saving"
+              ? "border-neutral-700 bg-neutral-800 text-neutral-400"
+              : "border-neutral-700 bg-neutral-800 text-white hover:bg-neutral-700"
+          }`}
         >
-          <Save className="h-4 w-4" />
-          Save Draft
+          {saveState === "saved" ? (
+            <>
+              <CheckCircle className="h-4 w-4" /> Saved!
+            </>
+          ) : saveState === "saving" ? (
+            <>
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" /> Saving...
+            </>
+          ) : (
+            <>
+              <Save className="h-4 w-4" /> Save Draft
+            </>
+          )}
         </button>
         <button
           onClick={onComplete}

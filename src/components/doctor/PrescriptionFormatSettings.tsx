@@ -5,6 +5,7 @@ import { useAppStore } from "@/lib/store";
 import type { PrescriptionFormatConfig } from "@/types/opd";
 import { DEFAULT_FORMAT_CONFIG, DEFAULT_SECTION_HEADINGS, getMergedFormatConfig } from "@/types/opd";
 import { X, ArrowUp, ArrowDown, RotateCcw } from "lucide-react";
+import { useOpdApi } from "@/hooks/useOpdApi";
 
 type Props = {
   onClose: () => void;
@@ -13,6 +14,8 @@ type Props = {
 export function PrescriptionFormatSettings({ onClose }: Props) {
   const config = getMergedFormatConfig(useAppStore((s) => s.prescriptionFormatConfig));
   const setConfig = useAppStore((s) => s.setPrescriptionFormatConfig);
+  const { saveFormatConfig } = useOpdApi();
+  const [isSaving, setIsSaving] = useState(false);
 
   const [local, setLocal] = useState<PrescriptionFormatConfig>(
     JSON.parse(JSON.stringify(config)),
@@ -85,8 +88,13 @@ export function PrescriptionFormatSettings({ onClose }: Props) {
     });
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    setIsSaving(true);
+    // Save locally
     setConfig(local);
+    // Save to company via API
+    await saveFormatConfig(local);
+    setIsSaving(false);
     onClose();
   };
 
@@ -274,9 +282,10 @@ export function PrescriptionFormatSettings({ onClose }: Props) {
       <div className="flex gap-2">
         <button
           onClick={handleSave}
-          className="flex-1 rounded-lg bg-blue-600 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700"
+          disabled={isSaving}
+          className="flex-1 rounded-lg bg-blue-600 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed"
         >
-          Save as Default
+          {isSaving ? "Saving..." : "Save as Default"}
         </button>
         <button
           onClick={handleReset}

@@ -7,6 +7,7 @@ import type { OpdPatient, OpdVisit, OpdBill, OpdBillItem } from "@/types/opd";
 import { OPD_QUICK_SERVICES } from "@/data/opdSeedData";
 import { BILLABLE_ITEMS } from "@/lib/constants";
 import { buildOpdBillPrintHtml, openPrintWindow } from "@/components/opd/opdPrint";
+import { useOpdApi } from "@/hooks/useOpdApi";
 
 type Props = {
   patient: OpdPatient;
@@ -30,10 +31,19 @@ export function OpdBilling({ patient, visit, onDone, onSkip }: Props) {
 
   const createOpdVisit = useAppStore((s) => s.createOpdVisit);
   const updateOpdVisitBill = useAppStore((s) => s.updateOpdVisitBill);
+  const upsertOpdVisit = useAppStore((s) => s.upsertOpdVisit);
   const getNextBillNo = useAppStore((s) => s.getNextBillNo);
+  const { createVisit: apiCreateVisit, updateVisit: apiUpdateVisit } = useOpdApi();
 
-  const getOrCreateVisit = () => {
+  const getOrCreateVisit = async (): Promise<OpdVisit> => {
     if (visit) return visit;
+    // Try API first
+    const apiVisit = await apiCreateVisit(patient.id);
+    if (apiVisit) {
+      upsertOpdVisit(apiVisit);
+      return apiVisit;
+    }
+    // Fallback to local
     return createOpdVisit(patient.id);
   };
 
@@ -86,8 +96,8 @@ export function OpdBilling({ patient, visit, onDone, onSkip }: Props) {
     // Move focus to qty/add
   };
 
-  const handleSaveAndPrint = () => {
-    const currentVisit = getOrCreateVisit();
+  const handleSaveAndPrint = async () => {
+    const currentVisit = await getOrCreateVisit();
     const today = new Date().toISOString().split("T")[0];
     const billNo = getNextBillNo(today);
     const bill: OpdBill = {
@@ -101,7 +111,10 @@ export function OpdBilling({ patient, visit, onDone, onSkip }: Props) {
       paymentMode,
       createdAt: new Date().toISOString(),
     };
+    // Optimistic update
     updateOpdVisitBill(currentVisit.id, bill);
+    // Sync to API
+    await apiUpdateVisit(currentVisit.id, { bill });
 
     // Print
     const html = buildOpdBillPrintHtml({ patient, bill, visit: currentVisit });
@@ -110,13 +123,13 @@ export function OpdBilling({ patient, visit, onDone, onSkip }: Props) {
     onDone(currentVisit);
   };
 
-  const handleSaveOnly = () => {
+  const handleSaveOnly = async () => {
     if (items.length === 0) {
-      const currentVisit = getOrCreateVisit();
+      const currentVisit = await getOrCreateVisit();
       onDone(currentVisit);
       return;
     }
-    const currentVisit = getOrCreateVisit();
+    const currentVisit = await getOrCreateVisit();
     const today = new Date().toISOString().split("T")[0];
     const billNo = getNextBillNo(today);
     const bill: OpdBill = {
@@ -130,12 +143,15 @@ export function OpdBilling({ patient, visit, onDone, onSkip }: Props) {
       paymentMode,
       createdAt: new Date().toISOString(),
     };
+    // Optimistic update
     updateOpdVisitBill(currentVisit.id, bill);
+    // Sync to API
+    await apiUpdateVisit(currentVisit.id, { bill });
     onDone(currentVisit);
   };
 
-  const handleSkip = () => {
-    const currentVisit = getOrCreateVisit();
+  const handleSkip = async () => {
+    const currentVisit = await getOrCreateVisit();
     onSkip(currentVisit);
   };
 

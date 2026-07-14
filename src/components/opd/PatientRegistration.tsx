@@ -4,6 +4,7 @@ import { FormEvent, useState } from "react";
 import { ArrowLeft } from "lucide-react";
 import { useAppStore } from "@/lib/store";
 import type { OpdPatient } from "@/types/opd";
+import { useOpdApi } from "@/hooks/useOpdApi";
 
 type Props = {
   existingPatient?: OpdPatient | null;
@@ -44,8 +45,11 @@ export function PatientRegistration({ existingPatient, initialName, initialPhone
 
   const addOpdPatient = useAppStore((s) => s.addOpdPatient);
   const updateOpdPatient = useAppStore((s) => s.updateOpdPatient);
+  const upsertOpdPatient = useAppStore((s) => s.upsertOpdPatient);
+  const { createPatient, updatePatient } = useOpdApi();
+  const [isSaving, setIsSaving] = useState(false);
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     const newErrors: Record<string, string> = {};
 
@@ -60,33 +64,48 @@ export function PatientRegistration({ existingPatient, initialName, initialPhone
     }
 
     if (existingPatient) {
-      updateOpdPatient(existingPatient.id, {
+      setIsSaving(true);
+      const updatedData = {
         name: name.trim(),
         phone: normalizePhone(phone.trim()),
         age: Number(age),
         gender,
         address: address.trim(),
         bloodGroup,
-      });
-      onRegistered({
-        ...existingPatient,
-        name: name.trim(),
-        phone: normalizePhone(phone.trim()),
-        age: Number(age),
-        gender,
-        address: address.trim(),
-        bloodGroup,
-      });
+      };
+      // Optimistic local update
+      updateOpdPatient(existingPatient.id, updatedData);
+      const updatedPatient = { ...existingPatient, ...updatedData };
+      // Sync to API
+      const apiResult = await updatePatient(existingPatient.id, updatedData);
+      if (apiResult) {
+        upsertOpdPatient(apiResult);
+        onRegistered(apiResult);
+      } else {
+        onRegistered(updatedPatient);
+      }
+      setIsSaving(false);
     } else {
-      const patient = addOpdPatient({
+      setIsSaving(true);
+      const patientData = {
         name: name.trim(),
         phone: normalizePhone(phone.trim()),
         age: Number(age),
         gender,
         address: address.trim(),
         bloodGroup,
-      });
-      onRegistered(patient);
+      };
+      // Try API first
+      const apiResult = await createPatient(patientData);
+      if (apiResult) {
+        upsertOpdPatient(apiResult);
+        onRegistered(apiResult);
+      } else {
+        // Fallback to local-only
+        const patient = addOpdPatient(patientData);
+        onRegistered(patient);
+      }
+      setIsSaving(false);
     }
   };
 
@@ -226,9 +245,12 @@ export function PatientRegistration({ existingPatient, initialName, initialPhone
           {/* Submit */}
           <button
             type="submit"
-            className="mt-2 w-full rounded-xl bg-emerald-600 py-3 text-sm font-semibold text-white transition-colors hover:bg-emerald-700"
+            disabled={isSaving}
+            className="mt-2 w-full rounded-xl bg-emerald-600 py-3 text-sm font-semibold text-white transition-colors hover:bg-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            {existingPatient ? "Update Patient & Continue" : "Register & Continue to Billing →"}
+            {isSaving
+              ? "Saving..."
+              : existingPatient ? "Update Patient & Continue" : "Register & Continue to Billing →"}
           </button>
         </form>
       </div>

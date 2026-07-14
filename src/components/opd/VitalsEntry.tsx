@@ -5,6 +5,7 @@ import { Check } from "lucide-react";
 import { useAppStore } from "@/lib/store";
 import type { OpdPatient, OpdVisit, Vitals } from "@/types/opd";
 import { createEmptyVitals } from "@/types/opd";
+import { useOpdApi } from "@/hooks/useOpdApi";
 
 type Props = {
   patient: OpdPatient;
@@ -53,13 +54,20 @@ const statusDots: Record<string, string> = {
 export function VitalsEntry({ patient, visit, onDone }: Props) {
   const [vitals, setVitals] = useState<Vitals>(visit.vitals ?? createEmptyVitals());
   const updateOpdVisitVitals = useAppStore((s) => s.updateOpdVisitVitals);
+  const { updateVisit: apiUpdateVisit } = useOpdApi();
+  const [isSaving, setIsSaving] = useState(false);
 
   const updateField = <K extends keyof Vitals>(key: K, value: Vitals[K]) => {
     setVitals((prev) => ({ ...prev, [key]: value }));
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    setIsSaving(true);
+    // Optimistic local update
     updateOpdVisitVitals(visit.id, vitals);
+    // Sync to API
+    await apiUpdateVisit(visit.id, { vitals });
+    setIsSaving(false);
     onDone();
   };
 
@@ -157,10 +165,11 @@ export function VitalsEntry({ patient, visit, onDone }: Props) {
         {/* Save */}
         <button
           onClick={handleSave}
-          className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 py-3 text-sm font-semibold text-white transition-colors hover:bg-emerald-700"
+          disabled={isSaving}
+          className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 py-3 text-sm font-semibold text-white transition-colors hover:bg-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed"
         >
           <Check className="h-4 w-4" />
-          Save Vitals & Complete
+          {isSaving ? "Saving..." : "Save Vitals & Complete"}
         </button>
       </div>
     </div>
