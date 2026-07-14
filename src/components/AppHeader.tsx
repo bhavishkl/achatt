@@ -24,6 +24,7 @@ export default function AppHeader({ children }: AppHeaderProps) {
   const [company, setCompany] = useState<Company | null>(null);
   const [isCompanyModalOpen, setIsCompanyModalOpen] = useState(false);
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+  const [isDesktopNavOpen, setIsDesktopNavOpen] = useState(false);
   const [authState, setAuthState] = useState<{
     isAuthenticated: boolean;
     userEmail: string | null;
@@ -190,11 +191,22 @@ export default function AppHeader({ children }: AppHeaderProps) {
         <header className="app-header sticky top-0 z-40 border-b border-neutral-800 bg-neutral-950/95 backdrop-blur">
           <div className="mx-auto flex max-w-[1600px] items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8">
             <div className="flex min-w-0 items-center gap-3">
+              {/* Mobile Toggle */}
               <button
                 type="button"
                 onClick={() => setIsMobileNavOpen(true)}
-                className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-neutral-800 bg-neutral-900 text-neutral-200 lg:hidden"
-                aria-label="Open navigation"
+                className="inline-flex shrink-0 h-10 w-10 items-center justify-center rounded-xl border border-neutral-800 bg-neutral-900 text-neutral-200 lg:hidden"
+                aria-label="Open mobile navigation"
+              >
+                <span className="text-lg">☰</span>
+              </button>
+
+              {/* Desktop Toggle */}
+              <button
+                type="button"
+                onClick={() => setIsDesktopNavOpen((p) => !p)}
+                className="hidden shrink-0 h-10 w-10 items-center justify-center rounded-xl border border-neutral-800 bg-neutral-900 text-neutral-200 lg:inline-flex"
+                aria-label="Toggle desktop navigation"
               >
                 <span className="text-lg">☰</span>
               </button>
@@ -220,9 +232,11 @@ export default function AppHeader({ children }: AppHeaderProps) {
         </header>
 
         <div className="mx-auto flex max-w-[1600px]">
-          <aside className="sticky top-[var(--app-header-height)] hidden h-[calc(100vh-var(--app-header-height))] w-80 shrink-0 border-r border-neutral-800 bg-neutral-950 lg:block">
-            {navContent}
-          </aside>
+          {isDesktopNavOpen && (
+            <aside className="sticky top-[var(--app-header-height)] hidden h-[calc(100vh-var(--app-header-height))] w-80 shrink-0 border-r border-neutral-800 bg-neutral-950 lg:block">
+              {navContent}
+            </aside>
+          )}
 
           <main className="min-w-0 flex-1">{children}</main>
         </div>

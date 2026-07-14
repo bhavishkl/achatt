@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import { Plus, Trash2, ChevronDown, ChevronUp, Save, CheckCircle, GripVertical, Eye, EyeOff, Settings } from "lucide-react";
 import { useAppStore } from "@/lib/store";
 import type { Prescription, MedicineEntry, TestEntry, TestResultEntry, CustomSection } from "@/types/opd";
 import { MEDICINE_FREQUENCIES, MEDICINE_ROUTES, DEFAULT_SECTION_HEADINGS, getMergedFormatConfig } from "@/types/opd";
 import { PULMONOLOGY_MEDICINES, PULMONOLOGY_TESTS, PULMONOLOGY_DIAGNOSES } from "@/data/opdSeedData";
 import { PrescriptionFormatSettings } from "@/components/doctor/PrescriptionFormatSettings";
+import { CHIEF_COMPLAINTS_TERMS, RESPIRATORY_EXAMINATION_TERMS, MEDICINE_TIMING_TERMS, MEDICINE_ROUTINE_TERMS, MEDICINE_DURATION_TERMS, NEXT_VISIT_REASON_TERMS, ADVICE_TERMS } from "@/data/consultationTerms";
 
 type Props = {
   prescription: Prescription;
@@ -25,6 +26,8 @@ function AutocompleteInput({
   placeholder,
   className = "",
   onSelect,
+  isTextarea = false,
+  multiEntryMode = "none",
 }: {
   value: string;
   onChange: (v: string) => void;
@@ -32,40 +35,110 @@ function AutocompleteInput({
   placeholder: string;
   className?: string;
   onSelect?: (v: string) => void;
+  isTextarea?: boolean;
+  multiEntryMode?: "newline" | "comma" | "none";
 }) {
+  const mode = multiEntryMode !== "none" ? multiEntryMode : (isTextarea ? "newline" : "none");
+  const isMulti = mode !== "none";
   const [show, setShow] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(isMulti ? -1 : 0);
+  const [cursorPos, setCursorPos] = useState(value?.length || 0);
+
+  const sepChar = mode === "comma" ? "," : "\n";
+  const textBeforeCursor = (value || "").substring(0, cursorPos);
+  const lastSepIndex = textBeforeCursor.lastIndexOf(sepChar);
+  const currentLineStart = isMulti ? (lastSepIndex >= 0 ? lastSepIndex + 1 : 0) : 0;
+  const currentLineText = isMulti ? textBeforeCursor.substring(currentLineStart).trimStart() : (value || "");
+
   const filtered = useMemo(() => {
-    if (!value.trim()) return suggestions.slice(0, 8);
-    const q = value.toLowerCase();
+    if (!currentLineText.trim()) return suggestions.slice(0, 8);
+    const q = currentLineText.toLowerCase();
     return suggestions.filter((s) => s.toLowerCase().includes(q)).slice(0, 8);
-  }, [value, suggestions]);
+  }, [currentLineText, suggestions]);
+
+  useEffect(() => setActiveIndex(isMulti ? -1 : 0), [currentLineText, isMulti]);
+
+  const handleSelectSuggestion = (s: string) => {
+    if (isMulti) {
+      const before = (value || "").substring(0, currentLineStart);
+      const after = (value || "").substring(cursorPos);
+      let append = mode === "comma" ? ", " : "\n";
+      if (after.trimStart().startsWith(mode === "comma" ? "," : "\n")) {
+         append = "";
+      }
+      onChange(before + s + append + after.trimStart());
+    } else {
+      onChange(s);
+    }
+    onSelect?.(s);
+    setShow(false);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (!show || filtered.length === 0) return;
+    
+    if (e.key === "Enter") {
+      if (activeIndex >= 0) {
+        e.preventDefault();
+        handleSelectSuggestion(filtered[activeIndex]);
+      }
+    } else if (e.key === "Tab") {
+      e.preventDefault();
+      handleSelectSuggestion(filtered[activeIndex >= 0 ? activeIndex : 0]);
+    } else if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setActiveIndex((prev) => (prev + 1) % filtered.length);
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setActiveIndex((prev) => prev <= 0 ? filtered.length - 1 : prev - 1);
+    } else if (e.key === "Escape") {
+      setShow(false);
+    }
+  };
+
+  const updateCursor = (e: any) => {
+    setCursorPos(e.target.selectionStart || 0);
+  };
+
+  const innerProps = {
+    value,
+    onChange: (e: any) => { 
+      onChange(e.target.value); 
+      setCursorPos(e.target.selectionStart || 0);
+      setShow(true); 
+    },
+    onFocus: (e: any) => { setShow(true); updateCursor(e); },
+    onBlur: () => setTimeout(() => setShow(false), 200),
+    onClick: updateCursor,
+    onKeyUp: updateCursor,
+    onKeyDown: handleKeyDown,
+    placeholder,
+    className,
+  };
 
   return (
     <div className="relative">
-      <input
-        type="text"
-        value={value}
-        onChange={(e) => { onChange(e.target.value); setShow(true); }}
-        onFocus={() => setShow(true)}
-        onBlur={() => setTimeout(() => setShow(false), 200)}
-        placeholder={placeholder}
-        className={className}
-      />
+      {isTextarea ? (
+        <textarea {...innerProps} rows={3} className={`${className} resize-y`} />
+      ) : (
+        <input type="text" {...innerProps} />
+      )}
       {show && filtered.length > 0 && (
         <div className="absolute left-0 right-0 top-full z-30 mt-1 max-h-40 overflow-y-auto rounded-lg border border-neutral-700 bg-neutral-800 shadow-xl">
-          {filtered.map((s) => (
+          {filtered.map((s, i) => (
             <button
               key={s}
               type="button"
               onMouseDown={(e) => e.preventDefault()}
-              onClick={() => {
-                onChange(s);
-                onSelect?.(s);
-                setShow(false);
-              }}
-              className="block w-full px-3 py-1.5 text-left text-sm text-neutral-300 transition-colors hover:bg-neutral-700 hover:text-white"
+              onClick={() => handleSelectSuggestion(s)}
+              className={`flex w-full items-center justify-between px-3 py-2 text-left text-sm transition-colors ${
+                i === activeIndex ? "bg-neutral-700 text-white" : "text-neutral-300 hover:bg-neutral-700 hover:text-white"
+              }`}
             >
-              {s}
+              <span>{s}</span>
+              {i === activeIndex && (
+                <span className="text-[10px] text-neutral-400">Enter ↵</span>
+              )}
             </button>
           ))}
         </div>
@@ -269,12 +342,14 @@ export function ConsultationPad({ prescription, onChange, onSave, onComplete }: 
 
       {/* Chief Complaints */}
       <Section title={sectionHeading("chiefComplaints")} sectionKey="chiefComplaints" collapsed={collapsed} onToggle={toggle}>
-        <textarea
+        <AutocompleteInput
           value={prescription.chiefComplaints}
-          onChange={(e) => update("chiefComplaints", e.target.value)}
+          onChange={(v) => update("chiefComplaints", v)}
+          suggestions={CHIEF_COMPLAINTS_TERMS}
           placeholder="Describe chief complaints..."
-          rows={3}
-          className={`${inputCls} resize-y`}
+          className={inputCls}
+          isTextarea
+          multiEntryMode="newline"
         />
       </Section>
 
@@ -287,6 +362,8 @@ export function ConsultationPad({ prescription, onChange, onSave, onComplete }: 
           placeholder="Enter diagnosis..."
           className={inputCls}
           onSelect={(v) => addCustomDiagnosis(v)}
+          isTextarea
+          multiEntryMode="comma"
         />
       </Section>
 
@@ -294,40 +371,37 @@ export function ConsultationPad({ prescription, onChange, onSave, onComplete }: 
 
       {/* Respiratory Examination */}
       <Section title={sectionHeading("respiratoryExamination")} sectionKey="respiratoryExamination" collapsed={collapsed} onToggle={toggle}>
-        <textarea
+        <AutocompleteInput
           value={prescription.respiratoryExamination}
-          onChange={(e) => update("respiratoryExamination", e.target.value)}
+          onChange={(v) => update("respiratoryExamination", v)}
+          suggestions={RESPIRATORY_EXAMINATION_TERMS}
           placeholder="Respiratory examination details..."
-          rows={3}
-          className={`${inputCls} resize-y`}
+          className={inputCls}
+          isTextarea
+          multiEntryMode="newline"
         />
       </Section>
 
       {/* Advice */}
-      <Section title="Advice" sectionKey="testResults" collapsed={collapsed} onToggle={toggle} onAdd={addTestResult} count={prescription.testResults.length}>
-        <div className="space-y-2">
-          {prescription.testResults.map((tr) => (
-            <div key={tr.id} className="flex flex-wrap items-start gap-2">
-              <AutocompleteInput
-                value={tr.testName}
-                onChange={(v) => updateTestResult(tr.id, { testName: v })}
-                suggestions={allTests}
-                placeholder="Test name"
-                className={`${inputCls} w-40`}
-              />
-              <input
-                type="text"
-                value={tr.result}
-                onChange={(e) => updateTestResult(tr.id, { result: e.target.value })}
-                placeholder="Result"
-                className={`${inputCls} flex-1`}
-              />
-              <button onClick={() => removeTestResult(tr.id)} className="mt-2 text-neutral-500 hover:text-red-400">
-                <Trash2 className="h-4 w-4" />
-              </button>
-            </div>
-          ))}
-        </div>
+      <Section title="Advice" sectionKey="testResults" collapsed={collapsed} onToggle={toggle}>
+        <AutocompleteInput
+          value={prescription.testResults.map((tr) => tr.testName).join('\n')}
+          onChange={(v) => {
+            const lines = v.split('\n');
+            const newTestResults = lines.map((line, i) => ({
+              id: `tr-${Date.now()}-${i}`,
+              testName: line,
+              result: "",
+              date: ""
+            }));
+            onChange({ ...prescription, testResults: newTestResults });
+          }}
+          suggestions={allTests}
+          placeholder="Enter required tests (one per line)..."
+          className={inputCls}
+          isTextarea
+          multiEntryMode="newline"
+        />
       </Section>
 
       {/* Medicines */}
@@ -350,10 +424,10 @@ export function ConsultationPad({ prescription, onChange, onSave, onComplete }: 
                   className={inputCls}
                   onSelect={(v) => addCustomMedicine(v)}
                 />
-                <input
-                  type="text"
+                <AutocompleteInput
                   value={med.timing || ""}
-                  onChange={(e) => updateMedicine(med.id, { timing: e.target.value })}
+                  onChange={(v) => updateMedicine(med.id, { timing: v })}
+                  suggestions={MEDICINE_TIMING_TERMS}
                   placeholder="Timing (e.g. After food)"
                   className={inputCls}
                 />
@@ -366,22 +440,22 @@ export function ConsultationPad({ prescription, onChange, onSave, onComplete }: 
                     <option key={f} value={f}>{f}</option>
                   ))}
                 </select>
-                <input
-                  type="text"
+                <AutocompleteInput
                   value={med.routine || ""}
-                  onChange={(e) => updateMedicine(med.id, { routine: e.target.value })}
+                  onChange={(v) => updateMedicine(med.id, { routine: v })}
+                  suggestions={MEDICINE_ROUTINE_TERMS}
                   placeholder="Routine (e.g. Daily)"
                   className={inputCls}
                 />
-                <input
-                  type="text"
+                <AutocompleteInput
                   value={med.duration}
-                  onChange={(e) => {
-                    updateMedicine(med.id, { duration: e.target.value });
-                    if (i === prescription.medicines.length - 1 && e.target.value.trim() !== '') {
+                  onChange={(v) => {
+                    updateMedicine(med.id, { duration: v });
+                    if (i === prescription.medicines.length - 1 && v.trim() !== '') {
                       addMedicine();
                     }
                   }}
+                  suggestions={MEDICINE_DURATION_TERMS}
                   placeholder="Duration (e.g. 5 days)"
                   className={inputCls}
                 />
@@ -423,10 +497,10 @@ export function ConsultationPad({ prescription, onChange, onSave, onComplete }: 
           </div>
           <div>
             <label className="mb-1 block text-xs text-neutral-500">Reason</label>
-            <input
-              type="text"
+            <AutocompleteInput
               value={prescription.nextVisitReason}
-              onChange={(e) => update("nextVisitReason", e.target.value)}
+              onChange={(v) => update("nextVisitReason", v)}
+              suggestions={NEXT_VISIT_REASON_TERMS}
               placeholder="Follow-up reason"
               className={inputCls}
             />
@@ -515,7 +589,7 @@ function Section({
   const isCollapsed = collapsed[sectionKey] ?? false;
 
   return (
-    <div className="rounded-xl border border-neutral-800 bg-neutral-900/50 overflow-hidden">
+    <div className="rounded-xl border border-neutral-800 bg-neutral-900/50">
       <div
         role="button"
         tabIndex={0}
@@ -526,7 +600,9 @@ function Section({
             onToggle(sectionKey);
           }
         }}
-        className="flex w-full items-center justify-between px-4 py-3 text-left transition-colors hover:bg-neutral-800/50 cursor-pointer"
+        className={`flex w-full items-center justify-between px-4 py-3 text-left transition-colors hover:bg-neutral-800/50 cursor-pointer ${
+          isCollapsed ? "rounded-xl" : "rounded-t-xl"
+        }`}
       >
         <div className="flex items-center gap-2">
           <span className="text-sm font-semibold text-white">{title}</span>

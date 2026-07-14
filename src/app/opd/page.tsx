@@ -26,6 +26,7 @@ export default function OpdPage() {
   const [activeVisit, setActiveVisit] = useState<OpdVisit | null>(null);
   const [showQueue, setShowQueue] = useState(false);
   const [carryForwardSearch, setCarryForwardSearch] = useState({ name: "", phone: "" });
+  const [editingPatient, setEditingPatient] = useState<OpdPatient | null>(null);
 
   const opdVisits = useAppStore((s) => s.opdVisits);
   const opdPatients = useAppStore((s) => s.opdPatients);
@@ -47,10 +48,8 @@ export default function OpdPage() {
   }, [todayVisits]);
 
   const handleSelectExisting = (patient: OpdPatient) => {
-    setSelectedPatient(patient);
-    const visit = createOpdVisit(patient.id);
-    setActiveVisit(visit);
-    setActiveStep("billing");
+    setEditingPatient(patient);
+    setActiveStep("register");
   };
 
   const handleRegisterNew = (searchText: string) => {
@@ -59,17 +58,17 @@ export default function OpdPage() {
       name: isPhone ? "" : searchText.trim(),
       phone: isPhone ? searchText.trim() : "",
     });
+    setEditingPatient(null);
     setActiveStep("register");
   };
 
   const handlePatientRegistered = (patient: OpdPatient) => {
     setSelectedPatient(patient);
-    const visit = createOpdVisit(patient.id);
-    setActiveVisit(visit);
     setActiveStep("billing");
   };
 
-  const handleBillingDone = () => {
+  const handleBillingDone = (visit: OpdVisit) => {
+    setActiveVisit(visit);
     setActiveStep("vitals");
   };
 
@@ -77,6 +76,7 @@ export default function OpdPage() {
     setActiveStep("search");
     setSelectedPatient(null);
     setActiveVisit(null);
+    setEditingPatient(null);
     setCarryForwardSearch({ name: "", phone: "" });
   };
 
@@ -100,6 +100,7 @@ export default function OpdPage() {
     setActiveStep("search");
     setSelectedPatient(null);
     setActiveVisit(null);
+    setEditingPatient(null);
     setCarryForwardSearch({ name: "", phone: "" });
   };
 
@@ -154,6 +155,10 @@ export default function OpdPage() {
                   if (isPast) {
                     // Allow going back only with valid state
                     if (step.key === "search") handleRestart();
+                    if (step.key === "register" && selectedPatient) {
+                      setEditingPatient(selectedPatient);
+                      setActiveStep("register");
+                    }
                   }
                 }}
                 disabled={isDisabled}
@@ -186,14 +191,21 @@ export default function OpdPage() {
 
           {activeStep === "register" && (
             <PatientRegistration
+              existingPatient={editingPatient}
               initialName={carryForwardSearch.name}
               initialPhone={carryForwardSearch.phone}
-              onRegistered={handlePatientRegistered}
-              onBack={() => setActiveStep("search")}
+              onRegistered={(patient) => {
+                setEditingPatient(null);
+                handlePatientRegistered(patient);
+              }}
+              onBack={() => {
+                setEditingPatient(null);
+                setActiveStep("search");
+              }}
             />
           )}
 
-          {activeStep === "billing" && selectedPatient && activeVisit && (
+          {activeStep === "billing" && selectedPatient && (
             <OpdBilling
               patient={selectedPatient}
               visit={activeVisit}

@@ -1,25 +1,21 @@
-// ============================================================
-// OPD Seed Data — Pulmonology-focused
-// ============================================================
-
 /** Pulmonologist specific combination medicines */
 export const PULMONOLOGY_MEDICINES: string[] = [
-  "Tab. Montelukast 10 mg + Fexofenadine 120 mg",
-  "Tab. Montelukast 10 mg + Levocetirizine 5 mg",
-  "Tab. Acebrophylline 200 mg + Acetylcysteine 600 mg",
-  "Cap. Doxofylline 400 mg + Ambroxol HCl 75 mg (SR)",
-  "Syp. Ambroxol HCl 30 mg + Guaifenesin 50 mg + Terbutaline Sulphate 1.25 mg/5 mL",
-  "Syp. Chlorpheniramine Maleate 2 mg + Dextromethorphan HBr 10 mg/5 mL",
-  "Respule. Levosalbutamol 1.25 mg + Ipratropium Bromide 500 mcg/2.5 mL",
-  "Neb. Budesonide 0.5 mg/2 mL",
-  "Inhaler. Budesonide 200 mcg + Formoterol Fumarate 6 mcg/dose",
-  "Inhaler. Tiotropium 9 mcg + Olodaterol 5 mcg/dose",
-  "Inhaler. Fluticasone Propionate 250 mcg + Salmeterol 50 mcg/dose",
-  "Inhaler. Budesonide 160 mcg + Glycopyrrolate 9 mcg + Formoterol Fumarate 4.8 mcg/dose",
-  "Rotacap. Formoterol Fumarate 12 mcg + Budesonide 400 mcg",
-  "DPI Cap. Tiotropium 18 mcg",
-  "Nasal Spray. Fluticasone Propionate 50 mcg/spray",
-  "Nasal Spray. Azelastine HCl 140 mcg + Fluticasone Propionate 50 mcg/spray"
+  "Tab. Montelukast 10 mg + Fexofenadine 120 mg (Allegra-M, Montek-FX)",
+  "Tab. Montelukast 10 mg + Levocetirizine 5 mg (Montek-LC, Montair-LC)",
+  "Tab. Acebrophylline 200 mg + Acetylcysteine 600 mg (AB Phylline NAC, Acbro-N)",
+  "Cap. Doxofylline 400 mg + Ambroxol HCl 75 mg (SR) (Doxobid-AX SR, Jivadox-AX)",
+  "Syp. Ambroxol HCl 30 mg + Guaifenesin 50 mg + Terbutaline Sulphate 1.25 mg/5 mL (Ascoril Expectorant, Ambrolite-S)",
+  "Syp. Chlorpheniramine Maleate 2 mg + Dextromethorphan HBr 10 mg/5 mL (Benadryl DR, Chericof-DX)",
+  "Respule. Levosalbutamol 1.25 mg + Ipratropium Bromide 500 mcg/2.5 mL (Duolin Respules, Combimist-L Respules)",
+  "Neb. Budesonide 0.5 mg/2 mL (Budecort Respules, Budamate Respules)",
+  "Inhaler. Budesonide 200 mcg + Formoterol Fumarate 6 mcg/dose (Foracort 200, Symbicort 200)",
+  "Inhaler. Tiotropium 9 mcg + Olodaterol 5 mcg/dose (Spiolto Respimat)",
+  "Inhaler. Fluticasone Propionate 250 mcg + Salmeterol 50 mcg/dose (Seroflo 250, MaxiFlo 250)",
+  "Inhaler. Budesonide 160 mcg + Glycopyrrolate 9 mcg + Formoterol Fumarate 4.8 mcg/dose (Breztri Aerosphere)",
+  "Rotacap. Formoterol Fumarate 12 mcg + Budesonide 400 mcg (Foracort Rotacaps 400)",
+  "DPI Cap. Tiotropium 18 mcg (Tiova Rotacaps, Lupitrop Rotacaps)",
+  "Nasal Spray. Fluticasone Propionate 50 mcg/spray (Flomist, Flixonase)",
+  "Nasal Spray. Azelastine HCl 140 mcg + Fluticasone Propionate 50 mcg/spray (Dymista, Azeflo)"
 ];
 
 /** Common pulmonology-relevant tests */

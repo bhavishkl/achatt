@@ -6,6 +6,7 @@ import { useAppStore } from "@/lib/store";
 import type { OpdPatient } from "@/types/opd";
 
 type Props = {
+  existingPatient?: OpdPatient | null;
   initialName: string;
   initialPhone: string;
   onRegistered: (patient: OpdPatient) => void;
@@ -32,16 +33,17 @@ const validatePhone = (value: string): string => {
   return "";
 };
 
-export function PatientRegistration({ initialName, initialPhone, onRegistered, onBack }: Props) {
-  const [name, setName] = useState(initialName);
-  const [phone, setPhone] = useState(initialPhone);
-  const [age, setAge] = useState<number | "">("");
-  const [gender, setGender] = useState<"Male" | "Female" | "Other">("Male");
-  const [address, setAddress] = useState("");
-  const [bloodGroup, setBloodGroup] = useState("");
+export function PatientRegistration({ existingPatient, initialName, initialPhone, onRegistered, onBack }: Props) {
+  const [name, setName] = useState(existingPatient?.name || initialName);
+  const [phone, setPhone] = useState(existingPatient?.phone || initialPhone);
+  const [age, setAge] = useState<number | "">(existingPatient?.age || "");
+  const [gender, setGender] = useState<"Male" | "Female" | "Other">(existingPatient?.gender || "Male");
+  const [address, setAddress] = useState(existingPatient?.address || "");
+  const [bloodGroup, setBloodGroup] = useState(existingPatient?.bloodGroup || "");
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const addOpdPatient = useAppStore((s) => s.addOpdPatient);
+  const updateOpdPatient = useAppStore((s) => s.updateOpdPatient);
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
@@ -57,16 +59,35 @@ export function PatientRegistration({ initialName, initialPhone, onRegistered, o
       return;
     }
 
-    const patient = addOpdPatient({
-      name: name.trim(),
-      phone: normalizePhone(phone.trim()),
-      age: Number(age),
-      gender,
-      address: address.trim(),
-      bloodGroup,
-    });
-
-    onRegistered(patient);
+    if (existingPatient) {
+      updateOpdPatient(existingPatient.id, {
+        name: name.trim(),
+        phone: normalizePhone(phone.trim()),
+        age: Number(age),
+        gender,
+        address: address.trim(),
+        bloodGroup,
+      });
+      onRegistered({
+        ...existingPatient,
+        name: name.trim(),
+        phone: normalizePhone(phone.trim()),
+        age: Number(age),
+        gender,
+        address: address.trim(),
+        bloodGroup,
+      });
+    } else {
+      const patient = addOpdPatient({
+        name: name.trim(),
+        phone: normalizePhone(phone.trim()),
+        age: Number(age),
+        gender,
+        address: address.trim(),
+        bloodGroup,
+      });
+      onRegistered(patient);
+    }
   };
 
   const fieldClasses = (field: string) =>
@@ -85,7 +106,9 @@ export function PatientRegistration({ initialName, initialPhone, onRegistered, o
             <ArrowLeft className="h-4 w-4" />
           </button>
           <div>
-            <h2 className="text-lg font-semibold text-white">Register New Patient</h2>
+            <h2 className="text-lg font-semibold text-white">
+              {existingPatient ? "Edit Patient Details" : "Register New Patient"}
+            </h2>
             <p className="text-sm text-neutral-400">Fill in patient details to continue</p>
           </div>
         </div>
@@ -115,7 +138,19 @@ export function PatientRegistration({ initialName, initialPhone, onRegistered, o
             <input
               type="tel"
               value={phone}
-              onChange={(e) => { setPhone(e.target.value); setErrors((p) => ({ ...p, phone: "" })); }}
+              onChange={(e) => { 
+                let val = e.target.value;
+                if (val.replace(/\D/g, "").length > 10) {
+                  const digits = val.replace(/\D/g, "");
+                  if (digits.length === 12 && digits.startsWith("91")) {
+                    val = digits.slice(2);
+                  } else {
+                    return;
+                  }
+                }
+                setPhone(val); 
+                setErrors((p) => ({ ...p, phone: "" })); 
+              }}
               placeholder="10-digit mobile number"
               className={fieldClasses("phone")}
               autoFocus={!!initialName && !initialPhone}
@@ -193,7 +228,7 @@ export function PatientRegistration({ initialName, initialPhone, onRegistered, o
             type="submit"
             className="mt-2 w-full rounded-xl bg-emerald-600 py-3 text-sm font-semibold text-white transition-colors hover:bg-emerald-700"
           >
-            Register & Continue to Billing →
+            {existingPatient ? "Update Patient & Continue" : "Register & Continue to Billing →"}
           </button>
         </form>
       </div>

@@ -73,8 +73,19 @@ export function PatientSearch({ onSelectPatient, onRegisterNew }: Props) {
           <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-neutral-500" />
           <input
             type="text"
+            inputMode="numeric"
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => {
+              const val = e.target.value;
+              if (val.replace(/\D/g, "").length > 10) return;
+              setQuery(val);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                onRegisterNew(query);
+              }
+            }}
             placeholder="Enter patient name or phone number..."
             className="w-full rounded-xl border border-neutral-700 bg-neutral-800 py-3.5 pl-12 pr-4 text-white placeholder-neutral-500 outline-none transition-colors focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
             autoFocus

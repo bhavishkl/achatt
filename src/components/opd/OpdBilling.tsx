@@ -10,9 +10,9 @@ import { buildOpdBillPrintHtml, openPrintWindow } from "@/components/opd/opdPrin
 
 type Props = {
   patient: OpdPatient;
-  visit: OpdVisit;
-  onDone: () => void;
-  onSkip: () => void;
+  visit: OpdVisit | null;
+  onDone: (visit: OpdVisit) => void;
+  onSkip: (visit: OpdVisit) => void;
 };
 
 let _itemCounter = 0;
@@ -28,8 +28,14 @@ export function OpdBilling({ patient, visit, onDone, onSkip }: Props) {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const descRef = useRef<HTMLInputElement>(null);
 
+  const createOpdVisit = useAppStore((s) => s.createOpdVisit);
   const updateOpdVisitBill = useAppStore((s) => s.updateOpdVisitBill);
   const getNextBillNo = useAppStore((s) => s.getNextBillNo);
+
+  const getOrCreateVisit = () => {
+    if (visit) return visit;
+    return createOpdVisit(patient.id);
+  };
 
   // All available services for autocomplete
   const allServices = useMemo(() => {
@@ -81,6 +87,7 @@ export function OpdBilling({ patient, visit, onDone, onSkip }: Props) {
   };
 
   const handleSaveAndPrint = () => {
+    const currentVisit = getOrCreateVisit();
     const today = new Date().toISOString().split("T")[0];
     const billNo = getNextBillNo(today);
     const bill: OpdBill = {
@@ -94,20 +101,22 @@ export function OpdBilling({ patient, visit, onDone, onSkip }: Props) {
       paymentMode,
       createdAt: new Date().toISOString(),
     };
-    updateOpdVisitBill(visit.id, bill);
+    updateOpdVisitBill(currentVisit.id, bill);
 
     // Print
-    const html = buildOpdBillPrintHtml({ patient, bill, visit });
+    const html = buildOpdBillPrintHtml({ patient, bill, visit: currentVisit });
     openPrintWindow(html);
 
-    onDone();
+    onDone(currentVisit);
   };
 
   const handleSaveOnly = () => {
     if (items.length === 0) {
-      onDone();
+      const currentVisit = getOrCreateVisit();
+      onDone(currentVisit);
       return;
     }
+    const currentVisit = getOrCreateVisit();
     const today = new Date().toISOString().split("T")[0];
     const billNo = getNextBillNo(today);
     const bill: OpdBill = {
@@ -121,8 +130,13 @@ export function OpdBilling({ patient, visit, onDone, onSkip }: Props) {
       paymentMode,
       createdAt: new Date().toISOString(),
     };
-    updateOpdVisitBill(visit.id, bill);
-    onDone();
+    updateOpdVisitBill(currentVisit.id, bill);
+    onDone(currentVisit);
+  };
+
+  const handleSkip = () => {
+    const currentVisit = getOrCreateVisit();
+    onSkip(currentVisit);
   };
 
   return (
@@ -131,7 +145,7 @@ export function OpdBilling({ patient, visit, onDone, onSkip }: Props) {
         {/* Patient Info */}
         <div className="mb-6 flex flex-wrap items-center gap-4 rounded-xl border border-neutral-800 bg-neutral-800/50 px-4 py-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-600 text-sm font-bold text-white">
-            #{visit.tokenNo}
+            {visit ? `#${visit.tokenNo}` : patient.name.charAt(0).toUpperCase()}
           </div>
           <div className="min-w-0 flex-1">
             <p className="font-medium text-white">{patient.name}</p>
@@ -321,7 +335,7 @@ export function OpdBilling({ patient, visit, onDone, onSkip }: Props) {
             </>
           )}
           <button
-            onClick={onSkip}
+            onClick={handleSkip}
             className="flex items-center justify-center gap-2 rounded-xl border border-neutral-700 bg-neutral-800 px-6 py-3 text-sm font-medium text-neutral-400 transition-colors hover:bg-neutral-700 hover:text-white"
           >
             <SkipForward className="h-4 w-4" />
