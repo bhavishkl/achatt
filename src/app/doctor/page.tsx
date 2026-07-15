@@ -62,7 +62,8 @@ export default function DoctorPage() {
   const updateOpdVisitStatus = useAppStore((s) => s.updateOpdVisitStatus);
   const updateOpdVisitPrescription = useAppStore((s) => s.updateOpdVisitPrescription);
 
-  const { loadPatients, loadTodayVisits, updateVisit, companyId } = useOpdApi();
+  const { loadPatients, loadTodayVisits, updateVisit, loadFormatConfig, companyId } = useOpdApi();
+  const setPrescriptionFormatConfig = useAppStore((s) => s.setPrescriptionFormatConfig);
 
   const today = getToday();
 
@@ -76,19 +77,23 @@ export default function DoctorPage() {
     let mounted = true;
     const load = async () => {
       setIsLoading(true);
-      const [patients, visits] = await Promise.all([
+      const [patients, visits, formatConfig] = await Promise.all([
         loadPatients(),
         loadTodayVisits(),
+        loadFormatConfig(),
       ]);
       if (mounted) {
         setOpdPatients(patients);
         setOpdVisits(visits);
+        if (formatConfig) {
+          setPrescriptionFormatConfig(formatConfig);
+        }
         setIsLoading(false);
       }
     };
     load();
     return () => { mounted = false; };
-  }, [companyId, loadPatients, loadTodayVisits, setOpdPatients, setOpdVisits]);
+  }, [companyId, loadPatients, loadTodayVisits, loadFormatConfig, setOpdPatients, setOpdVisits, setPrescriptionFormatConfig]);
 
   const todayVisits = useMemo(
     () =>

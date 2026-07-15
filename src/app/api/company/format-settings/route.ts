@@ -11,16 +11,17 @@ export async function GET(request: Request) {
 
   try {
     const { data, error } = await supabaseAdmin
-      .from("companies")
-      .select("prescription_format_config")
-      .eq("id", companyId)
+      .from("doctor_print_layouts")
+      .select("format_config")
+      .eq("company_id", companyId)
       .single();
 
-    if (error) {
+    if (error && error.code !== "PGRST116") {
+      // PGRST116 = no rows found for .single()
       return NextResponse.json({ message: "Error fetching format settings", error: error.message }, { status: 500 });
     }
 
-    return NextResponse.json({ config: data?.prescription_format_config ?? null });
+    return NextResponse.json({ config: data?.format_config ?? null });
   } catch (error: any) {
     return NextResponse.json({ message: "Internal Server Error", error: error.message }, { status: 500 });
   }
@@ -36,20 +37,20 @@ export async function PUT(request: Request) {
     }
 
     const { data, error } = await supabaseAdmin
-      .from("companies")
-      .update({
-        prescription_format_config: config,
+      .from("doctor_print_layouts")
+      .upsert({
+        company_id: companyId,
+        format_config: config,
         updated_at: new Date().toISOString(),
       })
-      .eq("id", companyId)
-      .select("prescription_format_config")
+      .select("format_config")
       .single();
 
     if (error) {
       return NextResponse.json({ message: "Error saving format settings", error: error.message }, { status: 500 });
     }
 
-    return NextResponse.json({ config: data?.prescription_format_config ?? null });
+    return NextResponse.json({ config: data?.format_config ?? null });
   } catch (error: any) {
     return NextResponse.json({ message: "Internal Server Error", error: error.message }, { status: 500 });
   }

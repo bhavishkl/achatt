@@ -3,11 +3,24 @@
 -- Run these against your Supabase database
 -- ============================================================
 
--- 1. ALTER companies table: Add prescription format settings column
+-- 1. Create doctor_print_layouts table: store print layout and offsets config per company
+CREATE TABLE IF NOT EXISTS doctor_print_layouts (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  company_id uuid NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  format_config jsonb NOT NULL,
+  created_at timestamptz DEFAULT CURRENT_TIMESTAMP,
+  updated_at timestamptz DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(company_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_doctor_print_layouts_company ON doctor_print_layouts(company_id);
+
+-- 2. CREATE / ALTER other OPD tables
+-- ALTER companies table: Add prescription format settings column
 ALTER TABLE companies
 ADD COLUMN IF NOT EXISTS prescription_format_config jsonb DEFAULT NULL;
 
--- 2. Create opd_patients table
+-- 3. Create opd_patients table
 CREATE TABLE IF NOT EXISTS opd_patients (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   company_id uuid NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
