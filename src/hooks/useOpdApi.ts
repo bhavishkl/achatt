@@ -159,6 +159,24 @@ export async function apiUpdateOpdVisit(
   return data.visit;
 }
 
+export async function apiBulkUpdateOpdVisits(
+  companyId: string,
+  updates: { id: string, tokenNo: number }[]
+): Promise<boolean> {
+  const { error } = await apiFetch(
+    `/api/opd-visits/bulk-update`,
+    {
+      method: "PUT",
+      body: JSON.stringify({ companyId, updates }),
+    }
+  );
+  if (error) {
+    console.error("apiBulkUpdateOpdVisits error:", error);
+    return false;
+  }
+  return true;
+}
+
 // ============================================================
 // Format Settings API
 // ============================================================
@@ -372,6 +390,14 @@ export function useOpdApi() {
     []
   );
 
+  const bulkUpdateVisits = useCallback(
+    async (updates: { id: string, tokenNo: number }[]) => {
+      if (!companyId) return false;
+      return apiBulkUpdateOpdVisits(companyId, updates);
+    },
+    [companyId]
+  );
+
   const loadFormatConfig = useCallback(async () => {
     if (!companyId) return null;
     return fetchFormatConfig(companyId);
@@ -427,6 +453,7 @@ export function useOpdApi() {
     updatePatient,
     createVisit,
     updateVisit,
+    bulkUpdateVisits,
     loadFormatConfig,
     saveFormatConfig,
     loadCustomItems,

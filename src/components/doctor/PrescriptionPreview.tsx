@@ -203,23 +203,6 @@ export function PrescriptionPreview({ patient, visit, prescription }: Props) {
           }
         }
       `}</style>
-      {/* Action buttons */}
-      <div className="mb-3 flex gap-2 no-print">
-        <button
-          onClick={handlePrint}
-          className="flex items-center gap-2 rounded-xl border border-neutral-700 bg-neutral-800 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-neutral-700"
-        >
-          <Printer className="h-4 w-4" />
-          Print
-        </button>
-        <button
-          onClick={handleExportDocx}
-          className="flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700"
-        >
-          <FileText className="h-4 w-4" />
-          Export DOCX
-        </button>
-      </div>
 
       {/* Preview Card */}
       <div 

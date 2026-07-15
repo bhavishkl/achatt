@@ -138,6 +138,8 @@ export interface AppState {
   updateOpdVisitVitals: (visitId: string, vitals: Vitals) => void;
   updateOpdVisitBill: (visitId: string, bill: OpdBill) => void;
   updateOpdVisitPrescription: (visitId: string, prescription: Prescription) => void;
+  bulkUpdateOpdVisitTokens: (updates: { id: string, tokenNo: number }[]) => void;
+  removeOpdVisit: (visitId: string) => void;
 
   // --- OPD Bill Counter ---
   opdBillCounter: Record<string, number>;
@@ -486,6 +488,21 @@ export const useAppStore = create<AppState>()(
           opdVisits: s.opdVisits.map((v) =>
             v.id === visitId ? { ...v, prescription, updatedAt: new Date().toISOString() } : v,
           ),
+        })),
+      bulkUpdateOpdVisitTokens: (updates) => 
+        set((s) => {
+          const updateMap = new Map(updates.map(u => [u.id, u.tokenNo]));
+          return {
+            opdVisits: s.opdVisits.map((v) => 
+              updateMap.has(v.id) 
+                ? { ...v, tokenNo: updateMap.get(v.id)!, updatedAt: new Date().toISOString() } 
+                : v
+            )
+          };
+        }),
+      removeOpdVisit: (visitId) =>
+        set((s) => ({
+          opdVisits: s.opdVisits.filter((v) => v.id !== visitId),
         })),
 
       // ---- OPD Bill Counter ----
