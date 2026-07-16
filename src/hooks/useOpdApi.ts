@@ -159,6 +159,21 @@ export async function apiUpdateOpdVisit(
   return data.visit;
 }
 
+export async function apiDeleteOpdVisit(
+  visitId: string,
+  companyId: string
+): Promise<boolean> {
+  const { error } = await apiFetch(`/api/opd-visits/${visitId}`, {
+    method: "DELETE",
+    body: JSON.stringify({ companyId }),
+  });
+  if (error) {
+    console.error("apiDeleteOpdVisit error:", error);
+    return false;
+  }
+  return true;
+}
+
 export async function apiBulkUpdateOpdVisits(
   companyId: string,
   updates: { id: string, tokenNo: number }[]
@@ -390,6 +405,11 @@ export function useOpdApi() {
     []
   );
 
+  const deleteVisit = useCallback(async (visitId: string) => {
+    if (!companyId) return false;
+    return apiDeleteOpdVisit(visitId, companyId);
+  }, [companyId]);
+
   const bulkUpdateVisits = useCallback(
     async (updates: { id: string, tokenNo: number }[]) => {
       if (!companyId) return false;
@@ -453,6 +473,7 @@ export function useOpdApi() {
     updatePatient,
     createVisit,
     updateVisit,
+    deleteVisit,
     bulkUpdateVisits,
     loadFormatConfig,
     saveFormatConfig,

@@ -46,6 +46,7 @@ function SortableVisitCard({
 }) {
   const opdPatients = useAppStore((s) => s.opdPatients);
   const removeOpdVisit = useAppStore((s) => s.removeOpdVisit);
+  const { deleteVisit } = useOpdApi();
 
   const {
     attributes,
@@ -125,9 +126,14 @@ function SortableVisitCard({
           <Printer className="h-4 w-4" />
         </button>
         <button
-          onClick={(e) => {
+          onClick={async (e) => {
             e.stopPropagation();
-            if (confirm("Are you sure you want to remove this patient from the queue?")) {
+            if (!confirm("Are you sure you want to remove this patient from the queue?")) {
+              return;
+            }
+
+            const deleted = await deleteVisit(visit.id);
+            if (deleted) {
               removeOpdVisit(visit.id);
             }
           }}

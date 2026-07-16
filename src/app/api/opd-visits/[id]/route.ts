@@ -39,6 +39,47 @@ export async function GET(
   }
 }
 
+export async function DELETE(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    let companyId: string | null = null;
+
+    try {
+      const body = await request.json();
+      companyId = body?.companyId ?? null;
+    } catch {
+      companyId = null;
+    }
+
+    if (!companyId) {
+      const { searchParams } = new URL(request.url);
+      companyId = searchParams.get("companyId");
+    }
+
+    if (!companyId) {
+      return NextResponse.json({ message: "Company ID is required" }, { status: 400 });
+    }
+
+    const { error } = await supabaseAdmin
+      .from("opd_visits")
+      .delete()
+      .eq("id", id)
+      .eq("company_id", companyId);
+
+    if (error) {
+      console.error("Error deleting visit:", error);
+      return NextResponse.json({ message: "Error deleting visit", error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json({ message: "Visit deleted successfully" });
+  } catch (error: any) {
+    return NextResponse.json({ message: "Internal Server Error", error: error.message }, { status: 500 });
+  }
+}
+
 export async function PUT(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
