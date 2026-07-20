@@ -31,9 +31,22 @@ CREATE TABLE IF NOT EXISTS opd_patients (
   address text,
   blood_group text,
   created_at timestamptz DEFAULT CURRENT_TIMESTAMP,
-  updated_at timestamptz DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE(company_id, phone)
+  updated_at timestamptz DEFAULT CURRENT_TIMESTAMP
 );
+
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1
+    FROM pg_constraint
+    WHERE conname = 'opd_patients_company_id_phone_key'
+  ) THEN
+    ALTER TABLE opd_patients DROP CONSTRAINT opd_patients_company_id_phone_key;
+  END IF;
+END $$;
+
+ALTER TABLE opd_patients
+ADD CONSTRAINT opd_patients_company_id_phone_name_key UNIQUE (company_id, phone, name);
 
 -- Index for fast lookups
 CREATE INDEX IF NOT EXISTS idx_opd_patients_company ON opd_patients(company_id);
