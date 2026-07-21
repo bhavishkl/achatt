@@ -5,7 +5,7 @@ import { EditorForm } from '../../components/EditForm';
 import { Preview } from '../../components/Preview';
 import { DischargeData } from '../../types';
 import { dischargeTemplates } from '../../lib/dcardTemplates';
-import { Printer, Edit, Eye, FileText, ClipboardPaste, CheckCircle, AlertCircle } from 'lucide-react';
+import { Printer, Edit, Eye, FileText, ClipboardPaste, CheckCircle, AlertCircle, ImagePlus, Trash2 } from 'lucide-react';
 import { generateDocx } from '../../lib/exportDocx';
 import { parseDischargeText } from '../../lib/parseDischargeText';
 
@@ -13,6 +13,7 @@ type Tab = 'paste' | 'edit' | 'preview';
 
 const FORM_STORAGE_KEY = 'dcard-form-data';
 const TEMPLATE_STORAGE_KEY = 'dcard-template-key';
+const HEADER_IMAGE_STORAGE_KEY = 'dcard-header-image';
 
 export default function DischargeCardPage() {
   const [selectedTemplateKey, setSelectedTemplateKey] = useState<string>(() => {
@@ -38,6 +39,10 @@ export default function DischargeCardPage() {
   const [rawText, setRawText] = useState('');
   const [parseStatus, setParseStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [parseMsg, setParseMsg] = useState('');
+  const [headerImageDataUrl, setHeaderImageDataUrl] = useState<string | null>(() => {
+    if (typeof window === 'undefined') return null;
+    return window.localStorage.getItem(HEADER_IMAGE_STORAGE_KEY);
+  });
 
   const handleTemplateChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const key = e.target.value;
@@ -53,8 +58,34 @@ export default function DischargeCardPage() {
 
   const handlePrint = () => window.print();
 
+  const handleHeaderImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = typeof reader.result === 'string' ? reader.result : null;
+      setHeaderImageDataUrl(result);
+      if (typeof window !== 'undefined') {
+        if (result) {
+          window.localStorage.setItem(HEADER_IMAGE_STORAGE_KEY, result);
+        } else {
+          window.localStorage.removeItem(HEADER_IMAGE_STORAGE_KEY);
+        }
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const clearHeaderImage = () => {
+    setHeaderImageDataUrl(null);
+    if (typeof window !== 'undefined') {
+      window.localStorage.removeItem(HEADER_IMAGE_STORAGE_KEY);
+    }
+  };
+
   const handleExportWord = async () => {
-    await generateDocx(data);
+    await generateDocx(data, headerImageDataUrl ?? undefined);
   };
 
   const handleParse = () => {
@@ -118,6 +149,39 @@ export default function DischargeCardPage() {
               </>
             )}
           </div>
+        </div>
+
+        {/* ── Header image uploader ── */}
+        <div className="mb-6 rounded-lg border border-gray-200 bg-white p-4 shadow-sm print:hidden">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div>
+              <p className="text-sm font-semibold text-gray-800">Custom header image for Word export</p>
+              <p className="text-sm text-gray-500">Upload a logo or clinic header and it will appear at the top of the exported document.</p>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <label className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50">
+                <ImagePlus size={16} />
+                {headerImageDataUrl ? 'Change image' : 'Upload image'}
+                <input type="file" accept="image/*" onChange={handleHeaderImageChange} className="sr-only" />
+              </label>
+
+              {headerImageDataUrl && (
+                <button
+                  onClick={clearHeaderImage}
+                  className="inline-flex items-center gap-2 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-700 hover:bg-red-100"
+                >
+                  <Trash2 size={16} /> Remove
+                </button>
+              )}
+            </div>
+          </div>
+
+          {headerImageDataUrl && (
+            <div className="mt-4 rounded-md border border-gray-200 bg-gray-50 p-3">
+              <img src={headerImageDataUrl} alt="Header preview" className="max-h-24 rounded object-contain" />
+            </div>
+          )}
         </div>
 
         {/* ── Tabs ── */}

@@ -10,6 +10,7 @@ import {
   WidthType,
   AlignmentType,
   ShadingType,
+  ImageRun,
 } from 'docx';
 import { saveAs } from 'file-saver';
 import { DischargeData } from '../types';
@@ -64,12 +65,22 @@ function sectionHeadingParagraph(title: string): Paragraph {
   });
 }
 
+function bodyTextRun(text: string, bold = false, underline = false): TextRun {
+  return new TextRun({
+    text,
+    bold,
+    underline: underline ? {} : undefined,
+    font: 'Calibri',
+    size: 22,
+  });
+}
+
 /** Plain text paragraphs split by newlines */
 function textParagraphs(content: string): Paragraph[] {
   return content.split('\n').map(
     (line) =>
       new Paragraph({
-        children: [new TextRun({ text: line, font: 'Calibri', size: 22 })],
+        children: [bodyTextRun(line)],
         spacing: { after: 60 },
       })
   );
@@ -112,7 +123,7 @@ function boxedSection(title: string, content: string, widthPct = 100): Table {
           children: [
             new Paragraph({
               children: [
-                new TextRun({ text: title, bold: true, underline: {} }),
+                bodyTextRun(title, true, true),
               ],
               spacing: { after: 120 },
             }),
@@ -129,7 +140,7 @@ function boxedSection(title: string, content: string, widthPct = 100): Table {
           children: contentLines.map(
             (line) =>
               new Paragraph({
-                text: line,
+                children: [bodyTextRun(line)],
                 spacing: { after: 80 },
               })
           ),
@@ -180,7 +191,7 @@ function buildInvestigationsTable(
             shading: { type: ShadingType.CLEAR, fill: 'FFFFFF' },
             children: [
               new Paragraph({
-                children: [new TextRun({ text: category, bold: true })],
+                children: [bodyTextRun(category, true)],
                 spacing: { after: 0 },
               }),
             ],
@@ -210,7 +221,7 @@ function buildInvestigationsTable(
               width: { size: 20, type: WidthType.PERCENTAGE },
               children: [
                 new Paragraph({
-                  text: entry.date,
+                  children: [bodyTextRun(entry.date)],
                   spacing: { after: 0 },
                 }),
               ],
@@ -222,7 +233,7 @@ function buildInvestigationsTable(
               children: findingLines.map(
                 (line, i) =>
                   new Paragraph({
-                    children: [new TextRun({ text: line })],
+                    children: [bodyTextRun(line)],
                     spacing: { after: i < findingLines.length - 1 ? 60 : 0 },
                   })
               ),
@@ -271,7 +282,7 @@ function buildTreatmentTable(
         width: { size: 50, type: WidthType.PERCENTAGE },
         children: [
           new Paragraph({
-            text,
+            children: [bodyTextRun(text)],
             spacing: { after: 0 },
           }),
         ],
@@ -305,8 +316,8 @@ function buildPatientTable(data: DischargeData): Table {
       children: [
         new Paragraph({
           children: [
-            new TextRun({ text: `${label}  `, bold: true }),
-            new TextRun({ text: value }),
+            bodyTextRun(`${label}  `, true),
+            bodyTextRun(value),
           ],
           spacing: { after: 0 },
         }),
@@ -346,21 +357,58 @@ function buildPatientTable(data: DischargeData): Table {
 
 // ─── Main export ───────────────────────────────────────────────────────────────
 
-export const generateDocx = async (data: DischargeData) => {
+function buildHeaderImageParagraph(imageDataUrl?: string): Paragraph | null {
+  if (!imageDataUrl?.startsWith('data:image/')) return null;
+
+  try {
+    const mimeMatch = imageDataUrl.match(/^data:(.+);base64,/);
+    const mimeType = mimeMatch?.[1] || 'image/png';
+    const base64 = imageDataUrl.replace(/^data:.+;base64,/, '');
+    const binary = atob(base64);
+    const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
+
+    const imageType = mimeType === 'image/jpeg' || mimeType === 'image/jpg'
+      ? 'jpg'
+      : mimeType === 'image/png'
+        ? 'png'
+        : mimeType === 'image/gif'
+          ? 'gif'
+          : mimeType === 'image/bmp'
+            ? 'bmp'
+            : null;
+
+    if (!imageType) return null;
+
+    return new Paragraph({
+      alignment: AlignmentType.CENTER,
+      children: [
+        new ImageRun({
+          data: bytes,
+          type: imageType,
+          transformation: { width: 600, height: 170 },
+        }),
+      ],
+      spacing: { after: 140 },
+    });
+  } catch {
+    return null;
+  }
+}
+
+export const generateDocx = async (data: DischargeData, headerImageDataUrl?: string) => {
   const children: (Paragraph | Table)[] = [];
+
+  const headerImageParagraph = buildHeaderImageParagraph(headerImageDataUrl);
+  if (headerImageParagraph) {
+    children.push(headerImageParagraph);
+  }
 
   // ── DISCHARGE SUMMARY title ──────────────────────────────────────────────────
   children.push(
     new Paragraph({
       alignment: AlignmentType.CENTER,
       children: [
-        new TextRun({
-          text: 'DISCHARGE SUMMARY',
-          bold: true,
-          underline: {},
-          font: 'Calibri',
-          size: 28, // 14pt
-        }),
+        bodyTextRun('DISCHARGE SUMMARY', true, true),
       ],
       spacing: { after: 160 },
     })
@@ -376,6 +424,7 @@ export const generateDocx = async (data: DischargeData) => {
             text: 'DISCHARGE AGAINST MEDICAL ADVICE (DAMA)',
             bold: true,
             color: 'D97706',
+            font: 'Calibri',
           }),
         ],
         spacing: { after: 200 },
@@ -412,7 +461,7 @@ export const generateDocx = async (data: DischargeData) => {
   if (data.treatmentGiven.length > 0) {
     children.push(
       new Paragraph({
-        children: [new TextRun({ text: 'TREATMENT GIVEN', bold: true, underline: {}, font: 'Calibri', size: 22 })],
+        children: [bodyTextRun('TREATMENT GIVEN', true, true)],
         spacing: { before: 80, after: 60 },
       })
     );
@@ -456,11 +505,7 @@ export const generateDocx = async (data: DischargeData) => {
                 new Paragraph({
                   alignment: AlignmentType.CENTER,
                   children: [
-                    new TextRun({
-                      text: 'CONSULTANT NAME AND SIGNATURE',
-                      bold: true,
-                      underline: {},
-                    }),
+                    bodyTextRun('CONSULTANT NAME AND SIGNATURE', true, true),
                   ],
                 }),
               ],
