@@ -387,8 +387,14 @@ function buildHeaderImageParagraph(imageDataUrl?: string): Paragraph | null {
 
 // ─── Save helper ─────────────────────────────────────────────────────────────────
 
+function isFileSystemAccessSupported(): boolean {
+  // Firefox doesn't support showSaveFilePicker on desktop
+  const isFirefox = navigator.userAgent.toLowerCase().includes('firefox');
+  return 'showSaveFilePicker' in window && !isFirefox;
+}
+
 async function saveDocxBlob(blob: Blob, fileName: string): Promise<void> {
-  if ('showSaveFilePicker' in window) {
+  if (isFileSystemAccessSupported()) {
     try {
       const handle = await (window as any).showSaveFilePicker({
         suggestedName: fileName,
