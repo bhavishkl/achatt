@@ -1,23 +1,23 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import CreateCompanyModal from "@/components/CreateCompanyModal";
-import { useAppStore } from "@/lib/store";
-import type { Company } from "@/lib/types";
-
-type AppHeaderProps = {
-  children: React.ReactNode;
-};
+import { useRouter, usePathname } from "next/navigation";
+import CreateCompanyModal from "./CreateCompanyModal";
+import { useAuthStore } from "@/lib/store";
+import type { Company } from "@/types";
 
 const NAV_LINKS = [
-  { href: "/opd", label: "Frontdesk", description: "OPD registration, billing, and vitals", icon: "🏥" },
-  { href: "/doctor", label: "Doctor", description: "Consultations and prescriptions", icon: "👨‍⚕️" },
-  { href: "/attendance", label: "Attendance", description: "Employees, shifts, and reports", icon: "⏱" },
-  { href: "/", label: "Inpatients", description: "Admissions, bills, and discharge history", icon: "🛏" },
-  { href: "/apt", label: "Appointments", description: "Daily OP queue and follow-ups", icon: "🗓" },
-  { href: "/dcard", label: "Discharge Card", description: "Templates and exported summaries", icon: "📄" },
+  { href: "/attendance", label: "Attendance", icon: "📋", description: "Mark and manage daily attendance" },
+  { href: "/doctor", label: "OPD", icon: "🩺", description: "Patient visits and prescriptions" },
+  { href: "/apt", label: "Appointments", icon: "📅", description: "Schedule and manage appointments" },
+  { href: "/dcard", label: "D-Card", icon: "📄", description: "Discharge summaries and cards" },
+  { href: "/employees", label: "Staff", icon: "👥", description: "Employee management and shifts" },
+  { href: "/leaves", label: "Leaves", icon: "📝", description: "Leave requests and approvals" },
+  { href: "/holidays", label: "Holidays", icon: "🎉", description: "Holiday calendar and management" },
+  { href: "/reports", label: "Reports", icon: "📊", description: "Analytics and export reports" },
+  { href: "/company-profile", label: "Company", icon: "🏢", description: "Company settings and profile" },
+  { href: "/calcy", label: "Calcy", icon: "💰", description: "Multi-account ledger with transactions" },
 ];
 
 export default function AppHeader({ children }: AppHeaderProps) {
