@@ -395,6 +395,45 @@ function buildHeaderImageParagraph(imageDataUrl?: string): Paragraph | null {
   }
 }
 
+<<<<<<< ours
+=======
+// ─── Save helper ─────────────────────────────────────────────────────────────────
+
+function isFileSystemAccessSupported(): boolean {
+  // Firefox doesn't support showSaveFilePicker on desktop
+  const isFirefox = navigator.userAgent.toLowerCase().includes('firefox');
+  return 'showSaveFilePicker' in window && !isFirefox;
+}
+
+async function saveDocxBlob(blob: Blob, fileName: string): Promise<void> {
+  if (isFileSystemAccessSupported()) {
+    try {
+      const handle = await (window as any).showSaveFilePicker({
+        suggestedName: fileName,
+        types: [
+          {
+            description: 'Word Document',
+            accept: {
+              'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
+            },
+          },
+        ],
+      });
+      const writable = await handle.createWritable();
+      await writable.write(blob);
+      await writable.close();
+      return;
+    } catch (e) {
+      if ((e as any).name === 'AbortError') return;
+    }
+  }
+  const { saveAs } = await import('file-saver');
+  saveAs(blob, fileName);
+}
+
+// ─── Main export ────────────────────────────────────────────────────────────────
+
+>>>>>>> theirs
 export const generateDocx = async (data: DischargeData, headerImageDataUrl?: string) => {
   const children: (Paragraph | Table)[] = [];
 
