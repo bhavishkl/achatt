@@ -12,7 +12,6 @@ import {
   ShadingType,
   ImageRun,
 } from 'docx';
-import { saveAs } from 'file-saver';
 import { DischargeData } from '../types';
 
 // ─── Border helpers ────────────────────────────────────────────────────────────
@@ -49,6 +48,18 @@ const allSingleBorders = {
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
 
+function getTodayDate(): string {
+  const today = new Date();
+  const day = String(today.getDate()).padStart(2, '0');
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const year = today.getFullYear();
+  return `${day}-${month}-${year}`;
+}
+
+function sanitizeFileName(name: string): string {
+  return name.replace(/[<>:"/\\|?*]/g, '_').trim();
+}
+
 /** Bold + underline heading paragraph (e.g. "FINAL DIAGNOSIS:") */
 function sectionHeadingParagraph(title: string): Paragraph {
   return new Paragraph({
@@ -58,7 +69,7 @@ function sectionHeadingParagraph(title: string): Paragraph {
         bold: true,
         underline: {},
         font: 'Calibri',
-        size: 22, // 11pt
+        size: 22,
       }),
     ],
     spacing: { before: 120, after: 60 },
@@ -96,7 +107,6 @@ function textParagraphs(content: string): Paragraph[] {
 function boxedSection(title: string, content: string, widthPct = 100): Table {
   const contentLines = content ? content.split('\n') : [''];
 
-  // Cell borders must be set explicitly — table-level borders alone are suppressed by cell defaults.
   const topCellBorders = {
     top: BORDER_SINGLE,
     left: BORDER_SINGLE,
@@ -115,16 +125,13 @@ function boxedSection(title: string, content: string, widthPct = 100): Table {
   };
 
   const innerRows: TableRow[] = [
-    // Heading row
     new TableRow({
       children: [
         new TableCell({
           borders: topCellBorders,
           children: [
             new Paragraph({
-              children: [
-                bodyTextRun(title, true, true),
-              ],
+              children: [bodyTextRun(title, true, true)],
               spacing: { after: 120 },
             }),
           ],
@@ -132,7 +139,6 @@ function boxedSection(title: string, content: string, widthPct = 100): Table {
         }),
       ],
     }),
-    // Content row
     new TableRow({
       children: [
         new TableCell({
@@ -159,18 +165,11 @@ function boxedSection(title: string, content: string, widthPct = 100): Table {
 
 // ─── Investigations table ──────────────────────────────────────────────────────
 
-/**
- * Matches the image exactly:
- *   - 2 columns: Date | Finding
- *   - Category is a bold full-width merged header row (shaded)
- *   - All cells have single borders
- */
 function buildInvestigationsTable(
   investigations: DischargeData['investigations']
 ): Table {
   if (!investigations.length) return new Table({ rows: [] });
 
-  // Group by category preserving insertion order
   const groups = new Map<string, { date: string; result: string; name: string }[]>();
   for (const inv of investigations) {
     const cat = inv.category || 'Other';
@@ -181,7 +180,6 @@ function buildInvestigationsTable(
   const rows: TableRow[] = [];
 
   for (const [category, entries] of groups) {
-    // Category header row — bold, spans conceptually (single cell full width achieved by equal cols)
     rows.push(
       new TableRow({
         children: [
@@ -201,16 +199,13 @@ function buildInvestigationsTable(
       })
     );
 
-    // Entry rows
     for (const entry of entries) {
-      // Build the raw finding string first, then let findingRuns parse bold/normal
       const rawFinding = entry.name
         ? entry.result
           ? `${entry.name}- ${entry.result}`
           : entry.name
         : entry.result;
 
-      // Split each line of the result (multi-line findings) into separate paragraphs
       const findingLines = rawFinding.split('\n');
 
       rows.push(
@@ -254,11 +249,6 @@ function buildInvestigationsTable(
 
 // ─── Treatment Given table ─────────────────────────────────────────────────────
 
-/**
- * 2-column table with all borders.
- * Items fill left column then right column (column-major order).
- * Each cell: "Name Dosage" on one line.
- */
 function buildTreatmentTable(
   treatmentGiven: DischargeData['treatmentGiven']
 ): Table {
@@ -300,7 +290,7 @@ function buildTreatmentTable(
   });
 }
 
-// ─── Patient info table ────────────────────────────────────────────────────────
+// ─── Patient info table ──────────────────────────────────────────────────────────
 
 function buildPatientTable(data: DischargeData): Table {
   const cell = (
@@ -355,7 +345,7 @@ function buildPatientTable(data: DischargeData): Table {
   });
 }
 
-// ─── Main export ───────────────────────────────────────────────────────────────
+// ─── Header image ────────────────────────────────────────────────────────────────
 
 function buildHeaderImageParagraph(imageDataUrl?: string): Paragraph | null {
   if (!imageDataUrl?.startsWith('data:image/')) return null;
@@ -395,6 +385,36 @@ function buildHeaderImageParagraph(imageDataUrl?: string): Paragraph | null {
   }
 }
 
+// ─── Save helper ─────────────────────────────────────────────────────────────────
+
+async function saveDocxBlob(blob: Blob, fileName: string): Promise<void> {
+  if ('showSaveFilePicker' in window) {
+    try {
+      const handle = await (window as any).showSaveFilePicker({
+        suggestedName: fileName,
+        types: [
+          {
+            description: 'Word Document',
+            accept: {
+              'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
+            },
+          },
+        ],
+      });
+      const writable = await handle.createWritable();
+      await writable.write(blob);
+      await writable.close();
+      return;
+    } catch (e) {
+      if ((e as any).name === 'AbortError') return;
+    }
+  }
+  const { saveAs } = await import('file-saver');
+  saveAs(blob, fileName);
+}
+
+// ─── Main export ────────────────────────────────────────────────────────────────
+
 export const generateDocx = async (data: DischargeData, headerImageDataUrl?: string) => {
   const children: (Paragraph | Table)[] = [];
 
@@ -403,18 +423,14 @@ export const generateDocx = async (data: DischargeData, headerImageDataUrl?: str
     children.push(headerImageParagraph);
   }
 
-  // ── DISCHARGE SUMMARY title ──────────────────────────────────────────────────
   children.push(
     new Paragraph({
       alignment: AlignmentType.CENTER,
-      children: [
-        bodyTextRun('DISCHARGE SUMMARY', true, true),
-      ],
+      children: [bodyTextRun('DISCHARGE SUMMARY', true, true)],
       spacing: { after: 160 },
     })
   );
 
-  // Optional DAMA notice
   if (data.dischargeAgainstMedicalAdvice) {
     children.push(
       new Paragraph({
@@ -432,32 +448,27 @@ export const generateDocx = async (data: DischargeData, headerImageDataUrl?: str
     );
   }
 
-  // ── Patient info table ───────────────────────────────────────────────────────
   children.push(buildPatientTable(data));
   children.push(new Paragraph({ text: '', spacing: { after: 80 } }));
 
-  // ── FINAL DIAGNOSIS — always rendered ────────────────────────────────────────
   children.push(sectionHeadingParagraph('FINAL DIAGNOSIS:'));
   if (data.finalDiagnosis) {
     children.push(...textParagraphs(data.finalDiagnosis));
   }
   children.push(new Paragraph({ text: '', spacing: { after: 80 } }));
 
-  // ── CLINICAL PRESENTATION ────────────────────────────────────────────────────
   if (data.clinicalPresentation) {
     children.push(sectionHeadingParagraph('CLINICAL PRESENTATION:'));
     children.push(...textParagraphs(data.clinicalPresentation));
     children.push(new Paragraph({ text: '', spacing: { after: 80 } }));
   }
 
-  // ── INVESTIGATIONS ───────────────────────────────────────────────────────────
   if (data.investigations.length > 0) {
     children.push(sectionHeadingParagraph('INVESTIGATIONS:'));
     children.push(buildInvestigationsTable(data.investigations));
     children.push(new Paragraph({ text: '', spacing: { after: 80 } }));
   }
 
-  // ── TREATMENT GIVEN ────────────────────────────────────────────────────
   if (data.treatmentGiven.length > 0) {
     children.push(
       new Paragraph({
@@ -469,7 +480,6 @@ export const generateDocx = async (data: DischargeData, headerImageDataUrl?: str
     children.push(new Paragraph({ text: '', spacing: { after: 80 } }));
   }
 
-  // ── COURSE IN THE HOSPITAL/SURGICAL PROCEDURE (boxed) ───────────────────────
   if (data.hospitalCourse) {
     children.push(boxedSection('COURSE IN THE HOSPITAL/SURGICAL PROCEDURE:', data.hospitalCourse));
     children.push(new Paragraph({ text: '', spacing: { after: 80 } }));
@@ -485,7 +495,6 @@ export const generateDocx = async (data: DischargeData, headerImageDataUrl?: str
     children.push(new Paragraph({ text: '', spacing: { after: 200 } }));
   }
 
-  // ── CONSULTANT NAME AND SIGNATURE (right-aligned) ───────────────────────────
   children.push(
     new Table({
       width: { size: 100, type: WidthType.PERCENTAGE },
@@ -504,9 +513,7 @@ export const generateDocx = async (data: DischargeData, headerImageDataUrl?: str
               children: [
                 new Paragraph({
                   alignment: AlignmentType.CENTER,
-                  children: [
-                    bodyTextRun('CONSULTANT NAME AND SIGNATURE', true, true),
-                  ],
+                  children: [bodyTextRun('CONSULTANT NAME AND SIGNATURE', true, true)],
                 }),
               ],
             }),
@@ -517,14 +524,12 @@ export const generateDocx = async (data: DischargeData, headerImageDataUrl?: str
   );
 
   const doc = new Document({
-    sections: [
-      {
-        properties: {},
-        children,
-      },
-    ],
+    sections: [{ properties: {}, children }],
   });
 
   const blob = await Packer.toBlob(doc);
-  saveAs(blob, `${data.patientName || 'Patient'}_Discharge_Summary.docx`);
+  const patientName = sanitizeFileName(data.patientName || 'Patient');
+  const dateStr = getTodayDate();
+  const fileName = `Discharge Summary ${patientName} ${dateStr}.docx`;
+  await saveDocxBlob(blob, fileName);
 };
