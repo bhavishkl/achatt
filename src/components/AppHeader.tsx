@@ -1,11 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import CreateCompanyModal from "@/components/CreateCompanyModal";
 import { useAppStore } from "@/lib/store";
 import type { Company } from "@/lib/types";
+
+const LONG_PRESS_DELAY = 500;
 
 type AppHeaderProps = {
   children: React.ReactNode;
@@ -19,6 +21,35 @@ const NAV_LINKS = [
   { href: "/apt", label: "Appointments", description: "Daily OP queue and follow-ups", icon: "🗓" },
   { href: "/dcard", label: "Discharge Card", description: "Templates and exported summaries", icon: "📄" },
 ];
+
+function useLongPress(callback: () => void, delay = LONG_PRESS_DELAY) {
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isLongPressRef = useRef(false);
+
+  const start = useCallback(() => {
+    isLongPressRef.current = false;
+    timeoutRef.current = setTimeout(() => {
+      isLongPressRef.current = true;
+      callback();
+    }, delay);
+  }, [callback, delay]);
+
+  const clear = useCallback(() => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+  }, []);
+
+  return {
+    onMouseDown: start,
+    onTouchStart: start,
+    onMouseUp: clear,
+    onMouseLeave: clear,
+    onTouchEnd: clear,
+    onTouchCancel: clear,
+  };
+}
 
 export default function AppHeader({ children }: AppHeaderProps) {
   const [company, setCompany] = useState<Company | null>(null);
@@ -34,6 +65,13 @@ export default function AppHeader({ children }: AppHeaderProps) {
   const router = useRouter();
   const pathname = usePathname();
   const setCompanyId = useAppStore((s) => s.setCompanyId);
+
+  const openCalcy = useCallback(() => {
+    router.push("/calcy");
+  }, [router]);
+
+  const mobileLongPress = useLongPress(openCalcy);
+  const desktopLongPress = useLongPress(openCalcy);
 
   useEffect(() => {
     setAuthState({
@@ -195,8 +233,9 @@ export default function AppHeader({ children }: AppHeaderProps) {
               <button
                 type="button"
                 onClick={() => setIsMobileNavOpen(true)}
+                {...mobileLongPress}
                 className="inline-flex shrink-0 h-10 w-10 items-center justify-center rounded-xl border border-neutral-800 bg-neutral-900 text-neutral-200 lg:hidden"
-                aria-label="Open mobile navigation"
+                aria-label="Open mobile navigation (long press for Calcy)"
               >
                 <span className="text-lg">☰</span>
               </button>
@@ -205,8 +244,9 @@ export default function AppHeader({ children }: AppHeaderProps) {
               <button
                 type="button"
                 onClick={() => setIsDesktopNavOpen((p) => !p)}
+                {...desktopLongPress}
                 className="hidden shrink-0 h-10 w-10 items-center justify-center rounded-xl border border-neutral-800 bg-neutral-900 text-neutral-200 lg:inline-flex"
-                aria-label="Toggle desktop navigation"
+                aria-label="Toggle desktop navigation (long press for Calcy)"
               >
                 <span className="text-lg">☰</span>
               </button>
