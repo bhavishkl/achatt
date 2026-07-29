@@ -67,6 +67,7 @@ export default function CalcyPage() {
   const [txAmount, setTxAmount] = useState("");
   const [txDescription, setTxDescription] = useState("");
   const [txDate, setTxDate] = useState(todayISO());
+  const [txFilterAccountId, setTxFilterAccountId] = useState<string>("");
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -98,12 +99,14 @@ export default function CalcyPage() {
 
   const sortedTransactions = useMemo(
     () =>
-      [...transactions].sort((a, b) => {
-        const dateCmp = b.date.localeCompare(a.date);
-        if (dateCmp !== 0) return dateCmp;
-        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-      }),
-    [transactions],
+      [...transactions]
+        .filter((t) => !txFilterAccountId || t.accountId === txFilterAccountId)
+        .sort((a, b) => {
+          const dateCmp = b.date.localeCompare(a.date);
+          if (dateCmp !== 0) return dateCmp;
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        }),
+    [transactions, txFilterAccountId],
   );
 
   const handleCreateAccount = () => {
@@ -468,7 +471,29 @@ export default function CalcyPage() {
 
         {/* ── Transaction History ── */}
         <div className="rounded-xl border border-neutral-800 bg-neutral-900 p-6">
-          <h2 className="mb-4 text-lg font-semibold text-white">All Transactions</h2>
+          <div className="mb-4 flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+            <h2 className="text-lg font-semibold text-white">All Transactions</h2>
+
+            {accounts.length > 0 && (
+              <div className="flex items-end gap-2">
+                <label className="block text-xs font-medium uppercase tracking-wider text-neutral-500">
+                  Filter by Account
+                </label>
+                <select
+                  value={txFilterAccountId}
+                  onChange={(e) => setTxFilterAccountId(e.target.value)}
+                  className="rounded-lg border border-neutral-700 bg-neutral-800 px-3 py-1.5 text-sm text-white focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                >
+                  <option value="">All Accounts</option>
+                  {accounts.map((account) => (
+                    <option key={account.id} value={account.id}>
+                      {account.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+          </div>
 
           {sortedTransactions.length === 0 ? (
             <div className="py-8 text-center">

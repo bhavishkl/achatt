@@ -105,6 +105,6 @@
   - Dashboard showing all account balances at once (grid of cards + total balance)
   - Account management: create, rename (inline edit), delete
   - Add transaction form with account selector dropdown, credit/debit toggle, amount, description, date
-  - Transaction history table showing all transactions across all accounts (with account name column)
+  - Transaction history table with account filter dropdown (All Accounts or specific account), showing date, account, type, description, amount, and delete action
   - Remaining balance computed from transactions (credits add, debits subtract)
   - Matches the app's dark theme (neutral-950)
