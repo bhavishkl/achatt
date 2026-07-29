@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import CreateCompanyModal from "@/components/CreateCompanyModal";
@@ -34,6 +34,29 @@ export default function AppHeader({ children }: AppHeaderProps) {
   const router = useRouter();
   const pathname = usePathname();
   const setCompanyId = useAppStore((s) => s.setCompanyId);
+
+  const LONG_PRESS_DURATION = 700;
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const longPressTriggered = useRef(false);
+
+  const startLongPress = () => {
+    longPressTriggered.current = false;
+    longPressTimer.current = setTimeout(() => {
+      longPressTriggered.current = true;
+      router.push("/calcy");
+    }, LONG_PRESS_DURATION);
+  };
+
+  const cancelLongPress = () => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+  };
+
+  useEffect(() => {
+    return () => cancelLongPress();
+  }, []);
 
   useEffect(() => {
     setAuthState({
@@ -194,7 +217,19 @@ export default function AppHeader({ children }: AppHeaderProps) {
               {/* Mobile Toggle */}
               <button
                 type="button"
-                onClick={() => setIsMobileNavOpen(true)}
+                onClick={() => {
+                  if (longPressTriggered.current) {
+                    longPressTriggered.current = false;
+                    return;
+                  }
+                  setIsMobileNavOpen(true);
+                }}
+                onMouseDown={startLongPress}
+                onTouchStart={startLongPress}
+                onMouseUp={cancelLongPress}
+                onTouchEnd={cancelLongPress}
+                onMouseLeave={cancelLongPress}
+                onTouchCancel={cancelLongPress}
                 className="inline-flex shrink-0 h-10 w-10 items-center justify-center rounded-xl border border-neutral-800 bg-neutral-900 text-neutral-200 lg:hidden"
                 aria-label="Open mobile navigation"
               >
@@ -204,7 +239,19 @@ export default function AppHeader({ children }: AppHeaderProps) {
               {/* Desktop Toggle */}
               <button
                 type="button"
-                onClick={() => setIsDesktopNavOpen((p) => !p)}
+                onClick={() => {
+                  if (longPressTriggered.current) {
+                    longPressTriggered.current = false;
+                    return;
+                  }
+                  setIsDesktopNavOpen((p) => !p);
+                }}
+                onMouseDown={startLongPress}
+                onTouchStart={startLongPress}
+                onMouseUp={cancelLongPress}
+                onTouchEnd={cancelLongPress}
+                onMouseLeave={cancelLongPress}
+                onTouchCancel={cancelLongPress}
                 className="hidden shrink-0 h-10 w-10 items-center justify-center rounded-xl border border-neutral-800 bg-neutral-900 text-neutral-200 lg:inline-flex"
                 aria-label="Toggle desktop navigation"
               >

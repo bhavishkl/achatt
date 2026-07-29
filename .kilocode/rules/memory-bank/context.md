@@ -100,3 +100,10 @@
 - Verified current code with `npm run -s typecheck` (passes).
 
 - Updated night-shift punch processing so rotational night shifts use the configured shift start/end timing window to choose the closest punch-in and punch-out across the shift date and next date, rather than fixed first/second punch ordering.
+- Added long-press support on the hamburger (☰) icons in `src/components/AppHeader.tsx` (both mobile and desktop): a 700ms press navigates to the new `/calcy` page; a quick click still opens/closes navigation as before.
+- Added new `Calcy` page at `src/app/calcy/page.tsx` — a frontend-only account manager with localStorage persistence (`calcy-accounts`, `calcy-transactions`):
+  - Create, rename (inline edit), and delete multiple accounts
+  - Per-account transaction history with credit/debit type, amount, description, and date
+  - Remaining balance computed from transactions (credits add, debits subtract), color-coded green/red
+  - Add/delete transactions with validation
+  - Matches the app's dark theme (neutral-950)
