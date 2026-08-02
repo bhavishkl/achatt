@@ -11,6 +11,7 @@ import {
   AlignmentType,
   ShadingType,
   ImageRun,
+  PageBreak,
 } from 'docx';
 import { DischargeData } from '../types';
 
@@ -375,7 +376,7 @@ function buildHeaderImageParagraph(imageDataUrl?: string): Paragraph | null {
         new ImageRun({
           data: bytes,
           type: imageType,
-          transformation: { width: 600, height: 170 },
+          transformation: { width: 600, height: 160 },
         }),
       ],
       spacing: { after: 140 },
@@ -432,7 +433,15 @@ export const generateDocx = async (data: DischargeData, headerImageDataUrl?: str
   children.push(
     new Paragraph({
       alignment: AlignmentType.CENTER,
-      children: [bodyTextRun('DISCHARGE SUMMARY', true, true)],
+      children: [
+        new TextRun({
+          text: 'DISCHARGE SUMMARY',
+          bold: true,
+          underline: {},
+          font: 'Calibri',
+          size: 28,
+        }),
+      ],
       spacing: { after: 160 },
     })
   );
@@ -447,6 +456,7 @@ export const generateDocx = async (data: DischargeData, headerImageDataUrl?: str
             bold: true,
             color: 'D97706',
             font: 'Calibri',
+            size: 22,
           }),
         ],
         spacing: { after: 200 },
@@ -498,8 +508,9 @@ export const generateDocx = async (data: DischargeData, headerImageDataUrl?: str
 
   if (data.followUp) {
     children.push(boxedSection('NEXT FOLLOW UP :', data.followUp, 50));
-    children.push(new Paragraph({ text: '', spacing: { after: 200 } }));
   }
+
+  children.push(new Paragraph({ children: [new PageBreak()] }));
 
   children.push(
     new Table({
@@ -530,6 +541,16 @@ export const generateDocx = async (data: DischargeData, headerImageDataUrl?: str
   );
 
   const doc = new Document({
+    styles: {
+      default: {
+        document: {
+          run: {
+            font: 'Calibri',
+            size: 22,
+          },
+        },
+      },
+    },
     sections: [{ properties: {}, children }],
   });
 

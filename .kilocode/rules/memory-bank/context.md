@@ -108,3 +108,9 @@
   - Transaction history table with account filter dropdown (All Accounts or specific account), showing date, account, type, description, amount, and delete action
   - Remaining balance computed from transactions (credits add, debits subtract)
   - Matches the app's dark theme (neutral-950)
+- Updated DOCX export in `src/lib/exportDocx.ts`:
+  - Increased "DISCHARGE SUMMARY" heading font size from 11pt to 14pt (size: 28 half-points)
+  - Decreased header image height from 170 to 160
+  - Added a page break before the "CONSULTANT NAME AND SIGNATURE" section so it always appears at the end of the document on its own page
+  - Set document-level default font to Calibri 11pt via `styles.default.document.run` so user edits default to Calibri 11
+  - Added `size: 22` (11pt) to the DAMA warning TextRun for consistency
