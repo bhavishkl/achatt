@@ -179,7 +179,7 @@ export const useAppStore = create<AppState>()(
           const newRecords = [...s.punchRecords, ...records];
           
           // Process punches with current employee + rotation context
-          const processed = processPunchRecords(newRecords, s.employees, s.shiftRotations);
+          const processed = processPunchRecords(newRecords, s.employees, s.shiftRotations, s.shiftGroups);
           
           return {
             punchRecords: newRecords,
@@ -197,7 +197,7 @@ export const useAppStore = create<AppState>()(
       setEmployees: (employees) =>
         set((s) => ({
           employees,
-          processedPunches: processPunchRecords(s.punchRecords, employees, s.shiftRotations),
+          processedPunches: processPunchRecords(s.punchRecords, employees, s.shiftRotations, s.shiftGroups),
         })),
       addEmployee: (e) =>
         set((s) => ({
@@ -299,28 +299,44 @@ export const useAppStore = create<AppState>()(
 
       // ---- Shift Groups ----
       shiftGroups: [],
-      setShiftGroups: (groups) => set({ shiftGroups: groups }),
+      setShiftGroups: (groups) =>
+        set((s) => ({
+          shiftGroups: groups,
+          processedPunches: processPunchRecords(s.punchRecords, s.employees, s.shiftRotations, groups),
+        })),
       addShiftGroup: (g) =>
-        set((s) => ({
-          shiftGroups: [...s.shiftGroups, { ...g, id: uid(), employeeIds: [] }],
-        })),
+        set((s) => {
+          const nextGroups = [...s.shiftGroups, { ...g, id: uid(), employeeIds: [] }];
+          return {
+            shiftGroups: nextGroups,
+            processedPunches: processPunchRecords(s.punchRecords, s.employees, s.shiftRotations, nextGroups),
+          };
+        }),
       updateShiftGroup: (id, data) =>
-        set((s) => ({
-          shiftGroups: s.shiftGroups.map((g) =>
+        set((s) => {
+          const nextGroups = s.shiftGroups.map((g) =>
             g.id === id ? { ...g, ...data } : g,
-          ),
-        })),
+          );
+          return {
+            shiftGroups: nextGroups,
+            processedPunches: processPunchRecords(s.punchRecords, s.employees, s.shiftRotations, nextGroups),
+          };
+        }),
       deleteShiftGroup: (id) =>
-        set((s) => ({
-          shiftGroups: s.shiftGroups.filter((g) => g.id !== id),
-        })),
+        set((s) => {
+          const nextGroups = s.shiftGroups.filter((g) => g.id !== id);
+          return {
+            shiftGroups: nextGroups,
+            processedPunches: processPunchRecords(s.punchRecords, s.employees, s.shiftRotations, nextGroups),
+          };
+        }),
 
       // ---- Shift Rotations ----
       shiftRotations: [],
       setShiftRotations: (rotations) =>
         set((s) => ({
           shiftRotations: rotations,
-          processedPunches: processPunchRecords(s.punchRecords, s.employees, rotations),
+          processedPunches: processPunchRecords(s.punchRecords, s.employees, rotations, s.shiftGroups),
         })),
       addShiftRotation: (r) =>
         set((s) => ({
@@ -329,6 +345,7 @@ export const useAppStore = create<AppState>()(
             s.punchRecords,
             s.employees,
             [...s.shiftRotations, r],
+            s.shiftGroups,
           ),
         })),
       deleteShiftRotation: (id) =>
@@ -336,7 +353,7 @@ export const useAppStore = create<AppState>()(
           const nextRotations = s.shiftRotations.filter((r) => r.id !== id);
           return {
             shiftRotations: nextRotations,
-            processedPunches: processPunchRecords(s.punchRecords, s.employees, nextRotations),
+            processedPunches: processPunchRecords(s.punchRecords, s.employees, nextRotations, s.shiftGroups),
           };
         }),
 
@@ -377,24 +394,44 @@ export const useAppStore = create<AppState>()(
       addEmployeeToGroup: (groupType, groupId, employeeId) =>
         set((s) => {
           const key = groupKeyMap[groupType];
-          return {
-            [key]: (s[key] as GroupUnion[]).map((g) =>
-              g.id === groupId && !g.employeeIds.includes(employeeId)
-                ? { ...g, employeeIds: [...g.employeeIds, employeeId] }
-                : g,
-            ),
-          } as Partial<AppState>;
+          const nextGroups = (s[key] as GroupUnion[]).map((g) =>
+            g.id === groupId && !g.employeeIds.includes(employeeId)
+              ? { ...g, employeeIds: [...g.employeeIds, employeeId] }
+              : g,
+          );
+          if (groupType === "shift") {
+            return {
+              [key]: nextGroups,
+              processedPunches: processPunchRecords(
+                s.punchRecords,
+                s.employees,
+                s.shiftRotations,
+                nextGroups as ShiftGroup[],
+              ),
+            } as Partial<AppState>;
+          }
+          return { [key]: nextGroups } as Partial<AppState>;
         }),
       removeEmployeeFromGroup: (groupType, groupId, employeeId) =>
         set((s) => {
           const key = groupKeyMap[groupType];
-          return {
-            [key]: (s[key] as GroupUnion[]).map((g) =>
-              g.id === groupId
-                ? { ...g, employeeIds: g.employeeIds.filter((eid) => eid !== employeeId) }
-                : g,
-            ),
-          } as Partial<AppState>;
+          const nextGroups = (s[key] as GroupUnion[]).map((g) =>
+            g.id === groupId
+              ? { ...g, employeeIds: g.employeeIds.filter((eid) => eid !== employeeId) }
+              : g,
+          );
+          if (groupType === "shift") {
+            return {
+              [key]: nextGroups,
+              processedPunches: processPunchRecords(
+                s.punchRecords,
+                s.employees,
+                s.shiftRotations,
+                nextGroups as ShiftGroup[],
+              ),
+            } as Partial<AppState>;
+          }
+          return { [key]: nextGroups } as Partial<AppState>;
         }),
 
       // ---- OPD Patient Registry ----
@@ -585,6 +622,7 @@ function processPunchRecords(
   records: PunchRecord[],
   employees: Employee[],
   shiftRotations: ShiftRotation[],
+  shiftGroups: ShiftGroup[],
 ): ProcessedPunch[] {
   const toTimeString = (isoDateTime: string) =>
     new Date(isoDateTime).toLocaleTimeString("en-GB", {
@@ -662,6 +700,33 @@ function processPunchRecords(
     const rotations = dayRotationsByEmp.get(internalId);
     if (!rotations || rotations.length === 0) return null;
     return rotations.find((r) => date >= r.startDate && date <= r.endDate) ?? null;
+  };
+
+  // Build lookup: internal employee id -> shift group (day shift timing from groups)
+  const shiftGroupByInternalEmp = new Map<string, ShiftGroup>();
+  shiftGroups.forEach((group) => {
+    group.employeeIds.forEach((internalEmpId) => {
+      if (!shiftGroupByInternalEmp.has(internalEmpId)) {
+        shiftGroupByInternalEmp.set(internalEmpId, group);
+      }
+    });
+  });
+
+  // Resolve the effective day-shift timing for an employee on a given date.
+  // Priority: date-range rotation (non-night) first, then a matching shift group.
+  const getDayShiftTiming = (
+    externalEmployeeId: string,
+    date: string,
+  ): { startTime: string; endTime: string } | null => {
+    const rotation = getDayShiftRotation(externalEmployeeId, date);
+    if (rotation) {
+      return { startTime: rotation.startTime, endTime: rotation.endTime };
+    }
+    const internalId = externalToInternal.get(externalEmployeeId);
+    if (!internalId) return null;
+    const group = shiftGroupByInternalEmp.get(internalId);
+    if (!group) return null;
+    return { startTime: group.startTime, endTime: group.endTime };
   };
 
   const nextDateString = (date: string) => {
@@ -776,11 +841,11 @@ function processPunchRecords(
         punchOut = toTimeString(usableToday[usableToday.length - 1].punchTime);
       } else if (usableToday.length === 1) {
         const singlePunch = usableToday[0];
-        const dayRotation = getDayShiftRotation(employeeId, date);
+        const dayTiming = getDayShiftTiming(employeeId, date);
 
-        if (dayRotation) {
-          const shiftStart = parseShiftDateTime(date, dayRotation.startTime);
-          const shiftEnd = parseShiftDateTime(date, dayRotation.endTime);
+        if (dayTiming) {
+          const shiftStart = parseShiftDateTime(date, dayTiming.startTime);
+          const shiftEnd = parseShiftDateTime(date, dayTiming.endTime);
 
           if (shiftEnd.getTime() <= shiftStart.getTime()) {
             shiftEnd.setDate(shiftEnd.getDate() + 1);
@@ -790,6 +855,7 @@ function processPunchRecords(
           const distToStart = Math.abs(punchMs - shiftStart.getTime());
           const distToEnd = Math.abs(punchMs - shiftEnd.getTime());
 
+          // Single punch closer to shift start => punch in; closer to shift end => punch out
           if (distToStart <= distToEnd) {
             punchIn = toTimeString(singlePunch.punchTime);
           } else {
