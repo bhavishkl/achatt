@@ -643,6 +643,27 @@ function processPunchRecords(
     return rotations.find((r) => date >= r.startDate && date <= r.endDate) ?? null;
   };
 
+  // Build lookup for day (non-night) shift rotations by internal employee id.
+  const dayRotationsByEmp = new Map<string, ShiftRotation[]>();
+  shiftRotations.forEach((rotation) => {
+    if (rotation.shiftType === "night") return;
+    const existing = dayRotationsByEmp.get(rotation.employeeId) ?? [];
+    existing.push(rotation);
+    dayRotationsByEmp.set(rotation.employeeId, existing);
+  });
+
+  dayRotationsByEmp.forEach((rotations) => {
+    rotations.sort((a, b) => a.startDate.localeCompare(b.startDate));
+  });
+
+  const getDayShiftRotation = (externalEmployeeId: string, date: string) => {
+    const internalId = externalToInternal.get(externalEmployeeId);
+    if (!internalId) return null;
+    const rotations = dayRotationsByEmp.get(internalId);
+    if (!rotations || rotations.length === 0) return null;
+    return rotations.find((r) => date >= r.startDate && date <= r.endDate) ?? null;
+  };
+
   const nextDateString = (date: string) => {
     const d = new Date(`${date}T00:00:00`);
     d.setDate(d.getDate() + 1);
@@ -754,7 +775,29 @@ function processPunchRecords(
         punchIn = toTimeString(usableToday[0].punchTime);
         punchOut = toTimeString(usableToday[usableToday.length - 1].punchTime);
       } else if (usableToday.length === 1) {
-        punchIn = toTimeString(usableToday[0].punchTime);
+        const singlePunch = usableToday[0];
+        const dayRotation = getDayShiftRotation(employeeId, date);
+
+        if (dayRotation) {
+          const shiftStart = parseShiftDateTime(date, dayRotation.startTime);
+          const shiftEnd = parseShiftDateTime(date, dayRotation.endTime);
+
+          if (shiftEnd.getTime() <= shiftStart.getTime()) {
+            shiftEnd.setDate(shiftEnd.getDate() + 1);
+          }
+
+          const punchMs = new Date(singlePunch.punchTime).getTime();
+          const distToStart = Math.abs(punchMs - shiftStart.getTime());
+          const distToEnd = Math.abs(punchMs - shiftEnd.getTime());
+
+          if (distToStart <= distToEnd) {
+            punchIn = toTimeString(singlePunch.punchTime);
+          } else {
+            punchOut = toTimeString(singlePunch.punchTime);
+          }
+        } else {
+          punchIn = toTimeString(singlePunch.punchTime);
+        }
       }
 
       const status: "present" | "absent" | "missed" =
