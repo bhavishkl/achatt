@@ -635,6 +635,15 @@ function processPunchRecords(
     rotations.sort((a, b) => a.startDate.localeCompare(b.startDate));
   });
 
+  // Build lookup for shift groups by internal employee id (for regular shifts)
+  const shiftGroupsByEmp = new Map<string, { startTime: string; endTime: string }>();
+  employees.forEach((emp) => {
+    const shiftGroup = shiftGroups.find((g) => g.employeeIds.includes(emp.id));
+    if (shiftGroup) {
+      shiftGroupsByEmp.set(emp.id, { startTime: shiftGroup.startTime, endTime: shiftGroup.endTime });
+    }
+  });
+
   const getNightShiftRotation = (externalEmployeeId: string, date: string) => {
     const internalId = externalToInternal.get(externalEmployeeId);
     if (!internalId) return null;
