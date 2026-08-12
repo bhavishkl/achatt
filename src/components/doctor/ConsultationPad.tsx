@@ -239,7 +239,8 @@ export function ConsultationPad({ prescription, onChange, onSave, onComplete }: 
     // Remove duplicates by label
     const uniqueMap = new Map();
     opts.forEach((o) => {
-      uniqueMap.set(o.label, o);
+      const lbl = typeof o === "string" ? o : o.label;
+      uniqueMap.set(lbl, o);
     });
     return Array.from(uniqueMap.values());
   }, [customMedicines, historicMedicines]);
