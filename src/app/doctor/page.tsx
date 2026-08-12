@@ -61,8 +61,9 @@ export default function DoctorPage() {
   const setOpdVisits = useAppStore((s) => s.setOpdVisits);
   const updateOpdVisitStatus = useAppStore((s) => s.updateOpdVisitStatus);
   const updateOpdVisitPrescription = useAppStore((s) => s.updateOpdVisitPrescription);
+  const setHistoricOptions = useAppStore((s) => s.setHistoricOptions);
 
-  const { loadPatients, loadTodayVisits, updateVisit, loadFormatConfig, companyId } = useOpdApi();
+  const { loadPatients, loadTodayVisits, updateVisit, loadFormatConfig, loadOpdOptions, companyId } = useOpdApi();
   const setPrescriptionFormatConfig = useAppStore((s) => s.setPrescriptionFormatConfig);
 
   const today = getToday();
@@ -77,10 +78,11 @@ export default function DoctorPage() {
     let mounted = true;
     const load = async () => {
       setIsLoading(true);
-      const [patients, visits, formatConfig] = await Promise.all([
+      const [patients, visits, formatConfig, options] = await Promise.all([
         loadPatients(),
         loadTodayVisits(),
         loadFormatConfig(),
+        loadOpdOptions(),
       ]);
       if (mounted) {
         setOpdPatients(patients);
@@ -88,12 +90,15 @@ export default function DoctorPage() {
         if (formatConfig) {
           setPrescriptionFormatConfig(formatConfig);
         }
+        if (options) {
+          setHistoricOptions(options);
+        }
         setIsLoading(false);
       }
     };
     load();
     return () => { mounted = false; };
-  }, [companyId, loadPatients, loadTodayVisits, loadFormatConfig, setOpdPatients, setOpdVisits, setPrescriptionFormatConfig]);
+  }, [companyId, loadPatients, loadTodayVisits, loadFormatConfig, loadOpdOptions, setOpdPatients, setOpdVisits, setPrescriptionFormatConfig, setHistoricOptions]);
 
   const todayVisits = useMemo(
     () =>
@@ -175,6 +180,48 @@ export default function DoctorPage() {
     );
   }
 
+  const renderVisitButton = (visit: OpdVisit) => {
+    const patient = getPatient(visit.patientId);
+    if (!patient) return null;
+    const isActive = visit.id === activeVisitId;
+
+    const statusBadge =
+      visit.status === "in_consultation"
+        ? { text: "Consulting", cls: "text-purple-400 bg-purple-500/15" }
+        : visit.status === "vitals_done"
+          ? { text: "Ready", cls: "text-blue-400 bg-blue-500/15" }
+          : visit.status === "completed"
+            ? { text: "Done", cls: "text-emerald-400 bg-emerald-500/15" }
+            : { text: "Waiting", cls: "text-amber-400 bg-amber-500/15" };
+
+    return (
+      <button
+        key={visit.id}
+        onClick={() => handleSelectVisit(visit)}
+        className={`flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition-all ${
+          isActive
+            ? "border-blue-500/40 bg-blue-500/10"
+            : "border-transparent bg-neutral-800/40 hover:border-neutral-700 hover:bg-neutral-800"
+        }`}
+      >
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-neutral-700 text-xs font-bold text-white">
+          {visit.tokenNo}
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-medium text-white">{patient.name}</p>
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] text-neutral-500">
+              {patient.age}y/{patient.gender[0]}
+            </span>
+            <span className={`rounded-full px-1.5 py-0.5 text-[9px] font-semibold ${statusBadge.cls}`}>
+              {statusBadge.text}
+            </span>
+          </div>
+        </div>
+      </button>
+    );
+  };
+
   return (
     <div className="min-h-screen p-4 sm:p-6 lg:p-8 print:p-0">
       {/* Page Header */}
@@ -192,48 +239,37 @@ export default function DoctorPage() {
         <div className="w-full shrink-0 lg:w-72 print:hidden">
           <div className="rounded-2xl border border-neutral-800 bg-neutral-900/50 p-4">
             <h3 className="mb-3 text-sm font-semibold text-white">Patient Queue</h3>
-            <div className="space-y-1.5">
-              {todayVisits.map((visit) => {
-                const patient = getPatient(visit.patientId);
-                if (!patient) return null;
-                const isActive = visit.id === activeVisitId;
+            <div className="space-y-4">
+              {/* Consulting Section */}
+              {todayVisits.filter(v => v.status === "in_consultation").length > 0 && (
+                <div>
+                  <h4 className="mb-2 text-xs font-semibold uppercase tracking-wider text-neutral-500">Consulting</h4>
+                  <div className="space-y-1.5">
+                    {todayVisits.filter(v => v.status === "in_consultation").map(renderVisitButton)}
+                  </div>
+                </div>
+              )}
 
-                const statusBadge =
-                  visit.status === "in_consultation"
-                    ? { text: "Consulting", cls: "text-purple-400 bg-purple-500/15" }
-                    : visit.status === "vitals_done"
-                      ? { text: "Ready", cls: "text-blue-400 bg-blue-500/15" }
-                      : visit.status === "completed"
-                        ? { text: "Done", cls: "text-emerald-400 bg-emerald-500/15" }
-                        : { text: "Waiting", cls: "text-amber-400 bg-amber-500/15" };
+              {/* Ready Section */}
+              {todayVisits.filter(v => v.status === "vitals_done").length > 0 && (
+                <div>
+                  <h4 className="mb-2 text-xs font-semibold uppercase tracking-wider text-neutral-500">Ready</h4>
+                  <div className="space-y-1.5">
+                    {todayVisits.filter(v => v.status === "vitals_done").map(renderVisitButton)}
+                  </div>
+                </div>
+              )}
 
-                return (
-                  <button
-                    key={visit.id}
-                    onClick={() => handleSelectVisit(visit)}
-                    className={`flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition-all ${
-                      isActive
-                        ? "border-blue-500/40 bg-blue-500/10"
-                        : "border-transparent bg-neutral-800/40 hover:border-neutral-700 hover:bg-neutral-800"
-                    }`}
-                  >
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-neutral-700 text-xs font-bold text-white">
-                      {visit.tokenNo}
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium text-white">{patient.name}</p>
-                      <div className="flex items-center gap-2">
-                        <span className="text-[10px] text-neutral-500">
-                          {patient.age}y/{patient.gender[0]}
-                        </span>
-                        <span className={`rounded-full px-1.5 py-0.5 text-[9px] font-semibold ${statusBadge.cls}`}>
-                          {statusBadge.text}
-                        </span>
-                      </div>
-                    </div>
-                  </button>
-                );
-              })}
+              {/* Completed Section */}
+              {todayVisits.filter(v => v.status === "completed").length > 0 && (
+                <div>
+                  <h4 className="mb-2 text-xs font-semibold uppercase tracking-wider text-neutral-500">Completed</h4>
+                  <div className="space-y-1.5">
+                    {todayVisits.filter(v => v.status === "completed").map(renderVisitButton)}
+                  </div>
+                </div>
+              )}
+
               {todayVisits.length === 0 && (
                 <div className="py-8 text-center">
                   <p className="text-sm text-neutral-500">No patients ready</p>

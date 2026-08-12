@@ -122,7 +122,8 @@ export const PULMONOLOGY_DIAGNOSES: string[] = [
 
 /** Quick-add OPD billing services */
 export const OPD_QUICK_SERVICES = [
-  { name: "Consultation", rate: 500 },
+  { name: "Consultation", rate: 400 },
+  { name: "Emergency Consultation", rate: 800 },
   { name: "Follow-up Consultation", rate: 200 },
   { name: "Nebulization", rate: 150 },
   { name: "PFT / Spirometry", rate: 500 },
@@ -130,4 +131,5 @@ export const OPD_QUICK_SERVICES = [
   { name: "Oxygen Administration", rate: 300 },
   { name: "Injection Charges", rate: 100 },
   { name: "Dressing", rate: 150 },
+  { name: "Discharge", rate: 0 },
 ] as const;

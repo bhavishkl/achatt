@@ -184,6 +184,12 @@ export function ConsultationPad({ prescription, onChange, onSave, onComplete }: 
   const customMedicines = useAppStore((s) => s.customMedicines);
   const customTests = useAppStore((s) => s.customTests);
   const customDiagnoses = useAppStore((s) => s.customDiagnoses);
+  
+  const historicDiagnoses = useAppStore((s) => s.historicDiagnoses);
+  const historicMedicines = useAppStore((s) => s.historicMedicines);
+  const historicChiefComplaints = useAppStore((s) => s.historicChiefComplaints);
+  const historicTests = useAppStore((s) => s.historicTests);
+  
   const addCustomMedicine = useAppStore((s) => s.addCustomMedicine);
   const addCustomTest = useAppStore((s) => s.addCustomTest);
   const addCustomDiagnosis = useAppStore((s) => s.addCustomDiagnosis);
@@ -218,10 +224,29 @@ export function ConsultationPad({ prescription, onChange, onSave, onComplete }: 
     customMedicines.forEach((med) => {
       opts.push({ label: med, value: med, searchStr: med.toLowerCase() });
     });
-    return opts;
-  }, [customMedicines]);
-  const allTests = useMemo(() => [...PULMONOLOGY_TESTS, ...customTests], [customTests]);
-  const allDiagnoses = useMemo(() => [...PULMONOLOGY_DIAGNOSES, ...customDiagnoses], [customDiagnoses]);
+    historicMedicines.forEach((med) => {
+      const label = `${med.name} ${med.frequency ? `(${med.frequency})` : ""}`;
+      opts.push({
+        label,
+        value: med.name,
+        searchStr: label.toLowerCase(),
+        frequency: med.frequency,
+        timing: med.timing,
+        routine: med.routine,
+        duration: med.duration,
+      });
+    });
+    // Remove duplicates by label
+    const uniqueMap = new Map();
+    opts.forEach((o) => {
+      uniqueMap.set(o.label, o);
+    });
+    return Array.from(uniqueMap.values());
+  }, [customMedicines, historicMedicines]);
+  
+  const allTests = useMemo(() => Array.from(new Set([...PULMONOLOGY_TESTS, ...customTests, ...historicTests])), [customTests, historicTests]);
+  const allDiagnoses = useMemo(() => Array.from(new Set([...PULMONOLOGY_DIAGNOSES, ...customDiagnoses, ...historicDiagnoses])), [customDiagnoses, historicDiagnoses]);
+  const allChiefComplaints = useMemo(() => Array.from(new Set([...CHIEF_COMPLAINTS_TERMS, ...historicChiefComplaints])), [historicChiefComplaints]);
 
   const toggle = (key: string) => setCollapsed((p) => ({ ...p, [key]: !p[key] }));
 
@@ -441,7 +466,7 @@ export function ConsultationPad({ prescription, onChange, onSave, onComplete }: 
         <AutocompleteInput
           value={prescription.chiefComplaints}
           onChange={(v) => update("chiefComplaints", v)}
-          suggestions={CHIEF_COMPLAINTS_TERMS}
+          suggestions={allChiefComplaints}
           placeholder="Describe chief complaints..."
           className={inputCls}
           isTextarea

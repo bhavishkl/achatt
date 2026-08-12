@@ -156,8 +156,8 @@ export function OpdBilling({ patient, visit, onDone, onSkip }: Props) {
   };
 
   return (
-    <div className="mx-auto max-w-3xl">
-      <div className="h-full max-h-[calc(100vh-12rem)] overflow-y-auto rounded-2xl border border-neutral-800 bg-neutral-900/50 p-6">
+    <div className="mx-auto max-w-3xl flex flex-col h-full max-h-[calc(100vh-12rem)]">
+      <div className="flex-1 min-h-0 overflow-y-auto rounded-t-2xl border border-neutral-800 border-b-0 bg-neutral-900/50 p-6">
         {/* Patient Info */}
         <div className="mb-6 flex flex-wrap items-center gap-4 rounded-xl border border-neutral-800 bg-neutral-800/50 px-4 py-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-600 text-sm font-bold text-white">
@@ -331,7 +331,10 @@ export function OpdBilling({ patient, visit, onDone, onSkip }: Props) {
           </div>
         )}
 
-        {/* Actions */}
+      </div>
+
+      {/* Actions */}
+      <div className="rounded-b-2xl border border-neutral-800 border-t-0 bg-neutral-900 p-4">
         <div className="flex flex-col gap-3 sm:flex-row">
           {items.length > 0 && (
             <>

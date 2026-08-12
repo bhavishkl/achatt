@@ -50,6 +50,18 @@ export interface AppState {
   addPunchRecords: (records: PunchRecord[]) => void;
   clearPunchRecords: () => void;
 
+  // Historic Options
+  historicDiagnoses: string[];
+  historicMedicines: any[];
+  historicChiefComplaints: string[];
+  historicTests: string[];
+  setHistoricOptions: (options: {
+    diagnoses: string[];
+    medicines: any[];
+    chiefComplaints: string[];
+    tests: string[];
+  }) => void;
+
   // --- Employees ---
   employees: Employee[];
   setEmployees: (employees: Employee[]) => void;
@@ -190,6 +202,19 @@ export const useAppStore = create<AppState>()(
         set(() => ({
           punchRecords: [],
           processedPunches: [],
+        })),
+
+      // ---- Historic Options ----
+      historicDiagnoses: [],
+      historicMedicines: [],
+      historicChiefComplaints: [],
+      historicTests: [],
+      setHistoricOptions: (options) =>
+        set(() => ({
+          historicDiagnoses: options.diagnoses,
+          historicMedicines: options.medicines,
+          historicChiefComplaints: options.chiefComplaints,
+          historicTests: options.tests,
         })),
 
       // ---- Employees ----

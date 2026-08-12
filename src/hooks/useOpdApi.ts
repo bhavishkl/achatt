@@ -192,6 +192,17 @@ export async function apiBulkUpdateOpdVisits(
   return true;
 }
 
+export async function fetchOpdOptions(companyId: string) {
+  const { data, error } = await apiFetch<any>(
+    `/api/opd-options?companyId=${companyId}`
+  );
+  if (error || !data) {
+    console.error("fetchOpdOptions error:", error);
+    return { diagnoses: [], medicines: [], chiefComplaints: [], tests: [] };
+  }
+  return data;
+}
+
 // ============================================================
 // Format Settings API
 // ============================================================
@@ -464,6 +475,11 @@ export function useOpdApi() {
     return apiDeleteTemplate(id);
   }, []);
 
+  const loadOpdOptions = useCallback(async () => {
+    if (!companyId) return null;
+    return fetchOpdOptions(companyId);
+  }, [companyId]);
+
   return {
     companyId,
     loadPatients,
@@ -482,5 +498,6 @@ export function useOpdApi() {
     loadTemplates,
     saveTemplate,
     deleteTemplate,
+    loadOpdOptions,
   };
 }
