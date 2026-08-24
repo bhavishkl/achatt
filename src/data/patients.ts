@@ -4,6 +4,7 @@ export const DUMMY_PATIENTS: Patient[] = [
     {
         id: '1',
         regNo: '0001',
+        ipNo: '2096/2026',
         prefix: 'Mr.',
         name: 'Rajesh Kumar',
         gender: 'Male',
@@ -27,6 +28,7 @@ export const DUMMY_PATIENTS: Patient[] = [
     {
         id: '2',
         regNo: '0002',
+        ipNo: '2097/2026',
         prefix: 'Mrs.',
         name: 'Priya Singh',
         gender: 'Female',

@@ -77,9 +77,13 @@ export default function AddPatientModal({
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
 
+        const currentYear = new Date().getFullYear();
+        const ipNo = `${String(currentYear).slice(-2)}${String(currentYear + 1).slice(-2)}`; // Format like 2096/2026
+
         const patient: Patient = {
             id: existingPatient?.id || Date.now().toString(),
             regNo: existingPatient?.regNo || nextRegNo,
+            ipNo: existingPatient?.ipNo || `${Math.floor(Math.random() * 9000) + 1000}/${currentYear}`,
             prefix: formData.prefix,
             name: formData.name,
             gender: formData.gender,

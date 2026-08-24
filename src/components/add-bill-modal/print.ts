@@ -76,6 +76,7 @@ export function buildBillPrintHtml({
                 .summary-row td:last-child { font-weight: 700; color: #000; }
                 .summary-total td { padding: 8px 12px; font-size: 14px; font-weight: 700; color: #000; }
                 .footer { text-align: center; margin-top: 40px; padding-top: 16px; border-top: 1px solid #000; font-size: 11px; color: #000; }
+                .print-date { text-align: right; margin-bottom: 8px; font-size: 11px; color: #000; }
                 @media print {
                     body { padding: 16px; }
                     @page { margin: 12mm; }
@@ -86,7 +87,6 @@ export function buildBillPrintHtml({
             <div class="header">
                 <h1>${companyName}</h1>
                 ${companyAddress ? `<p>${companyAddress}</p>` : ""}
-                ${(companyEmail || companyMobile1 || companyMobile2) ? `<div class="contact-row"><span>${companyEmail ? `Email: ${companyEmail}` : ""}</span><span>${(companyMobile1 || companyMobile2) ? `Mobile: ${[companyMobile1, companyMobile2].filter(Boolean).join(", ")}` : ""}</span></div>` : ""}
             </div>
             <div class="bill-type-banner">${ipBillType === "final" ? "IP FINAL BILL" : "IP DRAFT BILL"}</div>
 
@@ -94,7 +94,7 @@ export function buildBillPrintHtml({
                 <div>
                     <div class="meta-row"><span class="label-inline">Patient</span><span class="value-inline">${patient.prefix} ${patient.name}</span></div>
                     <div class="meta-row"><span class="label-inline">Gender/Age</span><span class="value-inline">${patient.gender}, ${patient.age} Yrs</span></div>
-                    <div class="meta-row"><span class="label-inline">Reg No</span><span class="value-inline">${patient.regNo}</span></div>
+                    <div class="meta-row"><span class="label-inline">IP No</span><span class="value-inline">${patient.ipNo}</span></div>
                 </div>
                 <div>
                     <div class="meta-row"><span class="label-inline">Ward / Bed</span><span class="value-inline">${patient.wardName} - Bed ${patient.bedNo}</span></div>
@@ -102,8 +102,8 @@ export function buildBillPrintHtml({
                 </div>
                 <div style="text-align:right">
                     <div class="meta-row" style="justify-content:flex-end"><span class="label-inline">Bill Date</span><span class="value-inline">${billDate}</span></div>
-                    <div class="meta-row" style="justify-content:flex-end"><span class="label-inline">Discharge</span><span class="value-inline">${dischargeDate || "-"}</span></div>
-                    <div class="meta-row" style="justify-content:flex-end"><span class="label-inline">Admission</span><span class="value-inline">${patient.admissionDate}</span></div>
+                    <div class="meta-row" style="justify-content:flex-end"><span class="label-inline">DOD</span><span class="value-inline">${dischargeDate || "-"}</span></div>
+                    <div class="meta-row" style="justify-content:flex-end"><span class="label-inline">DOA</span><span class="value-inline">${patient.admissionDate}</span></div>
                 </div>
             </div>
 
@@ -141,6 +141,7 @@ export function buildBillPrintHtml({
             </table>
 
             <div class="footer">
+                <div class="print-date">Print Date: ${new Date().toLocaleString()}</div>
                 <p>This is a computer-generated bill.</p>
             </div>
         </body>

@@ -9,6 +9,7 @@ export function mapPatientRow(row: any) {
   return {
     id: row.id,
     regNo: row.reg_no,
+    ipNo: row.ip_no,
     prefix: row.prefix,
     name: row.name,
     gender: row.gender,

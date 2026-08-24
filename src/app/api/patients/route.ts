@@ -6,6 +6,7 @@ function toInsertPayload(patient: any, companyId: string) {
   return {
     company_id: companyId,
     reg_no: String(patient.regNo).trim(),
+    ip_no: String(patient.ipNo || "").trim(),
     prefix: String(patient.prefix || "Mr.").trim(),
     name: String(patient.name || "").trim(),
     gender: String(patient.gender || "").trim(),
