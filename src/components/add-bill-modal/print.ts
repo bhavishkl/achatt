@@ -51,10 +51,10 @@ export function buildBillPrintHtml({
         <html>
         <head>
             <title>Bill - ${patient.name} - ${billDate}</title>
-            <style>
+<style>
                 * { margin: 0; padding: 0; box-sizing: border-box; }
                 body { font-family: 'Segoe UI', Arial, sans-serif; color: #1a1a1a; padding: 32px; max-width: 800px; margin: 0 auto; }
-                .header { text-align: center; padding-top: 88px; padding-bottom: 10px; margin-bottom: 10px; }
+                .header { text-align: center; padding-top: 40px; padding-bottom: 10px; margin-bottom: 10px; }
                 .header h1 { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
                 .header p { font-size: 12px; color: #000; }
                 .bill-type-banner { width: 100%; background: #f3f4f6; color: #000; border: 1px solid #000; text-align: center; font-size: 12px; font-weight: 700; letter-spacing: 0.7px; text-transform: uppercase; padding: 7px 10px; margin-bottom: 16px; }
@@ -75,10 +75,12 @@ export function buildBillPrintHtml({
                 .summary-row td { padding: 6px 12px; font-size: 13px; line-height: 1.2; }
                 .summary-row td:last-child { font-weight: 700; color: #000; }
                 .summary-total td { padding: 8px 12px; font-size: 14px; font-weight: 700; color: #000; }
-                .footer { text-align: center; margin-top: 40px; padding-top: 16px; border-top: 1px solid #000; font-size: 11px; color: #000; }
+                .footer { text-align: center; margin-top: 20px; padding-top: 10px; border-top: 1px solid #000; font-size: 11px; color: #000; }
+                .footer .print-date { margin-bottom: 8px; }
                 @media print {
                     body { padding: 16px; }
                     @page { margin: 12mm; }
+                    @page :first { margin-top: 12mm; }
                 }
             </style>
         </head>
@@ -94,7 +96,7 @@ export function buildBillPrintHtml({
                 <div>
                     <div class="meta-row"><span class="label-inline">Patient</span><span class="value-inline">${patient.prefix} ${patient.name}</span></div>
                     <div class="meta-row"><span class="label-inline">Gender/Age</span><span class="value-inline">${patient.gender}, ${patient.age} Yrs</span></div>
-                    <div class="meta-row"><span class="label-inline">Reg No</span><span class="value-inline">${patient.regNo}</span></div>
+                    <div class="meta-row"><span class="label-inline">IP Number</span><span class="value-inline">${patient.ipNo || patient.regNo}</span></div>
                 </div>
                 <div>
                     <div class="meta-row"><span class="label-inline">Ward / Bed</span><span class="value-inline">${patient.wardName} - Bed ${patient.bedNo}</span></div>
@@ -102,8 +104,8 @@ export function buildBillPrintHtml({
                 </div>
                 <div style="text-align:right">
                     <div class="meta-row" style="justify-content:flex-end"><span class="label-inline">Bill Date</span><span class="value-inline">${billDate}</span></div>
-                    <div class="meta-row" style="justify-content:flex-end"><span class="label-inline">Discharge</span><span class="value-inline">${dischargeDate || "-"}</span></div>
-                    <div class="meta-row" style="justify-content:flex-end"><span class="label-inline">Admission</span><span class="value-inline">${patient.admissionDate}</span></div>
+                    <div class="meta-row" style="justify-content:flex-end"><span class="label-inline">DOD</span><span class="value-inline">${dischargeDate || "-"}</span></div>
+                    <div class="meta-row" style="justify-content:flex-end"><span class="label-inline">DOA</span><span class="value-inline">${patient.admissionDate}</span></div>
                 </div>
             </div>
 
@@ -141,6 +143,7 @@ export function buildBillPrintHtml({
             </table>
 
             <div class="footer">
+                <div class="print-date">Printed on: ${new Date().toLocaleString()}</div>
                 <p>This is a computer-generated bill.</p>
             </div>
         </body>

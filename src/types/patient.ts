@@ -22,6 +22,7 @@ export interface Patient {
     id: string;
     // Generated
     regNo: string;
+    ipNo: string;
 
     // Patient Details
     prefix: string;

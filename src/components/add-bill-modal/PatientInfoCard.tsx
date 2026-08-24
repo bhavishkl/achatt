@@ -8,7 +8,7 @@ export default function PatientInfoCard({ patient }: { patient: Patient }) {
         <div className="font-medium text-white">
           {patient.prefix} {patient.name}
         </div>
-        <div className="text-neutral-400 text-xs">{patient.regNo}</div>
+        <div className="text-neutral-400 text-xs">IP No: {patient.ipNo || patient.regNo}</div>
       </div>
       <div>
         <label className="block text-neutral-500 text-xs uppercase tracking-wide">Admission</label>
