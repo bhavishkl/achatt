@@ -180,17 +180,38 @@ export default function AddBillModal({
     if (!patient || billItems.length === 0) return;
 
     const billDate = existingBill?.date || new Date().toISOString().split("T")[0];
+    const isFinal = isIpFinalBill;
+    
+    // Generate IP number in format "2030/2026" for final bills
+    const generateIpNumber = () => {
+      const year = new Date().getFullYear();
+      const randomNum = Math.floor(Math.random() * 9000) + 1000;
+      return `${randomNum}/${year}`;
+    };
+    
+    // For final bills, use generated IP number or existing patient IP number
+    const ipNumber = isFinal ? (patient.ipNo || generateIpNumber()) : (patient.ipNo || patient.regNo);
+    
+    // For bill number, use existing bill's billNumber or generate for new final bills
+    let billNumber = existingBill?.billNumber;
+    if (isFinal && !billNumber) {
+      // Generate a temporary bill number for preview
+      billNumber = "001";
+    }
+
     const html = buildBillPrintHtml({
       patient,
       items: billItems,
       billDate,
       dischargeDate,
-      ipBillType: isIpFinalBill ? "final" : "draft",
+      ipBillType: isFinal ? "final" : "draft",
       grossAmount: totalAmount,
       advanceUsed: autoAdvanceUsed,
       concession: concessionAmount,
       netAmount: netPayable,
       companyProfile,
+      billNumber,
+      ipNumber,
     });
 
     openBillPrintWindow(html);

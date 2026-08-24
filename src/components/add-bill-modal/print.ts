@@ -13,6 +13,8 @@ export function buildBillPrintHtml({
   concession,
   netAmount,
   companyProfile,
+  billNumber,
+  ipNumber,
 }: {
   patient: Patient;
   items: BillDraftItem[];
@@ -24,6 +26,8 @@ export function buildBillPrintHtml({
   concession: number;
   netAmount: number;
   companyProfile: Company | null;
+  billNumber?: string;
+  ipNumber?: string;
 }) {
   const companyName = companyProfile?.name || patient.hospitalName || "Hospital";
   const companyAddress = companyProfile?.address || "";
@@ -31,6 +35,10 @@ export function buildBillPrintHtml({
   const companyMobile1 = companyProfile?.mobileNumber1 || "";
   const companyMobile2 = companyProfile?.mobileNumber2 || "";
   const companyOwner = companyProfile?.ownerName || "";
+
+  const isFinalBill = ipBillType === "final";
+  const displayIpNumber = ipNumber || patient.ipNo || patient.regNo;
+  const displayBillNumber = billNumber;
 
   const itemsRows = items
     .map(
@@ -85,18 +93,21 @@ export function buildBillPrintHtml({
             </style>
         </head>
         <body>
+            ${!isFinalBill ? `
             <div class="header">
                 <h1>${companyName}</h1>
                 ${companyAddress ? `<p>${companyAddress}</p>` : ""}
                 ${(companyEmail || companyMobile1 || companyMobile2) ? `<div class="contact-row"><span>${companyEmail ? `Email: ${companyEmail}` : ""}</span><span>${(companyMobile1 || companyMobile2) ? `Mobile: ${[companyMobile1, companyMobile2].filter(Boolean).join(", ")}` : ""}</span></div>` : ""}
             </div>
-            <div class="bill-type-banner">${ipBillType === "final" ? "IP FINAL BILL" : "IP DRAFT BILL"}</div>
+            ` : ''}
+            <div class="bill-type-banner">${isFinalBill ? "IP FINAL BILL" : "IP DRAFT BILL"}</div>
 
             <div class="bill-meta">
                 <div>
                     <div class="meta-row"><span class="label-inline">Patient</span><span class="value-inline">${patient.prefix} ${patient.name}</span></div>
                     <div class="meta-row"><span class="label-inline">Gender/Age</span><span class="value-inline">${patient.gender}, ${patient.age} Yrs</span></div>
-                    <div class="meta-row"><span class="label-inline">IP Number</span><span class="value-inline">${patient.ipNo || patient.regNo}</span></div>
+                    <div class="meta-row"><span class="label-inline">IP Number</span><span class="value-inline">${displayIpNumber}</span></div>
+                    ${displayBillNumber ? `<div class="meta-row"><span class="label-inline">Bill Number</span><span class="value-inline">${displayBillNumber}</span></div>` : ''}
                 </div>
                 <div>
                     <div class="meta-row"><span class="label-inline">Ward / Bed</span><span class="value-inline">${patient.wardName} - Bed ${patient.bedNo}</span></div>

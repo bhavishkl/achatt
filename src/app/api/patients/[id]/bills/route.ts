@@ -7,6 +7,28 @@ function toNumber(value: unknown) {
   return Number.isFinite(n) ? n : 0;
 }
 
+function generateIpNumber(): string {
+  const year = new Date().getFullYear();
+  const randomNum = Math.floor(Math.random() * 9000) + 1000;
+  return `${randomNum}/${year}`;
+}
+
+async function generateBillNumber(patientId: string): Promise<string> {
+  const { data: existingBills } = await supabaseAdmin
+    .from("patient_bills")
+    .select("bill_number")
+    .eq("patient_id", patientId)
+    .not("bill_number", "is", null)
+    .order("bill_number", { ascending: false })
+    .limit(1);
+
+  if (existingBills && existingBills.length > 0 && existingBills[0].bill_number) {
+    const lastNumber = parseInt(existingBills[0].bill_number, 10);
+    return String(lastNumber + 1).padStart(3, "0");
+  }
+  return "001";
+}
+
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -22,7 +44,7 @@ export async function POST(
 
     const { data: existingBill, error: existingBillError } = await supabaseAdmin
       .from("patient_bills")
-      .select("id, patient_id, advance_used")
+      .select("id, patient_id, advance_used, bill_number")
       .eq("id", String(bill.id))
       .maybeSingle();
 
@@ -32,6 +54,17 @@ export async function POST(
 
     if (existingBill && existingBill.patient_id !== patientId) {
       return NextResponse.json({ message: "Bill does not belong to the specified patient" }, { status: 400 });
+    }
+
+    // Generate bill number and IP number for final bills
+    let billNumber = existingBill?.bill_number || null;
+    let ipNumber = null;
+
+    if (bill.ipBillType === "final") {
+      if (!billNumber) {
+        billNumber = await generateBillNumber(patientId);
+      }
+      ipNumber = generateIpNumber();
     }
 
     const payload = {
@@ -46,6 +79,7 @@ export async function POST(
       total_amount: toNumber(bill.totalAmount),
       items_json: Array.isArray(bill.items) ? bill.items : [],
       updated_at: new Date().toISOString(),
+      bill_number: billNumber,
     };
 
     const { error: upsertError } = await supabaseAdmin
@@ -92,7 +126,18 @@ export async function POST(
     }
 
     const patient = await hydratePatient(patientRow);
-    return NextResponse.json({ patient });
+    
+    // If final bill, update patient's IP number
+    if (bill.ipBillType === "final" && ipNumber) {
+      await supabaseAdmin
+        .from("patients")
+        .update({ ip_no: ipNumber })
+        .eq("id", patientId);
+      
+      patient.ipNo = ipNumber;
+    }
+
+    return NextResponse.json({ patient, billNumber, ipNumber });
   } catch (error: any) {
     return NextResponse.json({ message: "Internal Server Error", error: error.message }, { status: 500 });
   }

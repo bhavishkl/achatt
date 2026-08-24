@@ -9,6 +9,7 @@ export function mapPatientRow(row: any) {
   return {
     id: row.id,
     regNo: row.reg_no,
+    ipNo: row.ip_no,
     prefix: row.prefix,
     name: row.name,
     gender: row.gender,
@@ -43,6 +44,7 @@ function mapBillRow(row: any) {
     advanceUsed: toNumber(row.advance_used),
     concession: toNumber(row.concession),
     totalAmount: toNumber(row.total_amount),
+    billNumber: row.bill_number ?? undefined,
     items: items.map((item: any, index: number) => ({
       id: String(item?.id ?? `${row.id}-item-${index + 1}`),
       description: String(item?.description ?? ""),

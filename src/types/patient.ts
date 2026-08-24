@@ -16,6 +16,7 @@ export interface Bill {
     concession?: number;
     totalAmount: number;
     items: BillItem[];
+    billNumber?: string;
 }
 
 export interface Patient {
