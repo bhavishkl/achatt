@@ -18,6 +18,7 @@ const NAV_LINKS = [
   { href: "/", label: "Inpatients", description: "Admissions, bills, and discharge history", icon: "🛏" },
   { href: "/apt", label: "Appointments", description: "Daily OP queue and follow-ups", icon: "🗓" },
   { href: "/dcard", label: "Discharge Card", description: "Templates and exported summaries", icon: "📄" },
+  { href: "/ipd-master", label: "IPD Master", description: "Hospital, wards, doctors, and services", icon: "⚙️" },
 ];
 
 export default function AppHeader({ children }: AppHeaderProps) {

@@ -7,6 +7,24 @@ function toNumber(value: unknown) {
   return Number.isFinite(n) ? n : 0;
 }
 
+async function generateBillNo(): Promise<string> {
+  const { data, error } = await supabaseAdmin
+    .from("patient_bills")
+    .select("bill_no")
+    .not("bill_no", "is", null);
+
+  if (error) throw new Error(`Failed to fetch bill_nos: ${error.message}`);
+
+  let maxSerial = 2999;
+  for (const row of data ?? []) {
+    const raw = String(row.bill_no).split("/")[0].replace(/\D/g, "");
+    const serial = parseInt(raw, 10);
+    if (!isNaN(serial) && serial > maxSerial) maxSerial = serial;
+  }
+
+  return String(maxSerial + 1);
+}
+
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -22,7 +40,7 @@ export async function POST(
 
     const { data: existingBill, error: existingBillError } = await supabaseAdmin
       .from("patient_bills")
-      .select("id, patient_id, advance_used")
+      .select("id, patient_id, advance_used, bill_no")
       .eq("id", String(bill.id))
       .maybeSingle();
 
@@ -34,9 +52,12 @@ export async function POST(
       return NextResponse.json({ message: "Bill does not belong to the specified patient" }, { status: 400 });
     }
 
+    const billNo = existingBill?.bill_no || await generateBillNo();
+
     const payload = {
       id: String(bill.id),
       patient_id: patientId,
+      bill_no: billNo,
       bill_date: String(bill.date),
       discharge_date: bill.dischargeDate || null,
       ip_bill_type: bill.ipBillType === "final" ? "final" : "draft",

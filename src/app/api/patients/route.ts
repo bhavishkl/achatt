@@ -2,10 +2,11 @@ import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { NextResponse } from "next/server";
 import { hydratePatient, hydratePatients } from "@/app/api/patients/_utils";
 
-function toInsertPayload(patient: any, companyId: string) {
+function toInsertPayload(patient: any, companyId: string, ipNumber: string) {
   return {
     company_id: companyId,
     reg_no: String(patient.regNo).trim(),
+    ip_number: ipNumber,
     prefix: String(patient.prefix || "Mr.").trim(),
     name: String(patient.name || "").trim(),
     gender: String(patient.gender || "").trim(),
@@ -21,7 +22,30 @@ function toInsertPayload(patient: any, companyId: string) {
     attender_relation: String(patient.attenderRelation || "").trim(),
     status: patient.status === "discharged" ? "discharged" : "admitted",
     discharge_date: patient.dischargeDate || null,
+    doctor_name: String(patient.doctorName || "").trim(),
   };
+}
+
+const STARTING_IP_SERIAL = 2815;
+
+/** Returns the next available serial number across all patients (starts at 2815/yyyy). */
+async function generateIpNumber(): Promise<string> {
+  const year = new Date().getFullYear();
+
+  const { data, error } = await supabaseAdmin
+    .from("patients")
+    .select("ip_number")
+    .not("ip_number", "is", null);
+
+  if (error) throw new Error(`Failed to fetch ip_numbers: ${error.message}`);
+
+  let maxSerial = STARTING_IP_SERIAL - 1;
+  for (const row of data ?? []) {
+    const serial = parseInt(String(row.ip_number).split("/")[0], 10);
+    if (!isNaN(serial) && serial > maxSerial) maxSerial = serial;
+  }
+
+  return `${maxSerial + 1}/${year}`;
 }
 
 export async function GET(request: Request) {
@@ -59,7 +83,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: "Company ID and patient payload are required" }, { status: 400 });
     }
 
-    const payload = toInsertPayload(patient, companyId);
+    // Auto-generate IP number server-side — never trusted from client
+    const ipNumber = await generateIpNumber();
+
+    const payload = toInsertPayload(patient, companyId, ipNumber);
     if (!payload.name || !payload.reg_no || !payload.admission_date || !payload.admission_time) {
       return NextResponse.json({ message: "Missing required patient fields" }, { status: 400 });
     }

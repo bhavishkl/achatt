@@ -8,6 +8,7 @@ export interface BillItem {
 
 export interface Bill {
     id: string;
+    billNo?: string;
     date: string;
     dischargeDate?: string;
     ipBillType?: "draft" | "final";
@@ -22,6 +23,7 @@ export interface Patient {
     id: string;
     // Generated
     regNo: string;
+    ipNumber?: string; // format: e.g. 2818/2026
 
     // Patient Details
     prefix: string;

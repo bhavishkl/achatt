@@ -5,6 +5,7 @@ import { hydratePatient } from "@/app/api/patients/_utils";
 function toUpdatePayload(patient: any) {
   return {
     reg_no: String(patient.regNo).trim(),
+    // ip_number is auto-generated at creation and never updated
     prefix: String(patient.prefix || "Mr.").trim(),
     name: String(patient.name || "").trim(),
     gender: String(patient.gender || "").trim(),
@@ -20,6 +21,7 @@ function toUpdatePayload(patient: any) {
     attender_relation: String(patient.attenderRelation || "").trim(),
     status: patient.status === "discharged" ? "discharged" : "admitted",
     discharge_date: patient.dischargeDate || null,
+    doctor_name: String(patient.doctorName || "").trim(),
     updated_at: new Date().toISOString(),
   };
 }

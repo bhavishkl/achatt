@@ -1,6 +1,27 @@
 # Context
 
-## Recent Changes
+- **IPD Master & Billing Integration**:
+  - Added full IPD Master management (`/ipd-master`) with dynamic backend endpoints for hospital info, wards, services, and doctors in Supabase (`ipd_hospital_info`, `ipd_wards`, `ipd_services`, `ipd_doctors`).
+  - Added auto-generated serial `bill_no` to `patient_bills` in Supabase (starting from `3000`, e.g. `3000`, `3001`, ...) and mapped in `_utils.ts` and `[id]/bills/route.ts`.
+  - Updated Add Patient Admission modal (`AddPatientModal.tsx`) to dynamically populate Ward and Ref. Doctor dropdowns from IPD master with auto-selection when single entries exist.
+  - Added `doctor_name` persistence to `patients` table.
+  - Updated Add Bill modal (`AddBillModal.tsx`) to dynamically pull services from IPD master and dynamically generate Ward Packages based on shared service prefixes, completely removing hardcoded constants (`BILLABLE_ITEMS`, `WARD_BILL_PACKAGES`).
+  - Updated bill print layout (`print.ts`) to render hospital name, address, email, and phones from IPD master, along with IP number, doctor name, and patient age.
+  - Defaulted discharge date to today's date in Add Bill modal.
+  - Standardized date rendering to `DD-MM-YYYY` format across bill printouts, patient cards, and patient tables.
+  - Updated bill printout labels from Admission/Discharge to `DOA`/`DOD` and added Indian numbering amount-to-words conversion for Net Payable amount.
+  - Added letterhead print support for Final Bills (omits hospital info header and adds top letterhead clearance spacer) and added `Bill No` display to printouts.
+  - Added `/api/bills/next-no` endpoint to pre-fetch upcoming sequential bill numbers (starting from `3000`) in the Add Bill modal so new bills display and print the Bill No even before save.
+  - Set starting IP number sequence to `2815/yyyy` (e.g. `2815/2026`).
+
+- Added `ipNumber` field (format: `NNNN/yyyy`, e.g. `2818/2026`) to the patient admission flow:
+  - **Database**: Added `ip_number TEXT` nullable column to `patients` table in Supabase
+  - **Type**: Added optional `ipNumber?: string` to `Patient` interface in `src/types/patient.ts`
+  - **API POST** (`src/app/api/patients/route.ts`): `toInsertPayload` now includes `ip_number`
+  - **API PUT** (`src/app/api/patients/[id]/route.ts`): `toUpdatePayload` now includes `ip_number`
+  - **Row mapper** (`src/app/api/patients/_utils.ts`): `mapPatientRow` maps `row.ip_number` → `ipNumber`
+  - **Form** (`src/components/AddPatientModal.tsx`): Added optional "IP Number" input in the Clinical & Admission section with format hint and HTML5 pattern validation
+
 - Implemented full Frontdesk & Doctor OPD module (frontend-only with localStorage/Zustand persistence):
   - **Types**: Added `src/types/opd.ts` with `OpdPatient`, `OpdVisit`, `Vitals`, `OpdBill`, `Prescription`, `MedicineEntry`, `TestEntry`, `CustomSection`, `PrescriptionFormatConfig` types
   - **Seed Data**: Added `src/data/opdSeedData.ts` with pulmonology-only generic medicine names, tests, diagnoses, and OPD billing quick services

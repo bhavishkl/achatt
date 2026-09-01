@@ -9,6 +9,7 @@ export function mapPatientRow(row: any) {
   return {
     id: row.id,
     regNo: row.reg_no,
+    ipNumber: row.ip_number ?? undefined,
     prefix: row.prefix,
     name: row.name,
     gender: row.gender,
@@ -17,7 +18,7 @@ export function mapPatientRow(row: any) {
     admissionDate: row.admission_date,
     admissionTime: row.admission_time,
     hospitalName: "",
-    doctorName: "",
+    doctorName: row.doctor_name || "",
     wardName: row.ward_name,
     bedNo: row.bed_no,
     attenderName: row.attender_name,
@@ -36,6 +37,7 @@ function mapBillRow(row: any) {
   const items = Array.isArray(row.items_json) ? row.items_json : [];
   return {
     id: String(row.id),
+    billNo: row.bill_no ?? undefined,
     date: row.bill_date,
     dischargeDate: row.discharge_date ?? "",
     ipBillType: row.ip_bill_type === "final" ? "final" : "draft",

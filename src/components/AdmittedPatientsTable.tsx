@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Patient } from "@/types/patient";
+import { formatDisplayDate } from "@/components/add-bill-modal/utils";
 
 interface AdmittedPatientsTableProps {
   patients: Patient[];
@@ -25,27 +26,31 @@ export default function AdmittedPatientsTable({
   const [openMenuFor, setOpenMenuFor] = useState<string | null>(null);
 
   return (
-    <div>
-      <div className="flex justify-end mb-4">
+    <div className="space-y-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h2 className="text-lg font-semibold text-white">Currently Admitted</h2>
+          <p className="text-sm text-neutral-400">Manage admitted patients, records, and active bills</p>
+        </div>
         <button
           onClick={onAddNew}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2"
+          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors shadow-lg shadow-blue-900/20 flex items-center gap-2"
         >
           <span>+</span> New Admission
         </button>
       </div>
 
-      <div className="bg-neutral-900 rounded-xl border border-neutral-800 overflow-visible">
-        <div className="overflow-x-auto md:overflow-visible">
-          <table className="w-full text-left text-sm">
-            <thead className="bg-neutral-800 text-neutral-400">
-              <tr>
-                <th className="p-4 min-w-[120px]">Reg No</th>
-                <th className="p-4 min-w-[220px]">Patient Details</th>
-                <th className="p-4 min-w-[150px]">Ward</th>
-                <th className="p-4 min-w-[150px]">Admission Info</th>
-                <th className="p-4 min-w-[150px]">Attender</th>
-                <th className="p-4 min-w-[140px]">Bills</th>
+      <div className="bg-neutral-900 border border-neutral-800 rounded-xl overflow-hidden shadow-xl">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse text-sm">
+            <thead>
+              <tr className="border-b border-neutral-800 bg-neutral-950/50 text-neutral-400 text-xs font-semibold uppercase tracking-wider">
+                <th className="p-4">Reg No</th>
+                <th className="p-4">Patient Info</th>
+                <th className="p-4">Ward / Bed</th>
+                <th className="p-4">Admission</th>
+                <th className="p-4">Attender</th>
+                <th className="p-4">Bills</th>
                 <th className="p-4 text-right">Actions</th>
               </tr>
             </thead>
@@ -59,7 +64,15 @@ export default function AdmittedPatientsTable({
               ) : (
                 patients.map((patient) => (
                   <tr key={patient.id} className="hover:bg-neutral-800/50 transition-colors">
-                    <td className="p-4 font-mono text-neutral-400">{patient.regNo}</td>
+                    <td className="p-4">
+                      <div className="font-mono text-neutral-400">{patient.regNo}</div>
+                      {patient.ipNumber && (
+                        <div className="mt-1 inline-flex items-center gap-1 bg-blue-950/60 border border-blue-800/50 rounded px-1.5 py-0.5">
+                          <span className="text-blue-500 text-[10px] uppercase tracking-wide font-medium">IP</span>
+                          <span className="font-mono text-blue-300 text-xs">{patient.ipNumber}</span>
+                        </div>
+                      )}
+                    </td>
                     <td className="p-4">
                       <div className="font-medium text-white">
                         {patient.prefix} {patient.name}
@@ -74,7 +87,7 @@ export default function AdmittedPatientsTable({
                       <div className="text-neutral-500 text-xs mt-1">(Bed: {patient.bedNo})</div>
                     </td>
                     <td className="p-4">
-                      <div className="text-neutral-300">{patient.admissionDate}</div>
+                      <div className="text-neutral-300">{formatDisplayDate(patient.admissionDate)}</div>
                       <div className="text-neutral-500 text-xs">{patient.admissionTime}</div>
                     </td>
                     <td className="p-4">
@@ -92,7 +105,8 @@ export default function AdmittedPatientsTable({
                                 onClick={() => onEditBill(patient.id, bill.id)}
                                 className="text-xs bg-neutral-800 hover:bg-neutral-700 text-neutral-300 px-2 py-1 rounded border border-neutral-700 w-fit flex items-center gap-2 transition-colors"
                               >
-                                <span className="text-neutral-500">{bill.date}</span>
+                                {bill.billNo && <span className="text-blue-400 font-mono font-medium">#{bill.billNo}</span>}
+                                <span className="text-neutral-500">{formatDisplayDate(bill.date)}</span>
                                 <span>₹{bill.totalAmount.toLocaleString()}</span>
                                 <span className="text-neutral-500">✎</span>
                               </button>

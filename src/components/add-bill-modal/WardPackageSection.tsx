@@ -1,9 +1,8 @@
-import { WARD_BILL_PACKAGES } from "@/lib/constants";
-
 interface WardPackageSectionProps {
-  selectedPackageId: number | "";
+  selectedPackageId: string | "";
   packageQty: number | string;
-  onSelectPackage: (value: number | "") => void;
+  packages: any[];
+  onSelectPackage: (value: string | "") => void;
   onChangeQty: (value: number | string) => void;
   onAddPackage: () => void;
 }
@@ -11,6 +10,7 @@ interface WardPackageSectionProps {
 export default function WardPackageSection({
   selectedPackageId,
   packageQty,
+  packages,
   onSelectPackage,
   onChangeQty,
   onAddPackage,
@@ -22,10 +22,10 @@ export default function WardPackageSection({
           <label className="block text-xs text-neutral-500 mb-1">Ward Package</label>
           <select
             value={selectedPackageId}
-            onChange={(e) => onSelectPackage(e.target.value === "" ? "" : Number(e.target.value))}
+            onChange={(e) => onSelectPackage(e.target.value)}
             className="w-full bg-neutral-950 border border-neutral-800 rounded px-2 py-1.5 text-sm focus:ring-2 focus:ring-blue-600 outline-none"
           >
-            {WARD_BILL_PACKAGES.map((pkg) => (
+            {packages.map((pkg) => (
               <option key={pkg.id} value={pkg.id}>
                 {pkg.name}
               </option>

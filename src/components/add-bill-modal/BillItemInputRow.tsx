@@ -1,11 +1,11 @@
 import type { KeyboardEvent, RefObject } from "react";
-import { BILLABLE_ITEMS, WARD_BILL_PACKAGES } from "@/lib/constants";
-
 interface BillItemInputRowProps {
   inputDesc: string;
   inputRate: number | string;
   inputQty: number | string;
   descRef: RefObject<HTMLInputElement | null>;
+  services: any[];
+  packages: any[];
   onDescChange: (value: string) => void;
   onRateChange: (value: number | string) => void;
   onQtyChange: (value: number | string) => void;
@@ -17,6 +17,8 @@ export default function BillItemInputRow({
   inputRate,
   inputQty,
   descRef,
+  services,
+  packages,
   onDescChange,
   onRateChange,
   onQtyChange,
@@ -38,12 +40,12 @@ export default function BillItemInputRow({
             onKeyDown={onKeyDown}
           />
           <datalist id="billable-items">
-            {BILLABLE_ITEMS.map((opt) => (
+            {services.map((opt) => (
               <option key={opt.id} value={opt.name}>
                 {opt.name} - Rs {opt.rate}
               </option>
             ))}
-            {WARD_BILL_PACKAGES.map((pkg) => (
+            {packages.map((pkg) => (
               <option key={pkg.id} value={pkg.name}>
                 {pkg.name} - Package
               </option>

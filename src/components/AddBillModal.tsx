@@ -1,16 +1,16 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import type { Company } from "@/lib/types";
-import { BILLABLE_ITEMS, WARD_BILL_PACKAGES } from "@/lib/constants";
 import type { Bill } from "@/types/patient";
 import type { AddBillModalProps, BillDraftItem } from "@/components/add-bill-modal/types";
+import { useAppStore } from "@/lib/store";
 import {
   calculateTotal,
   createItemId,
   getPackageByWard,
-  getStoredUserId,
   toDraftItemsFromBill,
+  extractPackages,
 } from "@/components/add-bill-modal/utils";
 import { buildBillPrintHtml, openBillPrintWindow } from "@/components/add-bill-modal/print";
 import PatientInfoCard from "@/components/add-bill-modal/PatientInfoCard";
@@ -29,11 +29,16 @@ export default function AddBillModal({
 }: AddBillModalProps) {
   const [billItems, setBillItems] = useState<BillDraftItem[]>([]);
   const [companyProfile, setCompanyProfile] = useState<Company | null>(null);
+  const { companyId } = useAppStore();
+  const [services, setServices] = useState<any[]>([]);
+  const packages = useMemo(() => extractPackages(services), [services]);
+
   const [concession, setConcession] = useState<number | string>(0);
   const [dischargeDate, setDischargeDate] = useState("");
   const [isIpFinalBill, setIsIpFinalBill] = useState(false);
+  const [billNo, setBillNo] = useState("");
 
-  const [selectedPackageId, setSelectedPackageId] = useState<number | "">(WARD_BILL_PACKAGES[0]?.id ?? "");
+  const [selectedPackageId, setSelectedPackageId] = useState<string | "">("");
   const [packageQty, setPackageQty] = useState<number | string>(1);
 
   const [inputDesc, setInputDesc] = useState("");
@@ -67,45 +72,73 @@ export default function AddBillModal({
      
     setConcession(existingBill?.concession ?? 0);
      
-    setDischargeDate(existingBill?.dischargeDate ?? patient?.dischargeDate ?? "");
+    const today = new Date().toISOString().split("T")[0];
+    setDischargeDate(existingBill?.dischargeDate || patient?.dischargeDate || today);
      
     setIsIpFinalBill(existingBill?.ipBillType === "final");
 
-    const packageFromWard = patient ? getPackageByWard(patient.wardName) : null;
-     
-    setSelectedPackageId(packageFromWard?.id ?? WARD_BILL_PACKAGES[0]?.id ?? "");
-  }, [isOpen, existingBill, patient]);
-
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const userId = getStoredUserId();
-    if (!userId) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setCompanyProfile(null);
-      return;
+    if (existingBill?.billNo) {
+      setBillNo(existingBill.billNo);
+    } else {
+      fetch("/api/bills/next-no")
+        .then((res) => res.json())
+        .then((data) => {
+          if (data?.billNo) setBillNo(data.billNo);
+        })
+        .catch(console.error);
     }
 
-    const loadCompanyProfile = async () => {
+    const packageFromWard = patient ? getPackageByWard(patient.wardName, packages) : null;
+     
+    setSelectedPackageId(prev => prev || (packageFromWard?.id ?? (packages[0]?.id ?? "")));
+  }, [isOpen, existingBill, patient, packages]);
+
+  useEffect(() => {
+    if (!isOpen || !companyId) return;
+
+    let isMounted = true;
+
+    const loadData = async () => {
       try {
-        const response = await fetch(`/api/user/company?userId=${userId}`);
-        const data = await response.json();
-        if (!response.ok) {
-          setCompanyProfile(null);
-          return;
+        const [infoRes, servicesRes] = await Promise.all([
+          fetch(`/api/ipd/hospital-info?companyId=${companyId}`),
+          fetch(`/api/ipd/services?companyId=${companyId}`),
+        ]);
+
+        if (infoRes.ok) {
+          const infoData = await infoRes.json();
+          if (isMounted && infoData) {
+            setCompanyProfile({
+              name: infoData.name || "",
+              address: [infoData.address, infoData.city, infoData.state, infoData.pincode].filter(Boolean).join(", "),
+              emailId: infoData.email || "",
+              mobileNumber1: infoData.phone || "",
+              mobileNumber2: infoData.altPhone || "",
+            } as Company);
+          }
         }
-        setCompanyProfile(data.company ?? null);
-      } catch {
-        setCompanyProfile(null);
+
+        if (servicesRes.ok) {
+          const servData = await servicesRes.json();
+          if (isMounted && servData) {
+            setServices(servData || []);
+          }
+        }
+      } catch (err) {
+        console.error("Error loading IPD bill modal data:", err);
       }
     };
 
-    loadCompanyProfile();
-  }, [isOpen]);
+    loadData();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [isOpen, companyId]);
 
   const handleDescChange = (value: string) => {
     setInputDesc(value);
-    const found = BILLABLE_ITEMS.find((b) => b.name === value);
+    const found = services.find((b) => b.name === value);
     if (found) {
       setInputRate(found.rate);
     }
@@ -116,7 +149,7 @@ export default function AddBillModal({
     const qty = Number(inputQty);
     if (!desc || !qty) return;
 
-    const matchedPackage = WARD_BILL_PACKAGES.find(
+    const matchedPackage = packages.find(
       (pkg) => pkg.name.toLowerCase() === desc.toLowerCase()
     );
 
@@ -152,7 +185,7 @@ export default function AddBillModal({
     const qty = Number(packageQty);
     if (!selectedPackageId || !qty) return;
 
-    const selectedPackage = WARD_BILL_PACKAGES.find((pkg) => pkg.id === selectedPackageId);
+    const selectedPackage = packages.find((pkg) => pkg.id === selectedPackageId);
     if (!selectedPackage) return;
 
     selectedPackage.items.forEach((item) => {
@@ -184,6 +217,7 @@ export default function AddBillModal({
       patient,
       items: billItems,
       billDate,
+      billNo: billNo || existingBill?.billNo,
       dischargeDate,
       ipBillType: isIpFinalBill ? "final" : "draft",
       grossAmount: totalAmount,
@@ -202,6 +236,7 @@ export default function AddBillModal({
 
     const bill: Bill = {
       id: existingBill?.id || Date.now().toString(),
+      billNo: billNo || existingBill?.billNo,
       date: existingBill?.date || new Date().toISOString().split("T")[0],
       dischargeDate,
       ipBillType: isIpFinalBill ? "final" : "draft",
@@ -230,7 +265,15 @@ export default function AddBillModal({
   return (
     <div className="fixed inset-0 bg-black/80 p-2 sm:p-3 z-50 backdrop-blur-sm overflow-hidden">
       <div className="mx-auto bg-neutral-900 rounded-xl border border-neutral-800 w-full max-w-[1320px] shadow-2xl h-[96vh] flex flex-col p-3 sm:p-4">
-        <h2 className="text-lg sm:text-xl font-bold mb-2">{isEditing ? "Edit Bill" : "Add Bill"}</h2>
+        <div className="flex items-center justify-between mb-2">
+          <h2 className="text-lg sm:text-xl font-bold">{isEditing ? "Edit Bill" : "Add Bill"}</h2>
+          {billNo && (
+            <span className="flex items-center gap-1.5 bg-neutral-800 border border-neutral-700 rounded-lg px-3 py-1 text-sm">
+              <span className="text-neutral-400 text-xs uppercase tracking-wide">Bill No</span>
+              <span className="font-mono font-semibold text-emerald-400">{billNo}</span>
+            </span>
+          )}
+        </div>
 
         <div className="mb-3">
           <PatientInfoCard patient={patient} />
@@ -242,6 +285,7 @@ export default function AddBillModal({
               <WardPackageSection
                 selectedPackageId={selectedPackageId}
                 packageQty={packageQty}
+                packages={packages}
                 onSelectPackage={setSelectedPackageId}
                 onChangeQty={setPackageQty}
                 onAddPackage={addSelectedPackage}
@@ -252,6 +296,8 @@ export default function AddBillModal({
                 inputRate={inputRate}
                 inputQty={inputQty}
                 descRef={descRef}
+                services={services}
+                packages={packages}
                 onDescChange={handleDescChange}
                 onRateChange={setInputRate}
                 onQtyChange={setInputQty}

@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { Patient } from "@/types/patient";
+import { formatDisplayDate } from "@/components/add-bill-modal/utils";
 
 interface DischargedPatientsTableProps {
     patients: Patient[];
@@ -52,6 +53,7 @@ export default function DischargedPatientsTable({
             list = list.filter(p =>
                 p.name.toLowerCase().includes(q) ||
                 p.regNo.toLowerCase().includes(q) ||
+                (p.ipNumber ?? '').toLowerCase().includes(q) ||
                 p.wardName.toLowerCase().includes(q) ||
                 p.bedNo.toLowerCase().includes(q) ||
                 p.doctorName.toLowerCase().includes(q) ||
@@ -230,7 +232,15 @@ export default function DischargedPatientsTable({
                             ) : (
                                 paginated.map(patient => (
                                     <tr key={patient.id} className="hover:bg-neutral-800/50 transition-colors">
-                                        <td className="p-4 font-mono text-neutral-500">{patient.regNo}</td>
+                                        <td className="p-4">
+                                            <div className="font-mono text-neutral-500">{patient.regNo}</div>
+                                            {patient.ipNumber && (
+                                                <div className="mt-1 inline-flex items-center gap-1 bg-blue-950/60 border border-blue-800/50 rounded px-1.5 py-0.5">
+                                                    <span className="text-blue-500 text-[10px] uppercase tracking-wide font-medium">IP</span>
+                                                    <span className="font-mono text-blue-300 text-xs">{patient.ipNumber}</span>
+                                                </div>
+                                            )}
+                                        </td>
                                         <td className="p-4 font-medium text-neutral-300">
                                             {patient.prefix} {patient.name}
                                             <div className="text-xs text-neutral-500">{patient.age} Yrs, {patient.gender}</div>
@@ -239,8 +249,8 @@ export default function DischargedPatientsTable({
                                             <div>{patient.wardName}</div>
                                             <div className="text-xs text-neutral-500">Bed: {patient.bedNo}</div>
                                         </td>
-                                        <td className="p-4 text-neutral-400">{patient.admissionDate}</td>
-                                        <td className="p-4 text-green-400">{patient.dischargeDate}</td>
+                                        <td className="p-4 text-neutral-400">{formatDisplayDate(patient.admissionDate)}</td>
+                                        <td className="p-4 text-green-400">{formatDisplayDate(patient.dischargeDate)}</td>
                                         <td className="p-4">
                                             <div className="flex flex-col gap-1">
                                                 {patient.bills && patient.bills.length > 0 ? (
@@ -251,7 +261,8 @@ export default function DischargedPatientsTable({
                                                                 onClick={() => onViewBill(patient.id, bill.id)}
                                                                 className="text-xs bg-neutral-800 hover:bg-neutral-700 text-neutral-300 px-2 py-1 rounded border border-neutral-700 w-fit flex items-center gap-2 transition-colors"
                                                             >
-                                                                <span className="text-neutral-500">{bill.date}</span>
+                                                                {bill.billNo && <span className="text-blue-400 font-mono font-medium">#{bill.billNo}</span>}
+                                                                <span className="text-neutral-500">{formatDisplayDate(bill.date)}</span>
                                                                 <span>₹{bill.totalAmount.toLocaleString()}</span>
                                                                 <span className="text-neutral-500">👁</span>
                                                             </button>

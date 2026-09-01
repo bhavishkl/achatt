@@ -1,4 +1,5 @@
 import type { Patient } from "@/types/patient";
+import { formatDisplayDate } from "@/components/add-bill-modal/utils";
 
 export default function PatientInfoCard({ patient }: { patient: Patient }) {
   return (
@@ -15,7 +16,7 @@ export default function PatientInfoCard({ patient }: { patient: Patient }) {
         <div className="text-neutral-300">
           {patient.wardName}, Bed {patient.bedNo}
         </div>
-        <div className="text-neutral-400 text-xs">{patient.admissionDate}</div>
+        <div className="text-neutral-400 text-xs">{formatDisplayDate(patient.admissionDate)}</div>
       </div>
       <div>
         <label className="block text-neutral-500 text-xs uppercase tracking-wide">Doctor</label>

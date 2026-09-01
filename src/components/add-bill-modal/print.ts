@@ -1,11 +1,13 @@
 import type { Company } from "@/lib/types";
 import type { Patient } from "@/types/patient";
 import type { BillDraftItem } from "@/components/add-bill-modal/types";
+import { formatDisplayDate, amountToWords } from "@/components/add-bill-modal/utils";
 
 export function buildBillPrintHtml({
   patient,
   items,
   billDate,
+  billNo,
   dischargeDate,
   ipBillType,
   grossAmount,
@@ -17,6 +19,7 @@ export function buildBillPrintHtml({
   patient: Patient;
   items: BillDraftItem[];
   billDate: string;
+  billNo?: string;
   dischargeDate: string;
   ipBillType: "draft" | "final";
   grossAmount: number;
@@ -31,6 +34,12 @@ export function buildBillPrintHtml({
   const companyMobile1 = companyProfile?.mobileNumber1 || "";
   const companyMobile2 = companyProfile?.mobileNumber2 || "";
   const companyOwner = companyProfile?.ownerName || "";
+
+  const formattedBillDate = formatDisplayDate(billDate);
+  const formattedAdmissionDate = formatDisplayDate(patient.admissionDate);
+  const formattedDischargeDate = dischargeDate ? formatDisplayDate(dischargeDate) : "-";
+  const netAmountWords = amountToWords(netAmount);
+  const isFinal = ipBillType === "final";
 
   const itemsRows = items
     .map(
@@ -50,13 +59,14 @@ export function buildBillPrintHtml({
         <!DOCTYPE html>
         <html>
         <head>
-            <title>Bill - ${patient.name} - ${billDate}</title>
+            <title>Bill ${billNo ? `(${billNo}) ` : ""}- ${patient.name} - ${formattedBillDate}</title>
             <style>
                 * { margin: 0; padding: 0; box-sizing: border-box; }
                 body { font-family: 'Segoe UI', Arial, sans-serif; color: #1a1a1a; padding: 32px; max-width: 800px; margin: 0 auto; }
-                .header { text-align: center; padding-top: 88px; padding-bottom: 10px; margin-bottom: 10px; }
+                .header { text-align: center; padding-top: 10px; padding-bottom: 10px; margin-bottom: 10px; }
                 .header h1 { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
                 .header p { font-size: 12px; color: #000; }
+                .letterhead-space { height: 140px; }
                 .bill-type-banner { width: 100%; background: #f3f4f6; color: #000; border: 1px solid #000; text-align: center; font-size: 12px; font-weight: 700; letter-spacing: 0.7px; text-transform: uppercase; padding: 7px 10px; margin-bottom: 16px; }
                 .bill-meta { display: flex; justify-content: space-between; margin-bottom: 20px; font-size: 13px; }
                 .bill-meta div { line-height: 1.6; }
@@ -83,27 +93,33 @@ export function buildBillPrintHtml({
             </style>
         </head>
         <body>
-            <div class="header">
-                <h1>${companyName}</h1>
-                ${companyAddress ? `<p>${companyAddress}</p>` : ""}
-                ${(companyEmail || companyMobile1 || companyMobile2) ? `<div class="contact-row"><span>${companyEmail ? `Email: ${companyEmail}` : ""}</span><span>${(companyMobile1 || companyMobile2) ? `Mobile: ${[companyMobile1, companyMobile2].filter(Boolean).join(", ")}` : ""}</span></div>` : ""}
-            </div>
-            <div class="bill-type-banner">${ipBillType === "final" ? "IP FINAL BILL" : "IP DRAFT BILL"}</div>
+            ${
+              isFinal
+                ? `<div class="letterhead-space"></div>`
+                : `<div class="header">
+                    <h1>${companyName}</h1>
+                    ${companyAddress ? `<p>${companyAddress}</p>` : ""}
+                    ${(companyEmail || companyMobile1 || companyMobile2) ? `<p>${companyEmail ? `Email: ${companyEmail}` : ""} ${companyEmail && (companyMobile1 || companyMobile2) ? '| ' : ''}${(companyMobile1 || companyMobile2) ? `Mobile: ${[companyMobile1, companyMobile2].filter(Boolean).join(", ")}` : ""}</p>` : ""}
+                </div>`
+            }
+            <div class="bill-type-banner">${isFinal ? "IP FINAL BILL" : "IP DRAFT BILL"}</div>
 
             <div class="bill-meta">
                 <div>
                     <div class="meta-row"><span class="label-inline">Patient</span><span class="value-inline">${patient.prefix} ${patient.name}</span></div>
                     <div class="meta-row"><span class="label-inline">Gender/Age</span><span class="value-inline">${patient.gender}, ${patient.age} Yrs</span></div>
                     <div class="meta-row"><span class="label-inline">Reg No</span><span class="value-inline">${patient.regNo}</span></div>
+                    <div class="meta-row"><span class="label-inline">IP No</span><span class="value-inline">${patient.ipNumber || "-"}</span></div>
                 </div>
                 <div>
                     <div class="meta-row"><span class="label-inline">Ward / Bed</span><span class="value-inline">${patient.wardName} - Bed ${patient.bedNo}</span></div>
-                    ${companyOwner ? `<div class="meta-row"><span class="label-inline">Ref Doctor</span><span class="value-inline">${companyOwner}</span></div>` : ""}
+                    <div class="meta-row"><span class="label-inline">Doctor</span><span class="value-inline">${patient.doctorName || "-"}</span></div>
                 </div>
                 <div style="text-align:right">
-                    <div class="meta-row" style="justify-content:flex-end"><span class="label-inline">Bill Date</span><span class="value-inline">${billDate}</span></div>
-                    <div class="meta-row" style="justify-content:flex-end"><span class="label-inline">Discharge</span><span class="value-inline">${dischargeDate || "-"}</span></div>
-                    <div class="meta-row" style="justify-content:flex-end"><span class="label-inline">Admission</span><span class="value-inline">${patient.admissionDate}</span></div>
+                    <div class="meta-row" style="justify-content:flex-end"><span class="label-inline">Bill No</span><span class="value-inline">${billNo || "-"}</span></div>
+                    <div class="meta-row" style="justify-content:flex-end"><span class="label-inline">Bill Date</span><span class="value-inline">${formattedBillDate}</span></div>
+                    <div class="meta-row" style="justify-content:flex-end"><span class="label-inline">DOA</span><span class="value-inline">${formattedAdmissionDate}</span></div>
+                    <div class="meta-row" style="justify-content:flex-end"><span class="label-inline">DOD</span><span class="value-inline">${formattedDischargeDate}</span></div>
                 </div>
             </div>
 
@@ -136,6 +152,11 @@ export function buildBillPrintHtml({
                     <tr class="summary-total">
                         <td colspan="4" style="text-align:right">Net Payable</td>
                         <td style="text-align:right">Rs ${netAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                    </tr>
+                    <tr>
+                        <td colspan="5" style="padding:8px 12px;font-size:12px;color:#000;border:1px solid #000;background:#f9fafb;">
+                            <strong>Amount in Words:</strong> ${netAmountWords}
+                        </td>
                     </tr>
                 </tbody>
             </table>
