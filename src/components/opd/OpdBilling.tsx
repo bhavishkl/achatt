@@ -5,7 +5,6 @@ import { Plus, Trash2, Printer, SkipForward } from "lucide-react";
 import { useAppStore } from "@/lib/store";
 import type { OpdPatient, OpdVisit, OpdBill, OpdBillItem } from "@/types/opd";
 import { OPD_QUICK_SERVICES } from "@/data/opdSeedData";
-import { BILLABLE_ITEMS } from "@/lib/constants";
 import { buildOpdBillPrintHtml, openPrintWindow } from "@/components/opd/opdPrint";
 import { useOpdApi } from "@/hooks/useOpdApi";
 
@@ -49,10 +48,9 @@ export function OpdBilling({ patient, visit, onDone, onSkip }: Props) {
 
   // All available services for autocomplete
   const allServices = useMemo(() => {
-    const fromConstants = BILLABLE_ITEMS.map((b) => ({ name: b.name, rate: b.rate }));
     const fromQuick = OPD_QUICK_SERVICES.map((s) => ({ name: s.name, rate: s.rate }));
     const combined = new Map<string, number>();
-    [...fromQuick, ...fromConstants].forEach((s) => combined.set(s.name, s.rate));
+    fromQuick.forEach((s) => combined.set(s.name, s.rate));
     return Array.from(combined.entries()).map(([name, rate]) => ({ name, rate }));
   }, []);
 
