@@ -44,6 +44,22 @@ export default function AddPatientModal({
 
     const isEditing = !!existingPatient;
 
+    // Map prefix to gender
+    const getGenderFromPrefix = (prefix: string): string => {
+        switch (prefix) {
+            case "Mr.":
+            case "Master":
+                return "Male";
+            case "Mrs.":
+            case "Ms.":
+                return "Female";
+            case "Baby":
+                return "Other";
+            default:
+                return "Male";
+        }
+    };
+
     // Fetch IPD data
     useEffect(() => {
         if (!isOpen || !companyId) return;
@@ -113,7 +129,14 @@ export default function AddPatientModal({
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
+        setFormData(prev => {
+            const updatedData = { ...prev, [name]: value };
+            // Auto-set gender when prefix changes
+            if (name === "prefix") {
+                updatedData.gender = getGenderFromPrefix(value);
+            }
+            return updatedData;
+        });
     };
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -318,7 +341,6 @@ export default function AddPatientModal({
                             <div>
                                 <label className="block text-xs text-neutral-400 mb-1">Attender Name</label>
                                 <input
-                                    required
                                     name="attenderName"
                                     type="text"
                                     value={formData.attenderName}
@@ -329,7 +351,6 @@ export default function AddPatientModal({
                             <div>
                                 <label className="block text-xs text-neutral-400 mb-1">Relation</label>
                                 <input
-                                    required
                                     name="attenderRelation"
                                     type="text"
                                     value={formData.attenderRelation}
@@ -344,20 +365,17 @@ export default function AddPatientModal({
                             <div>
                                 <label className="block text-xs text-neutral-400 mb-1">Mobile No</label>
                                 <input
-                                    required
                                     name="attenderMobile"
                                     type="tel"
                                     value={formData.attenderMobile}
                                     onChange={handleInputChange}
                                     className="w-full bg-neutral-950 border border-neutral-800 rounded-lg p-2 focus:ring-2 focus:ring-blue-600 outline-none text-sm"
                                     placeholder="10-digit mobile number"
-                                    pattern="[0-9]{10}"
                                 />
                             </div>
                             <div>
                                 <label className="block text-xs text-neutral-400 mb-1">Address</label>
                                 <input
-                                    required
                                     name="attenderAddress"
                                     type="text"
                                     value={formData.attenderAddress}

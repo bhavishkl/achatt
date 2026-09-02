@@ -26,9 +26,9 @@ function toInsertPayload(patient: any, companyId: string, ipNumber: string) {
   };
 }
 
-const STARTING_IP_SERIAL = 2815;
+const STARTING_IP_SERIAL = 2813;
 
-/** Returns the next available serial number across all patients (starts at 2815/yyyy). */
+/** Returns the next available serial number across all patients (starts at 2813/yyyy). */
 async function generateIpNumber(): Promise<string> {
   const year = new Date().getFullYear();
 
