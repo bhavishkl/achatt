@@ -1,5 +1,10 @@
 # Context
 
+- **Post-discharge billing in Inpatients page**:
+  - Added `onAddBill` prop to `DischargedPatientsTable.tsx` with a "+ Add Bill" button rendered for every discharged patient row (in the Total Bill column, styled to match the admitted table).
+  - Wired it in `src/app/page.tsx` to the existing `openBillModal` handler, so the shared `AddBillModal` opens for discharged patients; bills save through the same `/api/patients/[id]/bills` endpoint (no patient-status restriction).
+  - `AddBillModal` already defaults the bill's discharge date to the patient's `dischargeDate`, so post-discharge bills pre-fill correctly.
+
 - **IPD Master & Billing Integration**:
   - Added full IPD Master management (`/ipd-master`) with dynamic backend endpoints for hospital info, wards, services, and doctors in Supabase (`ipd_hospital_info`, `ipd_wards`, `ipd_services`, `ipd_doctors`).
   - Added auto-generated serial `bill_no` to `patient_bills` in Supabase (starting from `3000`, e.g. `3000`, `3001`, ...) and mapped in `_utils.ts` and `[id]/bills/route.ts`.

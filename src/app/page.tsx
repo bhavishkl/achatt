@@ -271,7 +271,11 @@ export default function Home() {
         )}
 
         {activeTab === 'discharged' && (
-          <DischargedPatientsTable patients={dischargedPatients} onViewBill={openEditBillModal} />
+          <DischargedPatientsTable
+            patients={dischargedPatients}
+            onViewBill={openEditBillModal}
+            onAddBill={openBillModal}
+          />
         )}
       </div>
 

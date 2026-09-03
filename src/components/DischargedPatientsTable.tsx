@@ -7,6 +7,7 @@ import { formatDisplayDate } from "@/components/add-bill-modal/utils";
 interface DischargedPatientsTableProps {
     patients: Patient[];
     onViewBill: (patientId: string, billId: string) => void;
+    onAddBill: (patientId: string) => void;
 }
 
 type SortField = 'regNo' | 'name' | 'wardDetails' | 'admissionDate' | 'dischargeDate' | 'totalBill';
@@ -22,6 +23,7 @@ const SortIcon = ({ field, sortField, sortDir }: { field: SortField, sortField: 
 export default function DischargedPatientsTable({
     patients,
     onViewBill,
+    onAddBill,
 }: DischargedPatientsTableProps) {
     // Search
     const [search, setSearch] = useState('');
@@ -274,6 +276,12 @@ export default function DischargedPatientsTable({
                                                 ) : (
                                                     <span className="text-neutral-500">No bills</span>
                                                 )}
+                                                <button
+                                                    onClick={() => onAddBill(patient.id)}
+                                                    className="text-xs bg-neutral-800 hover:bg-neutral-700 text-blue-400 px-2 py-1 rounded border border-neutral-700 w-fit transition-colors"
+                                                >
+                                                    + Add Bill
+                                                </button>
                                             </div>
                                         </td>
                                     </tr>
