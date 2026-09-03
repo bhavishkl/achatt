@@ -29,6 +29,7 @@ export function OpdBilling({ patient, visit, onDone, onSkip }: Props) {
   const descRef = useRef<HTMLInputElement>(null);
 
   const createOpdVisit = useAppStore((s) => s.createOpdVisit);
+  const companyId = useAppStore((s) => s.companyId);
   const updateOpdVisitBill = useAppStore((s) => s.updateOpdVisitBill);
   const upsertOpdVisit = useAppStore((s) => s.upsertOpdVisit);
   const getNextBillNo = useAppStore((s) => s.getNextBillNo);
@@ -114,8 +115,20 @@ export function OpdBilling({ patient, visit, onDone, onSkip }: Props) {
     // Sync to API
     await apiUpdateVisit(currentVisit.id, { bill });
 
+    let hospitalInfo = null;
+    if (companyId) {
+      try {
+        const hospitalInfoResponse = await fetch(`/api/ipd/hospital-info?companyId=${companyId}`);
+        if (hospitalInfoResponse.ok) {
+          hospitalInfo = await hospitalInfoResponse.json();
+        }
+      } catch (error) {
+        console.error("Failed to load hospital information for OPD bill:", error);
+      }
+    }
+
     // Print
-    const html = buildOpdBillPrintHtml({ patient, bill, visit: currentVisit });
+    const html = buildOpdBillPrintHtml({ patient, bill, visit: currentVisit, hospitalInfo });
     openPrintWindow(html);
 
     onDone(currentVisit);

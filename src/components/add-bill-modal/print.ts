@@ -38,6 +38,13 @@ export function buildBillPrintHtml({
   const formattedBillDate = formatDisplayDate(billDate);
   const formattedAdmissionDate = formatDisplayDate(patient.admissionDate);
   const formattedDischargeDate = dischargeDate ? formatDisplayDate(dischargeDate) : "-";
+    const printDateTime = new Date().toLocaleString(undefined, {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+    });
   const netAmountWords = amountToWords(netAmount);
   const isFinal = ipBillType === "final";
 
@@ -84,8 +91,10 @@ export function buildBillPrintHtml({
                 thead th:nth-child(4) { text-align: center; }
                 .summary-row td { padding: 6px 12px; font-size: 13px; line-height: 1.2; }
                 .summary-row td:last-child { font-weight: 700; color: #000; }
+                .summary-concession td { font-weight: 700; color: #000; }
                 .summary-total td { padding: 8px 12px; font-size: 14px; font-weight: 700; color: #000; }
                 .footer { text-align: center; margin-top: 40px; padding-top: 16px; border-top: 1px solid #000; font-size: 11px; color: #000; }
+                .print-date { color: #6b7280; font-size: 10px; margin-bottom: 4px; }
                 @media print {
                     body { padding: 16px; }
                     @page { margin: 12mm; }
@@ -107,7 +116,7 @@ export function buildBillPrintHtml({
             <div class="bill-meta">
                 <div>
                     <div class="meta-row"><span class="label-inline">Patient</span><span class="value-inline">${patient.prefix} ${patient.name}</span></div>
-                    <div class="meta-row"><span class="label-inline">Gender/Age</span><span class="value-inline">${patient.gender}, ${patient.age} Yrs</span></div>
+                    <div class="meta-row"><span class="label-inline">Gender/Age</span><span class="value-inline">${patient.gender} / ${patient.age} Yrs</span></div>
                     <div class="meta-row"><span class="label-inline">Reg No</span><span class="value-inline">${patient.regNo}</span></div>
                     <div class="meta-row"><span class="label-inline">IP No</span><span class="value-inline">${patient.ipNumber || "-"}</span></div>
                 </div>
@@ -146,11 +155,11 @@ export function buildBillPrintHtml({
                     }
                     ${
                       concession > 0
-                        ? `<tr class="summary-row"><td colspan="4" style="text-align:right">Concession</td><td style="text-align:right">- Rs ${concession.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td></tr>`
+                                                ? `<tr class="summary-row summary-concession"><td colspan="4" style="text-align:right">Concession</td><td style="text-align:right">- Rs ${concession.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td></tr>`
                         : ""
                     }
                     <tr class="summary-total">
-                        <td colspan="4" style="text-align:right">Net Payable</td>
+                        <td colspan="4" style="text-align:right">${isFinal ? "Net Paid Amount" : "Net Payable"}</td>
                         <td style="text-align:right">Rs ${netAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                     </tr>
                     <tr>
@@ -162,6 +171,7 @@ export function buildBillPrintHtml({
             </table>
 
             <div class="footer">
+                <p class="print-date">Printed: ${printDateTime}</p>
                 <p>This is a computer-generated bill.</p>
             </div>
         </body>

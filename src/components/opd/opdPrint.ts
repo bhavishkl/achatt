@@ -1,14 +1,41 @@
 import type { OpdPatient, OpdVisit, OpdBill } from "@/types/opd";
 
+export interface OpdHospitalInfo {
+  name?: string;
+  tagline?: string;
+  phone?: string;
+  altPhone?: string;
+  email?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  pincode?: string;
+}
+
 export function buildOpdBillPrintHtml({
   patient,
   bill,
   visit,
+  hospitalInfo,
 }: {
   patient: OpdPatient;
   bill: OpdBill;
   visit: OpdVisit;
+  hospitalInfo?: OpdHospitalInfo | null;
 }): string {
+  const hospitalName = hospitalInfo?.name || "Hospital";
+  const hospitalAddress = [
+    hospitalInfo?.address,
+    hospitalInfo?.city,
+    hospitalInfo?.state,
+    hospitalInfo?.pincode,
+  ].filter(Boolean).join(", ");
+  const hospitalContact = [
+    hospitalInfo?.phone,
+    hospitalInfo?.altPhone,
+  ].filter(Boolean).join(", ");
+  const hospitalEmail = hospitalInfo?.email || "";
+  const hospitalTagline = hospitalInfo?.tagline || "Outpatient Department";
   const itemRows = bill.items
     .map(
       (item, i) => `
@@ -50,8 +77,11 @@ export function buildOpdBillPrintHtml({
 </head>
 <body>
   <div class="header">
-    <h1>OPD Bill</h1>
-    <p>Outpatient Department</p>
+    <h1>${hospitalName}</h1>
+    ${hospitalTagline ? `<p>${hospitalTagline}</p>` : ""}
+    ${hospitalAddress ? `<p>${hospitalAddress}</p>` : ""}
+    ${(hospitalContact || hospitalEmail) ? `<p>${hospitalContact ? `Phone: ${hospitalContact}` : ""}${hospitalContact && hospitalEmail ? " | " : ""}${hospitalEmail ? `Email: ${hospitalEmail}` : ""}</p>` : ""}
+    <p>OPD Bill</p>
   </div>
 
   <div class="bill-meta">
