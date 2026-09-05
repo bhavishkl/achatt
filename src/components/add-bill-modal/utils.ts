@@ -98,6 +98,46 @@ export function formatDisplayDate(dateStr: string | null | undefined): string {
   return dateStr;
 }
 
+/** Normalizes a stored time ("14:05" / "14:05:00") to the "HH:mm" an <input type="time"> needs. */
+export function toTimeInputValue(timeStr: string | null | undefined): string {
+  if (!timeStr) return "";
+  const match = String(timeStr).trim().match(/^(\d{1,2}):(\d{2})/);
+  if (!match) return "";
+  return `${match[1].padStart(2, "0")}:${match[2]}`;
+}
+
+/** "14:05" -> "02:05 PM". Returns "" when there is no usable time. */
+export function formatDisplayTime(timeStr: string | null | undefined): string {
+  const normalized = toTimeInputValue(timeStr);
+  if (!normalized) return "";
+
+  const [hourPart, minutePart] = normalized.split(":");
+  const hours = Number(hourPart);
+  const minutes = Number(minutePart);
+  if (hours > 23 || minutes > 59) return "";
+
+  const suffix = hours >= 12 ? "PM" : "AM";
+  const displayHour = hours % 12 === 0 ? 12 : hours % 12;
+  return `${String(displayHour).padStart(2, "0")}:${minutePart} ${suffix}`;
+}
+
+/** Combines date + optional time for display, e.g. "02-09-2026 04:15 PM". */
+export function formatDisplayDateTime(
+  dateStr: string | null | undefined,
+  timeStr: string | null | undefined
+): string {
+  const date = formatDisplayDate(dateStr);
+  if (date === "-") return "-";
+  const time = formatDisplayTime(timeStr);
+  return time ? `${date} ${time}` : date;
+}
+
+/** Current wall-clock time as "HH:mm", ready for an <input type="time">. */
+export function currentTimeValue(): string {
+  const now = new Date();
+  return `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+}
+
 export function amountToWords(num: number): string {
   if (isNaN(num) || num < 0) return "";
   if (num === 0) return "Rupees Zero Only";

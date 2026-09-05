@@ -122,3 +122,22 @@ CREATE INDEX IF NOT EXISTS idx_opd_templates_company ON opd_prescription_templat
 -- CREATE POLICY "Allow all for service role" ON opd_bill_counters FOR ALL USING (true);
 -- CREATE POLICY "Allow all for service role" ON opd_custom_items FOR ALL USING (true);
 -- CREATE POLICY "Allow all for service role" ON opd_prescription_templates FOR ALL USING (true);
+
+-- ============================================================
+-- IPD Billing — Discharge time + Cash/Online payment split
+-- ============================================================
+
+-- 1. Patient-level discharge time (set when a patient is discharged)
+ALTER TABLE patients
+ADD COLUMN IF NOT EXISTS discharge_time time WITHOUT TIME ZONE;
+
+-- 2. Bill-level discharge time (DOD time printed on the bill)
+ALTER TABLE patient_bills
+ADD COLUMN IF NOT EXISTS discharge_time time WITHOUT TIME ZONE;
+
+-- 3. How much of the bill was collected in cash vs online
+ALTER TABLE patient_bills
+ADD COLUMN IF NOT EXISTS paid_cash numeric NOT NULL DEFAULT 0;
+
+ALTER TABLE patient_bills
+ADD COLUMN IF NOT EXISTS paid_online numeric NOT NULL DEFAULT 0;

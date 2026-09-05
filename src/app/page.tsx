@@ -8,6 +8,7 @@ import DischargedPatientsTable from "@/components/DischargedPatientsTable";
 import AddPatientModal from "@/components/AddPatientModal";
 import AddBillModal from "@/components/AddBillModal";
 import { useAppStore } from "@/lib/store";
+import { currentTimeValue } from "@/components/add-bill-modal/utils";
 
 function PatientsTableSkeleton() {
   return (
@@ -42,10 +43,13 @@ const normalizePatient = (p: Patient): Patient => ({
   bills: (p.bills ?? []).map((b) => ({
     ...b,
     dischargeDate: b.dischargeDate ?? "",
+    dischargeTime: b.dischargeTime ?? "",
     ipBillType: b.ipBillType ?? "draft",
     grossAmount: b.grossAmount ?? b.totalAmount,
     advanceUsed: b.advanceUsed ?? 0,
     concession: b.concession ?? 0,
+    paidCash: b.paidCash ?? 0,
+    paidOnline: b.paidOnline ?? 0,
   })),
 });
 
@@ -163,6 +167,7 @@ export default function Home() {
         ...current,
         status: "discharged",
         dischargeDate: new Date().toISOString().split("T")[0],
+        dischargeTime: currentTimeValue(),
       });
       setPatients((prev) => prev.map((p) => (p.id === id ? saved : p)));
     } catch (error: any) {
