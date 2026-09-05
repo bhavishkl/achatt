@@ -74,7 +74,7 @@ export function buildBillPrintHtml({
                 .header { text-align: center; padding-top: 10px; padding-bottom: 10px; margin-bottom: 10px; }
                 .header h1 { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
                 .header p { font-size: 12px; color: #000; }
-                .letterhead-space { height: 80px; }
+                .letterhead-space { height: 90px; }
                 .bill-type-banner { width: 100%; background: #f3f4f6; color: #000; border: 1px solid #000; text-align: center; font-size: 12px; font-weight: 700; letter-spacing: 0.7px; text-transform: uppercase; padding: 7px 10px; margin-bottom: 16px; }
                 .bill-meta { display: flex; justify-content: space-between; margin-bottom: 20px; font-size: 13px; }
                 .bill-meta div { line-height: 1.6; }
