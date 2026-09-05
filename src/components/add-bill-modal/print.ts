@@ -1,7 +1,7 @@
 import type { Company } from "@/lib/types";
 import type { Patient } from "@/types/patient";
 import type { BillDraftItem } from "@/components/add-bill-modal/types";
-import { formatDisplayDate, amountToWords } from "@/components/add-bill-modal/utils";
+import { formatDisplayDate, formatDisplayDateTime, amountToWords } from "@/components/add-bill-modal/utils";
 
 export function buildBillPrintHtml({
   patient,
@@ -9,11 +9,14 @@ export function buildBillPrintHtml({
   billDate,
   billNo,
   dischargeDate,
+  dischargeTime,
   ipBillType,
   grossAmount,
   advanceUsed,
   concession,
   netAmount,
+  paidCash,
+  paidOnline,
   companyProfile,
 }: {
   patient: Patient;
@@ -21,11 +24,14 @@ export function buildBillPrintHtml({
   billDate: string;
   billNo?: string;
   dischargeDate: string;
+  dischargeTime?: string;
   ipBillType: "draft" | "final";
   grossAmount: number;
   advanceUsed: number;
   concession: number;
   netAmount: number;
+  paidCash?: number;
+  paidOnline?: number;
   companyProfile: Company | null;
 }) {
   const companyName = companyProfile?.name || patient.hospitalName || "Hospital";
@@ -36,8 +42,8 @@ export function buildBillPrintHtml({
   const companyOwner = companyProfile?.ownerName || "";
 
   const formattedBillDate = formatDisplayDate(billDate);
-  const formattedAdmissionDate = formatDisplayDate(patient.admissionDate);
-  const formattedDischargeDate = dischargeDate ? formatDisplayDate(dischargeDate) : "-";
+  const formattedAdmissionDate = formatDisplayDateTime(patient.admissionDate, patient.admissionTime);
+  const formattedDischargeDate = dischargeDate ? formatDisplayDateTime(dischargeDate, dischargeTime) : "-";
     const printDateTime = new Date().toLocaleString(undefined, {
         day: "2-digit",
         month: "2-digit",
@@ -47,6 +53,11 @@ export function buildBillPrintHtml({
     });
   const netAmountWords = amountToWords(netAmount);
   const isFinal = ipBillType === "final";
+  const cashPaid = Number(paidCash) || 0;
+  const onlinePaid = Number(paidOnline) || 0;
+  const balanceDue = netAmount - (cashPaid + onlinePaid);
+  const formatAmount = (value: number) =>
+    value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
   const itemsRows = items
     .map(
@@ -70,10 +81,11 @@ export function buildBillPrintHtml({
             <style>
                 * { margin: 0; padding: 0; box-sizing: border-box; }
                 body { font-family: 'Segoe UI', Arial, sans-serif; color: #1a1a1a; padding: 32px; max-width: 800px; margin: 0 auto; }
+                body.final-bill { padding-top: 10px; }
                 .header { text-align: center; padding-top: 10px; padding-bottom: 10px; margin-bottom: 10px; }
                 .header h1 { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
                 .header p { font-size: 12px; color: #000; }
-                .letterhead-space { height: 140px; }
+                .letterhead-space { height: 90px; }
                 .bill-type-banner { width: 100%; background: #f3f4f6; color: #000; border: 1px solid #000; text-align: center; font-size: 12px; font-weight: 700; letter-spacing: 0.7px; text-transform: uppercase; padding: 7px 10px; margin-bottom: 16px; }
                 .bill-meta { display: flex; justify-content: space-between; margin-bottom: 20px; font-size: 13px; }
                 .bill-meta div { line-height: 1.6; }
@@ -97,11 +109,12 @@ export function buildBillPrintHtml({
                 .print-date { color: #6b7280; font-size: 10px; margin-bottom: 4px; }
                 @media print {
                     body { padding: 16px; }
+                    body.final-bill { padding-top: 0; }
                     @page { margin: 12mm; }
                 }
             </style>
         </head>
-        <body>
+        <body${isFinal ? ` class="final-bill"` : ""}>
             ${
               isFinal
                 ? `<div class="letterhead-space"></div>`
@@ -160,8 +173,23 @@ export function buildBillPrintHtml({
                     }
                     <tr class="summary-total">
                         <td colspan="4" style="text-align:right">${isFinal ? "Net Paid Amount" : "Net Payable"}</td>
-                        <td style="text-align:right">Rs ${netAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                        <td style="text-align:right">Rs ${formatAmount(netAmount)}</td>
                     </tr>
+                    ${
+                      cashPaid > 0
+                        ? `<tr class="summary-row"><td colspan="4" style="text-align:right">Paid by Cash</td><td style="text-align:right">Rs ${formatAmount(cashPaid)}</td></tr>`
+                        : ""
+                    }
+                    ${
+                      onlinePaid > 0
+                        ? `<tr class="summary-row"><td colspan="4" style="text-align:right">Paid Online</td><td style="text-align:right">Rs ${formatAmount(onlinePaid)}</td></tr>`
+                        : ""
+                    }
+                    ${
+                      (cashPaid > 0 || onlinePaid > 0) && balanceDue > 0.009
+                        ? `<tr class="summary-row summary-concession"><td colspan="4" style="text-align:right">Balance Due</td><td style="text-align:right">Rs ${formatAmount(balanceDue)}</td></tr>`
+                        : ""
+                    }
                     <tr>
                         <td colspan="5" style="padding:8px 12px;font-size:12px;color:#000;border:1px solid #000;background:#f9fafb;">
                             <strong>Amount in Words:</strong> ${netAmountWords}

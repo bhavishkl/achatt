@@ -1,5 +1,13 @@
 # Context
 
+- **IPD bill: DOA/DOD times + cash/online payment split** (Inpatients page `/`):
+  - `Bill` type gained `dischargeTime`, `paidCash`, `paidOnline`; `Patient` gained `dischargeTime`.
+  - `add-bill-modal/utils.ts`: new `formatDisplayTime` (24h -> "hh:mm AM/PM"), `formatDisplayDateTime`, `toTimeInputValue`, `currentTimeValue` helpers.
+  - `print.ts`: DOA now prints `admissionDate + admissionTime`, DOD prints the bill's `dischargeDate + dischargeTime`; summary adds "Paid by Cash" / "Paid Online" rows and a "Balance Due" row when the split is short of the net amount.
+  - `AddBillModal`: Discharge Date/Time are a 2-column pair (time defaults to the bill's, then the patient's, then now); new `PaymentSplitSection.tsx` with Cash + Online inputs, an "All cash" shortcut, and a live Collected / Balance / Excess indicator. Both values are saved on the bill and passed to the printout.
+  - Persistence: `patient_bills.discharge_time`, `patient_bills.paid_cash`, `patient_bills.paid_online`, `patients.discharge_time` (migration appended to `sql_command.sql`, columns added to `schema.json`). Writes degrade gracefully via `isMissingColumnError` in `api/patients/_utils.ts` (retry without the new columns) so billing keeps working until the migration is applied.
+  - Discharging from the patients table now records the discharge time; discharged/admitted tables show the time under the date.
+
 - **API loading states on Inpatients page** (`/`, PR #6):
   - Replaced the plain "Loading patients..." text with a shimmering `PatientsTableSkeleton` (rendered while the initial `/api/patients` fetch is in flight and the list is empty).
   - `AddPatientModal`: submit is now async — shows a spinner ("Saving…") on the submit button, disables Cancel, and stays open on save failure (page's `handleSavePatient` rethrows after surfacing the error). Ward/Doctor dropdowns show "Loading wards…/Loading doctors…" while `/api/ipd/wards` + `/api/ipd/doctors` are in flight.

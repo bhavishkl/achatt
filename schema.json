@@ -1059,6 +1059,14 @@
         "max_length": null,
         "is_nullable": "YES",
         "column_default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "ordinal_position": 21,
+        "column_name": "discharge_time",
+        "data_type": "time without time zone",
+        "max_length": null,
+        "is_nullable": "YES",
+        "column_default": null
       }
     ]
   },
@@ -1160,6 +1168,30 @@
         "max_length": null,
         "is_nullable": "YES",
         "column_default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "ordinal_position": 13,
+        "column_name": "discharge_time",
+        "data_type": "time without time zone",
+        "max_length": null,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "ordinal_position": 14,
+        "column_name": "paid_cash",
+        "data_type": "numeric",
+        "max_length": null,
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "ordinal_position": 15,
+        "column_name": "paid_online",
+        "data_type": "numeric",
+        "max_length": null,
+        "is_nullable": "NO",
+        "column_default": "0"
       }
     ]
   },

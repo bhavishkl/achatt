@@ -9,8 +9,10 @@ import { useAppStore } from "@/lib/store";
 import {
   calculateTotal,
   createItemId,
+  currentTimeValue,
   getPackageByWard,
   toDraftItemsFromBill,
+  toTimeInputValue,
   extractPackages,
 } from "@/components/add-bill-modal/utils";
 import { buildBillPrintHtml, openBillPrintWindow } from "@/components/add-bill-modal/print";
@@ -19,6 +21,7 @@ import WardPackageSection from "@/components/add-bill-modal/WardPackageSection";
 import BillItemInputRow from "@/components/add-bill-modal/BillItemInputRow";
 import BillItemsList from "@/components/add-bill-modal/BillItemsList";
 import BillTotalsRow from "@/components/add-bill-modal/BillTotalsRow";
+import PaymentSplitSection from "@/components/add-bill-modal/PaymentSplitSection";
 import BillActionButtons from "@/components/add-bill-modal/BillActionButtons";
 
 export default function AddBillModal({
@@ -39,6 +42,9 @@ export default function AddBillModal({
 
   const [concession, setConcession] = useState<number | string>(0);
   const [dischargeDate, setDischargeDate] = useState("");
+  const [dischargeTime, setDischargeTime] = useState("");
+  const [paidCash, setPaidCash] = useState<number | string>(0);
+  const [paidOnline, setPaidOnline] = useState<number | string>(0);
   const [isIpFinalBill, setIsIpFinalBill] = useState(false);
   const [billNo, setBillNo] = useState("");
 
@@ -77,6 +83,16 @@ export default function AddBillModal({
      
     const today = new Date().toISOString().split("T")[0];
     setDischargeDate(existingBill?.dischargeDate || patient?.dischargeDate || today);
+
+    setDischargeTime(
+      toTimeInputValue(existingBill?.dischargeTime) ||
+        toTimeInputValue(patient?.dischargeTime) ||
+        currentTimeValue()
+    );
+
+    setPaidCash(existingBill?.paidCash ?? 0);
+
+    setPaidOnline(existingBill?.paidOnline ?? 0);
      
     setIsIpFinalBill(existingBill?.ipBillType === "final");
 
@@ -217,6 +233,8 @@ export default function AddBillModal({
     Math.max(0, totalAmount - autoAdvanceUsed)
   );
   const netPayable = Math.max(0, totalAmount - autoAdvanceUsed - concessionAmount);
+  const cashAmount = Math.max(0, Number(paidCash) || 0);
+  const onlineAmount = Math.max(0, Number(paidOnline) || 0);
 
   const handlePrintBill = () => {
     if (!patient || billItems.length === 0) return;
@@ -228,11 +246,14 @@ export default function AddBillModal({
       billDate,
       billNo: billNo || existingBill?.billNo,
       dischargeDate,
+      dischargeTime,
       ipBillType: isIpFinalBill ? "final" : "draft",
       grossAmount: totalAmount,
       advanceUsed: autoAdvanceUsed,
       concession: concessionAmount,
       netAmount: netPayable,
+      paidCash: cashAmount,
+      paidOnline: onlineAmount,
       companyProfile,
     });
 
@@ -248,11 +269,14 @@ export default function AddBillModal({
       billNo: billNo || existingBill?.billNo,
       date: existingBill?.date || new Date().toISOString().split("T")[0],
       dischargeDate,
+      dischargeTime,
       ipBillType: isIpFinalBill ? "final" : "draft",
       grossAmount: totalAmount,
       advanceUsed: autoAdvanceUsed,
       concession: concessionAmount,
       totalAmount: netPayable,
+      paidCash: cashAmount,
+      paidOnline: onlineAmount,
       items: billItems.map((item) => ({
         ...item,
         amount: item.rate * item.quantity,
@@ -342,13 +366,26 @@ export default function AddBillModal({
               </div>
 
               <div className="bg-neutral-950/50 border border-neutral-800 rounded-lg p-2.5 mb-2">
-                <label className="block text-xs text-neutral-400 mb-1">Discharge Date</label>
-                <input
-                  type="date"
-                  value={dischargeDate}
-                  onChange={(e) => setDischargeDate(e.target.value)}
-                  className="w-full bg-neutral-950 border border-neutral-800 rounded px-2 py-1.5 text-sm focus:ring-2 focus:ring-blue-600 outline-none text-white"
-                />
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-xs text-neutral-400 mb-1">Discharge Date</label>
+                    <input
+                      type="date"
+                      value={dischargeDate}
+                      onChange={(e) => setDischargeDate(e.target.value)}
+                      className="w-full bg-neutral-950 border border-neutral-800 rounded px-2 py-1.5 text-sm focus:ring-2 focus:ring-blue-600 outline-none text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-neutral-400 mb-1">Discharge Time</label>
+                    <input
+                      type="time"
+                      value={dischargeTime}
+                      onChange={(e) => setDischargeTime(e.target.value)}
+                      className="w-full bg-neutral-950 border border-neutral-800 rounded px-2 py-1.5 text-sm focus:ring-2 focus:ring-blue-600 outline-none text-white"
+                    />
+                  </div>
+                </div>
                 <label className="flex items-center gap-2 mt-3 text-sm text-neutral-300">
                   <input
                     type="checkbox"
@@ -359,6 +396,14 @@ export default function AddBillModal({
                   IP Final Bill
                 </label>
               </div>
+
+              <PaymentSplitSection
+                paidCash={paidCash}
+                paidOnline={paidOnline}
+                netPayable={netPayable}
+                onChangeCash={setPaidCash}
+                onChangeOnline={setPaidOnline}
+              />
             </div>
 
             <div className="xl:col-span-7 min-h-0 flex flex-col">

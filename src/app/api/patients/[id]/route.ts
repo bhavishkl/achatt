@@ -1,6 +1,6 @@
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { NextResponse } from "next/server";
-import { hydratePatient } from "@/app/api/patients/_utils";
+import { hydratePatient, isMissingColumnError, toTimeValue } from "@/app/api/patients/_utils";
 
 function toUpdatePayload(patient: any) {
   return {
@@ -21,6 +21,7 @@ function toUpdatePayload(patient: any) {
     attender_relation: String(patient.attenderRelation || "").trim(),
     status: patient.status === "discharged" ? "discharged" : "admitted",
     discharge_date: patient.dischargeDate || null,
+    discharge_time: toTimeValue(patient.dischargeTime),
     doctor_name: String(patient.doctorName || "").trim(),
     updated_at: new Date().toISOString(),
   };
@@ -44,12 +45,24 @@ export async function PUT(
       return NextResponse.json({ message: "Missing required patient fields" }, { status: 400 });
     }
 
-    const { data, error } = await supabaseAdmin
+    let { data, error } = await supabaseAdmin
       .from("patients")
       .update(payload)
       .eq("id", id)
       .select("*")
       .single();
+
+    // `discharge_time` arrives with the migration in sql_command.sql; keep saving without it until then.
+    if (isMissingColumnError(error)) {
+      const { discharge_time: _dischargeTime, ...fallbackPayload } = payload;
+      console.warn("patients.discharge_time is missing — saved without it. Run the migration in sql_command.sql.");
+      ({ data, error } = await supabaseAdmin
+        .from("patients")
+        .update(fallbackPayload)
+        .eq("id", id)
+        .select("*")
+        .single());
+    }
 
     if (error) {
       return NextResponse.json({ message: "Error updating patient", error: error.message }, { status: 500 });

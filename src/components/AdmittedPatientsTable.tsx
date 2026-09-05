@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import { Patient } from "@/types/patient";
-import { formatDisplayDate } from "@/components/add-bill-modal/utils";
+import { formatDisplayDate, formatDisplayTime } from "@/components/add-bill-modal/utils";
 
 interface AdmittedPatientsTableProps {
   patients: Patient[];
@@ -91,7 +91,7 @@ export default function AdmittedPatientsTable({
                     </td>
                     <td className="p-4">
                       <div className="text-neutral-300">{formatDisplayDate(patient.admissionDate)}</div>
-                      <div className="text-neutral-500 text-xs">{patient.admissionTime}</div>
+                      <div className="text-neutral-500 text-xs">{formatDisplayTime(patient.admissionTime) || patient.admissionTime}</div>
                     </td>
                     <td className="p-4">
                       <div className="text-neutral-300">{patient.attenderName}</div>
