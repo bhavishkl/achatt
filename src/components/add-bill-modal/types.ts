@@ -4,6 +4,7 @@ export interface AddBillModalProps {
   isOpen: boolean;
   patient: Patient | null;
   existingBill?: Bill | null;
+  isSaving?: boolean;
   onClose: () => void;
   onSaveBill: (patientId: string, bill: Bill) => Promise<void>;
 }

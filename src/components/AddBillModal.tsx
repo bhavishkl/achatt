@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useMemo } from "react";
+import { Loader2 } from "lucide-react";
 import type { Company } from "@/lib/types";
 import type { Bill } from "@/types/patient";
 import type { AddBillModalProps, BillDraftItem } from "@/components/add-bill-modal/types";
@@ -24,6 +25,7 @@ export default function AddBillModal({
   isOpen,
   patient,
   existingBill,
+  isSaving = false,
   onClose,
   onSaveBill,
 }: AddBillModalProps) {
@@ -31,6 +33,8 @@ export default function AddBillModal({
   const [companyProfile, setCompanyProfile] = useState<Company | null>(null);
   const { companyId } = useAppStore();
   const [services, setServices] = useState<any[]>([]);
+  const [isLoadingServices, setIsLoadingServices] = useState(false);
+  const [isLoadingBillNo, setIsLoadingBillNo] = useState(false);
   const packages = useMemo(() => extractPackages(services), [services]);
 
   const [concession, setConcession] = useState<number | string>(0);
@@ -59,7 +63,6 @@ export default function AddBillModal({
   useEffect(() => {
     if (!isOpen) return;
 
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setBillItems(toDraftItemsFromBill(existingBill));
      
     setInputDesc("");
@@ -80,12 +83,15 @@ export default function AddBillModal({
     if (existingBill?.billNo) {
       setBillNo(existingBill.billNo);
     } else {
+      setBillNo("");
+      setIsLoadingBillNo(true);
       fetch("/api/bills/next-no")
         .then((res) => res.json())
         .then((data) => {
           if (data?.billNo) setBillNo(data.billNo);
         })
-        .catch(console.error);
+        .catch(console.error)
+        .finally(() => setIsLoadingBillNo(false));
     }
 
     const packageFromWard = patient ? getPackageByWard(patient.wardName, packages) : null;
@@ -99,6 +105,7 @@ export default function AddBillModal({
     let isMounted = true;
 
     const loadData = async () => {
+      setIsLoadingServices(true);
       try {
         const [infoRes, servicesRes] = await Promise.all([
           fetch(`/api/ipd/hospital-info?companyId=${companyId}`),
@@ -126,6 +133,8 @@ export default function AddBillModal({
         }
       } catch (err) {
         console.error("Error loading IPD bill modal data:", err);
+      } finally {
+        if (isMounted) setIsLoadingServices(false);
       }
     };
 
@@ -232,7 +241,7 @@ export default function AddBillModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!patient || billItems.length === 0) return;
+    if (!patient || billItems.length === 0 || isSaving) return;
 
     const bill: Bill = {
       id: existingBill?.id || Date.now().toString(),
@@ -267,12 +276,17 @@ export default function AddBillModal({
       <div className="mx-auto bg-neutral-900 rounded-xl border border-neutral-800 w-full max-w-[1320px] shadow-2xl h-[96vh] flex flex-col p-3 sm:p-4">
         <div className="flex items-center justify-between mb-2">
           <h2 className="text-lg sm:text-xl font-bold">{isEditing ? "Edit Bill" : "Add Bill"}</h2>
-          {billNo && (
+          {billNo ? (
             <span className="flex items-center gap-1.5 bg-neutral-800 border border-neutral-700 rounded-lg px-3 py-1 text-sm">
               <span className="text-neutral-400 text-xs uppercase tracking-wide">Bill No</span>
               <span className="font-mono font-semibold text-emerald-400">{billNo}</span>
             </span>
-          )}
+          ) : isLoadingBillNo ? (
+            <span className="flex items-center gap-1.5 bg-neutral-800 border border-neutral-700 rounded-lg px-3 py-1 text-sm text-neutral-400">
+              <span className="text-xs uppercase tracking-wide">Bill No</span>
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            </span>
+          ) : null}
         </div>
 
         <div className="mb-3">
@@ -286,6 +300,7 @@ export default function AddBillModal({
                 selectedPackageId={selectedPackageId}
                 packageQty={packageQty}
                 packages={packages}
+                isLoading={isLoadingServices}
                 onSelectPackage={setSelectedPackageId}
                 onChangeQty={setPackageQty}
                 onAddPackage={addSelectedPackage}
@@ -358,7 +373,7 @@ export default function AddBillModal({
                   totalAmount={netPayable}
                 />
 
-                <BillActionButtons isEditing={isEditing} onCancel={onClose} onPrint={handlePrintBill} />
+                <BillActionButtons isEditing={isEditing} isSaving={isSaving} onCancel={onClose} onPrint={handlePrintBill} />
               </div>
             </div>
           </div>

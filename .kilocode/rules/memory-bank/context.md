@@ -1,5 +1,14 @@
 # Context
 
+- **API loading states on Inpatients page** (`/`, PR #6):
+  - Replaced the plain "Loading patients..." text with a shimmering `PatientsTableSkeleton` (rendered while the initial `/api/patients` fetch is in flight and the list is empty).
+  - `AddPatientModal`: submit is now async — shows a spinner ("Saving…") on the submit button, disables Cancel, and stays open on save failure (page's `handleSavePatient` rethrows after surfacing the error). Ward/Doctor dropdowns show "Loading wards…/Loading doctors…" while `/api/ipd/wards` + `/api/ipd/doctors` are in flight.
+  - `AdmittedPatientsTable`: new `dischargingId` prop — the Discharge menu item shows a spinner ("Discharging…") and is disabled during the discharge PUT.
+  - `AddBillModal`: new `isSaving` prop — Save button shows spinner + Print/Cancel disabled during bill save; double-submit guarded. Bill No badge shows a spinner while `/api/bills/next-no` is fetching. `WardPackageSection` gets `isLoading` — select shows "Loading packages…" while `/api/ipd/services` loads.
+  - Advance modal (inline in page): "Save Advance" shows spinner + disables Cancel while POSTing `/api/patients/[id]/advances`.
+  - Spinners use `Loader2` from lucide-react with `animate-spin`.
+  - Removed two now-unused `react-hooks/set-state-in-effect` eslint-disable directives in `AddBillModal`/`AddPatientModal`.
+
 - **Post-discharge billing in Inpatients page**:
   - Added `onAddBill` prop to `DischargedPatientsTable.tsx` with a "+ Add Bill" button rendered for every discharged patient row (in the Total Bill column, styled to match the admitted table).
   - Wired it in `src/app/page.tsx` to the existing `openBillModal` handler, so the shared `AddBillModal` opens for discharged patients; bills save through the same `/api/patients/[id]/bills` endpoint (no patient-status restriction).
