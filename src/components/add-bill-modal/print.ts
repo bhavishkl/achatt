@@ -70,10 +70,11 @@ export function buildBillPrintHtml({
             <style>
                 * { margin: 0; padding: 0; box-sizing: border-box; }
                 body { font-family: 'Segoe UI', Arial, sans-serif; color: #1a1a1a; padding: 32px; max-width: 800px; margin: 0 auto; }
+                body.final-bill { padding-top: 10px; }
                 .header { text-align: center; padding-top: 10px; padding-bottom: 10px; margin-bottom: 10px; }
                 .header h1 { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
                 .header p { font-size: 12px; color: #000; }
-                .letterhead-space { height: 140px; }
+                .letterhead-space { height: 80px; }
                 .bill-type-banner { width: 100%; background: #f3f4f6; color: #000; border: 1px solid #000; text-align: center; font-size: 12px; font-weight: 700; letter-spacing: 0.7px; text-transform: uppercase; padding: 7px 10px; margin-bottom: 16px; }
                 .bill-meta { display: flex; justify-content: space-between; margin-bottom: 20px; font-size: 13px; }
                 .bill-meta div { line-height: 1.6; }
@@ -97,11 +98,12 @@ export function buildBillPrintHtml({
                 .print-date { color: #6b7280; font-size: 10px; margin-bottom: 4px; }
                 @media print {
                     body { padding: 16px; }
+                    body.final-bill { padding-top: 0; }
                     @page { margin: 12mm; }
                 }
             </style>
         </head>
-        <body>
+        <body${isFinal ? ` class="final-bill"` : ""}>
             ${
               isFinal
                 ? `<div class="letterhead-space"></div>`
