@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Loader2 } from "lucide-react";
 import { Patient } from "@/types/patient";
 import { useAppStore } from "@/lib/store";
 
@@ -9,7 +10,7 @@ interface AddPatientModalProps {
     existingPatient?: Patient | null;
     nextRegNo: string;
     onClose: () => void;
-    onAddPatient: (patient: Patient) => void;
+    onAddPatient: (patient: Patient) => void | Promise<void>;
 }
 
 const INITIAL_FORM_DATA = {
@@ -37,10 +38,12 @@ export default function AddPatientModal({
 }: AddPatientModalProps) {
     const { companyId } = useAppStore();
     const [formData, setFormData] = useState(INITIAL_FORM_DATA);
-    
+    const [isSaving, setIsSaving] = useState(false);
+
     // IPD Data
     const [wards, setWards] = useState<any[]>([]);
     const [doctors, setDoctors] = useState<any[]>([]);
+    const [isLoadingIpd, setIsLoadingIpd] = useState(false);
 
     const isEditing = !!existingPatient;
 
@@ -65,6 +68,7 @@ export default function AddPatientModal({
         if (!isOpen || !companyId) return;
 
         const loadIpdData = async () => {
+            setIsLoadingIpd(true);
             try {
                 const [wardsRes, doctorsRes] = await Promise.all([
                     fetch(`/api/ipd/wards?companyId=${companyId}`),
@@ -72,7 +76,7 @@ export default function AddPatientModal({
                 ]);
                 const wardsData = await wardsRes.json();
                 const doctorsData = await doctorsRes.json();
-                
+
                 setWards(wardsData || []);
                 setDoctors(doctorsData || []);
 
@@ -86,6 +90,8 @@ export default function AddPatientModal({
                 }
             } catch (error) {
                 console.error("Failed to load IPD data", error);
+            } finally {
+                setIsLoadingIpd(false);
             }
         };
         loadIpdData();
@@ -95,7 +101,6 @@ export default function AddPatientModal({
     useEffect(() => {
         if (isOpen) {
             if (existingPatient) {
-                // eslint-disable-next-line react-hooks/set-state-in-effect
                 setFormData({
                     prefix: existingPatient.prefix,
                     name: existingPatient.name,
@@ -139,8 +144,9 @@ export default function AddPatientModal({
         });
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (isSaving) return;
 
         const patient: Patient = {
             id: existingPatient?.id || Date.now().toString(),
@@ -169,9 +175,17 @@ export default function AddPatientModal({
             bills: existingPatient?.bills || [],
         };
 
-        onAddPatient(patient);
-        setFormData(INITIAL_FORM_DATA);
-        onClose();
+        setIsSaving(true);
+        try {
+            await onAddPatient(patient);
+            setFormData(INITIAL_FORM_DATA);
+            onClose();
+        } catch {
+            // Save failed — keep the modal open so the user can retry.
+            // The error message is surfaced by the parent page.
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     if (!isOpen) return null;
@@ -292,7 +306,9 @@ export default function AddPatientModal({
                                     onChange={handleInputChange}
                                     className="w-full bg-neutral-950 border border-neutral-800 rounded-lg p-2 focus:ring-2 focus:ring-blue-600 outline-none text-sm"
                                 >
-                                    <option value="" disabled>Select Doctor</option>
+                                    <option value="" disabled>
+                                        {isLoadingIpd ? "Loading doctors…" : "Select Doctor"}
+                                    </option>
                                     {doctors.map(doc => (
                                         <option key={doc.id} value={`${doc.prefix} ${doc.name}`}>
                                             {doc.prefix} {doc.name}
@@ -309,7 +325,9 @@ export default function AddPatientModal({
                                     onChange={handleInputChange}
                                     className="w-full bg-neutral-950 border border-neutral-800 rounded-lg p-2 focus:ring-2 focus:ring-blue-600 outline-none text-sm"
                                 >
-                                    <option value="" disabled>Select Ward</option>
+                                    <option value="" disabled>
+                                        {isLoadingIpd ? "Loading wards…" : "Select Ward"}
+                                    </option>
                                     {wards.map(ward => (
                                         <option key={ward.id} value={ward.name}>
                                             {ward.name}
@@ -390,15 +408,23 @@ export default function AddPatientModal({
                         <button
                             type="button"
                             onClick={onClose}
-                            className="px-4 py-2 text-neutral-400 hover:text-white transition-colors"
+                            disabled={isSaving}
+                            className="px-4 py-2 text-neutral-400 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             Cancel
                         </button>
                         <button
                             type="submit"
-                            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors"
+                            disabled={isSaving}
+                            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
                         >
-                            {isEditing ? 'Update Patient' : 'Admit Patient'}
+                            {isSaving ? (
+                                <>
+                                    <Loader2 className="h-4 w-4 animate-spin" /> Saving…
+                                </>
+                            ) : (
+                                isEditing ? 'Update Patient' : 'Admit Patient'
+                            )}
                         </button>
                     </div>
                 </form>

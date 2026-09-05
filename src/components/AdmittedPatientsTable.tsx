@@ -1,11 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { Loader2 } from "lucide-react";
 import { Patient } from "@/types/patient";
 import { formatDisplayDate } from "@/components/add-bill-modal/utils";
 
 interface AdmittedPatientsTableProps {
   patients: Patient[];
+  dischargingId?: string | null;
   onDischarge: (id: string) => void;
   onAddBill: (id: string) => void;
   onEditBill: (patientId: string, billId: string) => void;
@@ -16,6 +18,7 @@ interface AdmittedPatientsTableProps {
 
 export default function AdmittedPatientsTable({
   patients,
+  dischargingId = null,
   onDischarge,
   onAddBill,
   onEditBill,
@@ -160,9 +163,19 @@ export default function AdmittedPatientsTable({
                                   onDischarge(patient.id);
                                   setOpenMenuFor(null);
                                 }}
-                                className="w-full text-left px-3 py-2 text-sm text-neutral-300 hover:bg-neutral-800 rounded-b-lg"
+                                disabled={dischargingId === patient.id}
+                                className={`w-full text-left px-3 py-2 text-sm rounded-b-lg flex items-center gap-2 ${dischargingId === patient.id
+                                  ? "text-neutral-500 cursor-not-allowed"
+                                  : "text-neutral-300 hover:bg-neutral-800"
+                                  }`}
                               >
-                                Discharge
+                                {dischargingId === patient.id ? (
+                                  <>
+                                    <Loader2 className="h-4 w-4 animate-spin" /> Discharging…
+                                  </>
+                                ) : (
+                                  "Discharge"
+                                )}
                               </button>
                             </div>
                           )}

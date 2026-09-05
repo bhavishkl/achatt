@@ -1,12 +1,40 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Loader2 } from "lucide-react";
 import { Patient, Bill } from "@/types/patient";
 import AdmittedPatientsTable from "@/components/AdmittedPatientsTable";
 import DischargedPatientsTable from "@/components/DischargedPatientsTable";
 import AddPatientModal from "@/components/AddPatientModal";
 import AddBillModal from "@/components/AddBillModal";
 import { useAppStore } from "@/lib/store";
+
+function PatientsTableSkeleton() {
+  return (
+    <div className="bg-neutral-900 border border-neutral-800 rounded-xl overflow-hidden">
+      <div className="flex items-center justify-between gap-3 p-4 border-b border-neutral-800">
+        <div className="h-5 w-40 bg-neutral-800 rounded animate-pulse" />
+        <div className="h-8 w-36 bg-neutral-800 rounded-lg animate-pulse" />
+      </div>
+      <div className="divide-y divide-neutral-800">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <div key={i} className="p-4 grid grid-cols-3 md:grid-cols-6 gap-4">
+            <div className="h-4 bg-neutral-800 rounded animate-pulse" />
+            <div className="h-4 bg-neutral-800 rounded animate-pulse" />
+            <div className="hidden md:block h-4 bg-neutral-800 rounded animate-pulse" />
+            <div className="hidden md:block h-4 bg-neutral-800 rounded animate-pulse" />
+            <div className="hidden md:block h-4 bg-neutral-800 rounded animate-pulse" />
+            <div className="h-4 bg-neutral-800 rounded animate-pulse" />
+          </div>
+        ))}
+      </div>
+      <div className="p-4 flex items-center justify-center gap-2 text-sm text-neutral-500">
+        <Loader2 className="h-4 w-4 animate-spin" />
+        Loading patients…
+      </div>
+    </div>
+  );
+}
 
 const normalizePatient = (p: Patient): Patient => ({
   ...p,
@@ -36,6 +64,11 @@ export default function Home() {
   const [editingBill, setEditingBill] = useState<Bill | null>(null);
   const [advancePatientId, setAdvancePatientId] = useState<string | null>(null);
   const [advanceInput, setAdvanceInput] = useState<number | string>('');
+
+  // API in-flight states
+  const [dischargingPatientId, setDischargingPatientId] = useState<string | null>(null);
+  const [isSavingBill, setIsSavingBill] = useState(false);
+  const [isSavingAdvance, setIsSavingAdvance] = useState(false);
 
   useEffect(() => {
     if (!companyId) {
@@ -80,7 +113,7 @@ export default function Home() {
     setPatientsError("");
     if (!companyId) {
       setPatientsError("Company profile is required to manage admissions.");
-      return;
+      throw new Error("Company profile is required to manage admissions.");
     }
 
     try {
@@ -104,10 +137,8 @@ export default function Home() {
       }
     } catch (error: any) {
       setPatientsError(error.message || "Failed to save patient");
-      return;
+      throw error;
     }
-
-    setEditingPatient(null);
   };
 
   const openEditPatientModal = (patientId: string) => {
@@ -123,8 +154,10 @@ export default function Home() {
 
   const handleDischarge = async (id: string) => {
     const current = patients.find((p) => p.id === id);
-    if (!current) return;
+    if (!current || dischargingPatientId) return;
 
+    setDischargingPatientId(id);
+    setPatientsError("");
     try {
       const saved = await savePatientToServer({
         ...current,
@@ -134,6 +167,8 @@ export default function Home() {
       setPatients((prev) => prev.map((p) => (p.id === id ? saved : p)));
     } catch (error: any) {
       setPatientsError(error.message || "Failed to discharge patient");
+    } finally {
+      setDischargingPatientId(null);
     }
   };
 
@@ -153,6 +188,7 @@ export default function Home() {
 
   const handleSaveBill = async (patientId: string, bill: Bill) => {
     setPatientsError("");
+    setIsSavingBill(true);
     try {
       const response = await fetch(`/api/patients/${patientId}/bills`, {
         method: "POST",
@@ -167,6 +203,8 @@ export default function Home() {
     } catch (error: any) {
       setPatientsError(error.message || "Failed to save bill");
       throw error;
+    } finally {
+      setIsSavingBill(false);
     }
 
     setEditingBill(null);
@@ -188,10 +226,12 @@ export default function Home() {
   };
 
   const handleSaveAdvance = async () => {
-    if (!advancePatientId) return;
+    if (!advancePatientId || isSavingAdvance) return;
     const amount = Number(advanceInput);
     if (!amount || amount <= 0) return;
 
+    setIsSavingAdvance(true);
+    setPatientsError("");
     try {
       const response = await fetch(`/api/patients/${advancePatientId}/advances`, {
         method: "POST",
@@ -206,6 +246,8 @@ export default function Home() {
       closeAdvanceModal();
     } catch (error: any) {
       setPatientsError(error.message || "Failed to save advance amount");
+    } finally {
+      setIsSavingAdvance(false);
     }
   };
 
@@ -254,24 +296,31 @@ export default function Home() {
         </div>
 
         {/* Content */}
-        {isLoadingPatients && (
-          <div className="mb-4 text-sm text-neutral-400">Loading patients...</div>
-        )}
+        {isLoadingPatients && patients.length === 0 ? (
+          <PatientsTableSkeleton />
+        ) : (
+          <>
+            {activeTab === 'admission' && (
+              <AdmittedPatientsTable
+                patients={admittedPatients}
+                dischargingId={dischargingPatientId}
+                onDischarge={handleDischarge}
+                onAddBill={openBillModal}
+                onEditBill={openEditBillModal}
+                onEditPatient={openEditPatientModal}
+                onAddAdvance={openAdvanceModal}
+                onAddNew={() => { setEditingPatient(null); setIsAddModalOpen(true); }}
+              />
+            )}
 
-        {activeTab === 'admission' && (
-          <AdmittedPatientsTable
-            patients={admittedPatients}
-            onDischarge={handleDischarge}
-            onAddBill={openBillModal}
-            onEditBill={openEditBillModal}
-            onEditPatient={openEditPatientModal}
-            onAddAdvance={openAdvanceModal}
-            onAddNew={() => { setEditingPatient(null); setIsAddModalOpen(true); }}
-          />
-        )}
-
-        {activeTab === 'discharged' && (
-          <DischargedPatientsTable patients={dischargedPatients} onViewBill={openEditBillModal} />
+            {activeTab === 'discharged' && (
+              <DischargedPatientsTable
+                patients={dischargedPatients}
+                onViewBill={openEditBillModal}
+                onAddBill={openBillModal}
+              />
+            )}
+          </>
         )}
       </div>
 
@@ -281,15 +330,14 @@ export default function Home() {
         existingPatient={editingPatient}
         nextRegNo={getNextRegNo()}
         onClose={closePatientModal}
-        onAddPatient={(patient) => {
-          void handleSavePatient(patient);
-        }}
+        onAddPatient={handleSavePatient}
       />
 
       <AddBillModal
         isOpen={isBillModalOpen}
         patient={selectedPatient}
         existingBill={editingBill}
+        isSaving={isSavingBill}
         onClose={closeBillModal}
         onSaveBill={handleSaveBill}
       />
@@ -312,16 +360,24 @@ export default function Home() {
               <button
                 type="button"
                 onClick={closeAdvanceModal}
-                className="px-4 py-2 text-neutral-400 hover:text-white"
+                disabled={isSavingAdvance}
+                className="px-4 py-2 text-neutral-400 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 Cancel
               </button>
               <button
                 type="button"
-                onClick={handleSaveAdvance}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg"
+                onClick={() => void handleSaveAdvance()}
+                disabled={isSavingAdvance}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
               >
-                Save Advance
+                {isSavingAdvance ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" /> Saving…
+                  </>
+                ) : (
+                  "Save Advance"
+                )}
               </button>
             </div>
           </div>
