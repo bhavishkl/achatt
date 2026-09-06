@@ -52,6 +52,18 @@ export default function BillItemInputRow({
             ))}
           </datalist>
         </div>
+        <div className="w-20">
+          <label className="block text-xs text-neutral-500 mb-1">Qty</label>
+          <input
+            type="number"
+            min="1"
+            className="w-full bg-neutral-950 border border-neutral-800 rounded px-2 py-1.5 text-sm focus:ring-2 focus:ring-blue-600 outline-none"
+            value={inputQty}
+            onChange={(e) => onQtyChange(e.target.value === "" ? "" : Number(e.target.value))}
+            onKeyDown={onKeyDown}
+            placeholder="1"
+          />
+        </div>
         <div className="w-28">
           <label className="block text-xs text-neutral-500 mb-1">Rate</label>
           <input
@@ -63,18 +75,6 @@ export default function BillItemInputRow({
             onChange={(e) => onRateChange(e.target.value === "" ? "" : Number(e.target.value))}
             onKeyDown={onKeyDown}
             placeholder="0"
-          />
-        </div>
-        <div className="w-20">
-          <label className="block text-xs text-neutral-500 mb-1">Qty</label>
-          <input
-            type="number"
-            min="1"
-            className="w-full bg-neutral-950 border border-neutral-800 rounded px-2 py-1.5 text-sm focus:ring-2 focus:ring-blue-600 outline-none"
-            value={inputQty}
-            onChange={(e) => onQtyChange(e.target.value === "" ? "" : Number(e.target.value))}
-            onKeyDown={onKeyDown}
-            placeholder="1"
           />
         </div>
         <div className="w-24 text-right text-sm font-medium text-neutral-400 pb-2">

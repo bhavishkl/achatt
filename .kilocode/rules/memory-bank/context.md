@@ -1,5 +1,10 @@
 # Context
 
+- **Add Bill modal: save-then-print + input order** (Inpatients page `/`):
+  - Removed the separate "Print Bill" button; the submit button is now "Save & Print Bill" / "Update & Print Bill" and prints automatically once the save succeeds (nothing prints if the save fails).
+  - `print.ts`: added `openPendingPrintWindow()` — the print tab is opened synchronously on click (while the user gesture is still trusted) and `openBillPrintWindow(html, targetWindow)` fills it in after the await, so popup blockers do not swallow the printout. Print is triggered via `onload` with a guarded timeout fallback.
+  - `BillItemInputRow`: Qty now sits directly after Item / Description, with Rate after it (order: Description -> Qty -> Rate -> line amount).
+
 - **IPD bill: DOA/DOD times + cash/online payment split** (Inpatients page `/`):
   - `Bill` type gained `dischargeTime`, `paidCash`, `paidOnline`; `Patient` gained `dischargeTime`.
   - `add-bill-modal/utils.ts`: new `formatDisplayTime` (24h -> "hh:mm AM/PM"), `formatDisplayDateTime`, `toTimeInputValue`, `currentTimeValue` helpers.

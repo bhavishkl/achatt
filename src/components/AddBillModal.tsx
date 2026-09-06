@@ -15,7 +15,11 @@ import {
   toTimeInputValue,
   extractPackages,
 } from "@/components/add-bill-modal/utils";
-import { buildBillPrintHtml, openBillPrintWindow } from "@/components/add-bill-modal/print";
+import {
+  buildBillPrintHtml,
+  openBillPrintWindow,
+  openPendingPrintWindow,
+} from "@/components/add-bill-modal/print";
 import PatientInfoCard from "@/components/add-bill-modal/PatientInfoCard";
 import WardPackageSection from "@/components/add-bill-modal/WardPackageSection";
 import BillItemInputRow from "@/components/add-bill-modal/BillItemInputRow";
@@ -236,38 +240,15 @@ export default function AddBillModal({
   const cashAmount = Math.max(0, Number(paidCash) || 0);
   const onlineAmount = Math.max(0, Number(paidOnline) || 0);
 
-  const handlePrintBill = () => {
-    if (!patient || billItems.length === 0) return;
-
-    const billDate = existingBill?.date || new Date().toISOString().split("T")[0];
-    const html = buildBillPrintHtml({
-      patient,
-      items: billItems,
-      billDate,
-      billNo: billNo || existingBill?.billNo,
-      dischargeDate,
-      dischargeTime,
-      ipBillType: isIpFinalBill ? "final" : "draft",
-      grossAmount: totalAmount,
-      advanceUsed: autoAdvanceUsed,
-      concession: concessionAmount,
-      netAmount: netPayable,
-      paidCash: cashAmount,
-      paidOnline: onlineAmount,
-      companyProfile,
-    });
-
-    openBillPrintWindow(html);
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!patient || billItems.length === 0 || isSaving) return;
 
+    const billDate = existingBill?.date || new Date().toISOString().split("T")[0];
     const bill: Bill = {
       id: existingBill?.id || Date.now().toString(),
       billNo: billNo || existingBill?.billNo,
-      date: existingBill?.date || new Date().toISOString().split("T")[0],
+      date: billDate,
       dischargeDate,
       dischargeTime,
       ipBillType: isIpFinalBill ? "final" : "draft",
@@ -283,12 +264,38 @@ export default function AddBillModal({
       })),
     };
 
+    // Reserved while the click is still a trusted gesture; filled in once the save succeeds.
+    const printWindow = openPendingPrintWindow();
+
     try {
       await onSaveBill(patient.id, bill);
-      onClose();
     } catch {
       // Error state is displayed by the parent page.
+      printWindow?.close();
+      return;
     }
+
+    openBillPrintWindow(
+      buildBillPrintHtml({
+        patient,
+        items: billItems,
+        billDate,
+        billNo: bill.billNo,
+        dischargeDate,
+        dischargeTime,
+        ipBillType: isIpFinalBill ? "final" : "draft",
+        grossAmount: totalAmount,
+        advanceUsed: autoAdvanceUsed,
+        concession: concessionAmount,
+        netAmount: netPayable,
+        paidCash: cashAmount,
+        paidOnline: onlineAmount,
+        companyProfile,
+      }),
+      printWindow
+    );
+
+    onClose();
   };
 
   const isEditing = !!existingBill;
@@ -418,7 +425,7 @@ export default function AddBillModal({
                   totalAmount={netPayable}
                 />
 
-                <BillActionButtons isEditing={isEditing} isSaving={isSaving} onCancel={onClose} onPrint={handlePrintBill} />
+                <BillActionButtons isEditing={isEditing} isSaving={isSaving} onCancel={onClose} />
               </div>
             </div>
           </div>

@@ -4,10 +4,9 @@ interface BillActionButtonsProps {
   isEditing: boolean;
   isSaving?: boolean;
   onCancel: () => void;
-  onPrint: () => void;
 }
 
-export default function BillActionButtons({ isEditing, isSaving = false, onCancel, onPrint }: BillActionButtonsProps) {
+export default function BillActionButtons({ isEditing, isSaving = false, onCancel }: BillActionButtonsProps) {
   return (
     <div className="flex justify-end gap-2 mt-3">
 
@@ -20,14 +19,6 @@ export default function BillActionButtons({ isEditing, isSaving = false, onCance
         Cancel
       </button>
       <button
-        type="button"
-        onClick={onPrint}
-        disabled={isSaving}
-        className="bg-neutral-800 hover:bg-neutral-700 text-neutral-200 px-4 py-1.5 rounded-lg font-medium transition-colors border border-neutral-700 disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        Print Bill
-      </button>
-      <button
         type="submit"
         disabled={isSaving}
         className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-1.5 rounded-lg font-medium transition-colors flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
@@ -37,7 +28,7 @@ export default function BillActionButtons({ isEditing, isSaving = false, onCance
             <Loader2 className="h-4 w-4 animate-spin" /> Saving…
           </>
         ) : (
-          isEditing ? "Update Bill" : "Save Bill"
+          isEditing ? "Update & Print Bill" : "Save & Print Bill"
         )}
       </button>
     </div>

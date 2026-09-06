@@ -207,13 +207,42 @@ export function buildBillPrintHtml({
         `;
 }
 
-export function openBillPrintWindow(html: string) {
+/**
+ * Opens the print window up-front, while the click is still a trusted user gesture.
+ * Saving happens before the bill HTML is ready, and browsers block `window.open`
+ * once the gesture has expired — so the tab is reserved first and filled in later.
+ */
+export function openPendingPrintWindow(): Window | null {
   const printWindow = window.open("", "_blank", "width=800,height=600");
   if (printWindow) {
-    printWindow.document.write(html);
+    printWindow.document.write(
+      `<!DOCTYPE html><html><head><title>Preparing bill…</title></head>
+       <body style="font-family:'Segoe UI',Arial,sans-serif;padding:32px;color:#444">Preparing bill…</body></html>`
+    );
     printWindow.document.close();
-    printWindow.onload = () => {
-      printWindow.print();
-    };
   }
+  return printWindow;
+}
+
+export function openBillPrintWindow(html: string, targetWindow?: Window | null) {
+  const printWindow = targetWindow && !targetWindow.closed
+    ? targetWindow
+    : window.open("", "_blank", "width=800,height=600");
+  if (!printWindow) return;
+
+  printWindow.document.open();
+  printWindow.document.write(html);
+  printWindow.document.close();
+
+  let hasPrinted = false;
+  const triggerPrint = () => {
+    if (hasPrinted || printWindow.closed) return;
+    hasPrinted = true;
+    printWindow.focus();
+    printWindow.print();
+  };
+
+  // `onload` may never fire for a reused window whose document already loaded.
+  printWindow.onload = triggerPrint;
+  setTimeout(triggerPrint, 600);
 }
