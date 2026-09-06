@@ -1,13 +1,11 @@
 "use client";
 
-import { Loader2, LogOut, ReceiptIndianRupee, SquarePen, Wallet } from "lucide-react";
+import { ReceiptIndianRupee, SquarePen, Wallet } from "lucide-react";
 import { Patient } from "@/types/patient";
 import { formatDisplayDate, formatDisplayTime } from "@/components/add-bill-modal/utils";
 
 interface AdmittedPatientsTableProps {
   patients: Patient[];
-  dischargingId?: string | null;
-  onDischarge: (id: string) => void;
   onAddBill: (id: string) => void;
   onEditPatient: (patientId: string) => void;
   onAddAdvance: (id: string) => void;
@@ -16,8 +14,6 @@ interface AdmittedPatientsTableProps {
 
 export default function AdmittedPatientsTable({
   patients,
-  dischargingId = null,
-  onDischarge,
   onAddBill,
   onEditPatient,
   onAddAdvance,
@@ -126,19 +122,6 @@ export default function AdmittedPatientsTable({
                           aria-label="Add Advance"
                         >
                           <Wallet className="h-4 w-4" />
-                        </button>
-                        <button
-                          onClick={() => onDischarge(patient.id)}
-                          disabled={dischargingId === patient.id}
-                          className={`${actionButtonClass} text-amber-400`}
-                          title={dischargingId === patient.id ? "Discharging…" : "Discharge"}
-                          aria-label={dischargingId === patient.id ? "Discharging" : "Discharge"}
-                        >
-                          {dischargingId === patient.id ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <LogOut className="h-4 w-4" />
-                          )}
                         </button>
                       </div>
                     </td>

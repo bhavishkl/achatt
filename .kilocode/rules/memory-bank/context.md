@@ -1,5 +1,10 @@
 # Context
 
+- **Discharge is now driven by the final bill** (Inpatients page `/`):
+  - Removed the Discharge icon button from `AdmittedPatientsTable` (props `onDischarge`/`dischargingId` dropped); Actions is now Add Bill / Edit Patient / Add Advance.
+  - `page.tsx`: deleted `handleDischarge` and the `dischargingPatientId` state. `handleSaveBill` now discharges the patient after a successful save when `bill.ipBillType === "final"` and the patient is not already discharged, using the bill's `dischargeDate`/`dischargeTime` (falling back to today/now). A failure there surfaces "Bill saved, but discharging the patient failed" without blocking the printout.
+  - `AddBillModal`: added the hint "Saving a final bill discharges the patient." under the IP Final Bill checkbox.
+
 - **Currently Admitted table UI** (`AdmittedPatientsTable.tsx`, Inpatients page `/`):
   - Added a "Total Admitted <n>" badge next to the heading (driven by `patients.length`).
   - Removed the whole `Bills` column (bill chips, running total, and the "+ Add Bill" button); the table is now Reg No / Patient Info / Ward-Bed / Admission / Attender / Actions. The `onEditBill` prop was dropped from the component and from `page.tsx` (the discharged table still uses `openEditBillModal` for viewing bills).

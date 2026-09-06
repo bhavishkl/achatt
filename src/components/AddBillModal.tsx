@@ -400,6 +400,9 @@ export default function AddBillModal({
                   />
                   IP Final Bill
                 </label>
+                <p className="text-xs text-neutral-500 mt-1 ml-6">
+                  Saving a final bill discharges the patient.
+                </p>
               </div>
 
               <PaymentSplitSection
