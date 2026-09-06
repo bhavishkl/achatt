@@ -311,7 +311,6 @@ export default function Home() {
                 dischargingId={dischargingPatientId}
                 onDischarge={handleDischarge}
                 onAddBill={openBillModal}
-                onEditBill={openEditBillModal}
                 onEditPatient={openEditPatientModal}
                 onAddAdvance={openAdvanceModal}
                 onAddNew={() => { setEditingPatient(null); setIsAddModalOpen(true); }}

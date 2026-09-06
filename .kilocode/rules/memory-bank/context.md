@@ -1,5 +1,10 @@
 # Context
 
+- **Currently Admitted table UI** (`AdmittedPatientsTable.tsx`, Inpatients page `/`):
+  - Added a "Total Admitted <n>" badge next to the heading (driven by `patients.length`).
+  - Removed the whole `Bills` column (bill chips, running total, and the "+ Add Bill" button); the table is now Reg No / Patient Info / Ward-Bed / Admission / Attender / Actions. The `onEditBill` prop was dropped from the component and from `page.tsx` (the discharged table still uses `openEditBillModal` for viewing bills).
+  - Replaced the ⋮ dropdown with inline icon-only buttons in Actions — Add Bill (`ReceiptIndianRupee`), Edit Patient (`SquarePen`), Add Advance (`Wallet`), Discharge (`LogOut`, swaps to a `Loader2` spinner while discharging). Each has `title` + `aria-label`; the `openMenuFor` state is gone.
+
 - **Bill printout: no payment split, smaller services table** (`add-bill-modal/print.ts`):
   - Removed the "Paid by Cash" / "Paid Online" / "Balance Due" rows from the printed bill and dropped `paidCash`/`paidOnline` from `buildBillPrintHtml`. The cash/online split is still captured in the Add Bill modal and saved on the bill record — it is just not printed.
   - Shrank the services (items) table: body font 13px -> 11px, header font 12px -> 10px, header padding 10px/12px -> 7px/10px, item cell padding 8px/12px -> 5px/10px. Summary rows (Gross, Advance, Concession, Net, amount in words) keep their existing sizes.
