@@ -15,8 +15,6 @@ export function buildBillPrintHtml({
   advanceUsed,
   concession,
   netAmount,
-  paidCash,
-  paidOnline,
   companyProfile,
 }: {
   patient: Patient;
@@ -30,8 +28,6 @@ export function buildBillPrintHtml({
   advanceUsed: number;
   concession: number;
   netAmount: number;
-  paidCash?: number;
-  paidOnline?: number;
   companyProfile: Company | null;
 }) {
   const companyName = companyProfile?.name || patient.hospitalName || "Hospital";
@@ -53,9 +49,6 @@ export function buildBillPrintHtml({
     });
   const netAmountWords = amountToWords(netAmount);
   const isFinal = ipBillType === "final";
-  const cashPaid = Number(paidCash) || 0;
-  const onlinePaid = Number(paidOnline) || 0;
-  const balanceDue = netAmount - (cashPaid + onlinePaid);
   const formatAmount = (value: number) =>
     value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
@@ -63,11 +56,11 @@ export function buildBillPrintHtml({
     .map(
       (item, i) => `
             <tr>
-                <td style="padding:8px 12px;text-align:center">${i + 1}</td>
-                <td style="padding:8px 12px">${item.description}</td>
-                <td style="padding:8px 12px;text-align:right">Rs ${item.rate.toFixed(2)}</td>
-                <td style="padding:8px 12px;text-align:center">${item.quantity}</td>
-                <td style="padding:8px 12px;text-align:right;font-weight:700;color:#000">Rs ${(item.rate * item.quantity).toFixed(2)}</td>
+                <td style="padding:5px 10px;text-align:center">${i + 1}</td>
+                <td style="padding:5px 10px">${item.description}</td>
+                <td style="padding:5px 10px;text-align:right">Rs ${item.rate.toFixed(2)}</td>
+                <td style="padding:5px 10px;text-align:center">${item.quantity}</td>
+                <td style="padding:5px 10px;text-align:right;font-weight:700;color:#000">Rs ${(item.rate * item.quantity).toFixed(2)}</td>
             </tr>
         `
     )
@@ -95,8 +88,8 @@ export function buildBillPrintHtml({
                 .meta-row { display: flex; align-items: center; gap: 8px; }
                 .meta-row .label-inline { color: #000; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; min-width: 70px; font-weight: 600; }
                 .meta-row .value-inline { color: #000; font-weight: 700; }
-                table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 13px; border: 1px solid #000; }
-                thead th { background: #f3f4f6; padding: 10px 12px; text-align: left; font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: #000; border: 1px solid #000; }
+                table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 11px; border: 1px solid #000; }
+                thead th { background: #f3f4f6; padding: 7px 10px; text-align: left; font-weight: 600; font-size: 10px; text-transform: uppercase; letter-spacing: 0.4px; color: #000; border: 1px solid #000; }
                 tbody td { color: #000; border: 1px solid #000; }
                 thead th:first-child { text-align: center; }
                 thead th:nth-child(3), thead th:nth-child(5) { text-align: right; }
@@ -175,21 +168,6 @@ export function buildBillPrintHtml({
                         <td colspan="4" style="text-align:right">${isFinal ? "Net Paid Amount" : "Net Payable"}</td>
                         <td style="text-align:right">Rs ${formatAmount(netAmount)}</td>
                     </tr>
-                    ${
-                      cashPaid > 0
-                        ? `<tr class="summary-row"><td colspan="4" style="text-align:right">Paid by Cash</td><td style="text-align:right">Rs ${formatAmount(cashPaid)}</td></tr>`
-                        : ""
-                    }
-                    ${
-                      onlinePaid > 0
-                        ? `<tr class="summary-row"><td colspan="4" style="text-align:right">Paid Online</td><td style="text-align:right">Rs ${formatAmount(onlinePaid)}</td></tr>`
-                        : ""
-                    }
-                    ${
-                      (cashPaid > 0 || onlinePaid > 0) && balanceDue > 0.009
-                        ? `<tr class="summary-row summary-concession"><td colspan="4" style="text-align:right">Balance Due</td><td style="text-align:right">Rs ${formatAmount(balanceDue)}</td></tr>`
-                        : ""
-                    }
                     <tr>
                         <td colspan="5" style="padding:8px 12px;font-size:12px;color:#000;border:1px solid #000;background:#f9fafb;">
                             <strong>Amount in Words:</strong> ${netAmountWords}

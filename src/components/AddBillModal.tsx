@@ -288,8 +288,6 @@ export default function AddBillModal({
         advanceUsed: autoAdvanceUsed,
         concession: concessionAmount,
         netAmount: netPayable,
-        paidCash: cashAmount,
-        paidOnline: onlineAmount,
         companyProfile,
       }),
       printWindow

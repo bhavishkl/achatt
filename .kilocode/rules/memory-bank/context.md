@@ -1,5 +1,9 @@
 # Context
 
+- **Bill printout: no payment split, smaller services table** (`add-bill-modal/print.ts`):
+  - Removed the "Paid by Cash" / "Paid Online" / "Balance Due" rows from the printed bill and dropped `paidCash`/`paidOnline` from `buildBillPrintHtml`. The cash/online split is still captured in the Add Bill modal and saved on the bill record — it is just not printed.
+  - Shrank the services (items) table: body font 13px -> 11px, header font 12px -> 10px, header padding 10px/12px -> 7px/10px, item cell padding 8px/12px -> 5px/10px. Summary rows (Gross, Advance, Concession, Net, amount in words) keep their existing sizes.
+
 - **Add Bill modal: save-then-print + input order** (Inpatients page `/`):
   - Removed the separate "Print Bill" button; the submit button is now "Save & Print Bill" / "Update & Print Bill" and prints automatically once the save succeeds (nothing prints if the save fails).
   - `print.ts`: added `openPendingPrintWindow()` — the print tab is opened synchronously on click (while the user gesture is still trusted) and `openBillPrintWindow(html, targetWindow)` fills it in after the await, so popup blockers do not swallow the printout. Print is triggered via `onload` with a guarded timeout fallback.
