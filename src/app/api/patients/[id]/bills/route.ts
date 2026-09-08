@@ -126,6 +126,38 @@ export async function POST(
       }
     }
 
+    // Saving an IP Final Bill is what discharges the patient: stamp the bill's
+    // discharge date/time onto the patients row, then flip the status.
+    if (bill.ipBillType === "final") {
+      const dischargePayload: Record<string, unknown> = {
+        status: "discharged",
+        discharge_date: bill.dischargeDate || new Date().toISOString().split("T")[0],
+        discharge_time: toTimeValue(bill.dischargeTime),
+        updated_at: new Date().toISOString(),
+      };
+
+      let { error: dischargeError } = await supabaseAdmin
+        .from("patients")
+        .update(dischargePayload)
+        .eq("id", patientId);
+
+      if (isMissingColumnError(dischargeError)) {
+        const { discharge_time: _dischargeTime, ...fallbackPayload } = dischargePayload;
+        console.warn("patients.discharge_time is missing — discharged without it. Run the migration in sql_command.sql.");
+        ({ error: dischargeError } = await supabaseAdmin
+          .from("patients")
+          .update(fallbackPayload)
+          .eq("id", patientId));
+      }
+
+      if (dischargeError) {
+        return NextResponse.json(
+          { message: "Bill saved, but discharging the patient failed", error: dischargeError.message },
+          { status: 500 }
+        );
+      }
+    }
+
     const { data: patientRow, error: patientError } = await supabaseAdmin
       .from("patients")
       .select("*")

@@ -1,5 +1,9 @@
 # Context
 
+- **Final bill writes the discharge date/time onto the patients row** (`api/patients/[id]/bills/route.ts`):
+  - Moved the discharge server-side into the bill POST: when `bill.ipBillType === "final"`, the route updates `patients.status = 'discharged'`, `patients.discharge_date` = the modal's discharge date (today if blank) and `patients.discharge_time` = the modal's discharge time, before re-reading and hydrating the patient. Missing-column fallback keeps it working pre-migration; a failure returns "Bill saved, but discharging the patient failed".
+  - `page.tsx#handleSaveBill` no longer issues a second PUT — the bill response already carries the discharged patient with its date/time.
+
 - **Discharge is now driven by the final bill** (Inpatients page `/`):
   - Removed the Discharge icon button from `AdmittedPatientsTable` (props `onDischarge`/`dischargingId` dropped); Actions is now Add Bill / Edit Patient / Add Advance.
   - `page.tsx`: deleted `handleDischarge` and the `dischargingPatientId` state. `handleSaveBill` now discharges the patient after a successful save when `bill.ipBillType === "final"` and the patient is not already discharged, using the bill's `dischargeDate`/`dischargeTime` (falling back to today/now). A failure there surfaces "Bill saved, but discharging the patient failed" without blocking the printout.

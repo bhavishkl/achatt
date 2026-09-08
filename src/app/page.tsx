@@ -8,7 +8,6 @@ import DischargedPatientsTable from "@/components/DischargedPatientsTable";
 import AddPatientModal from "@/components/AddPatientModal";
 import AddBillModal from "@/components/AddBillModal";
 import { useAppStore } from "@/lib/store";
-import { currentTimeValue } from "@/components/add-bill-modal/utils";
 
 function PatientsTableSkeleton() {
   return (
@@ -173,7 +172,6 @@ export default function Home() {
     setPatientsError("");
     setIsSavingBill(true);
 
-    let savedPatient: Patient;
     try {
       const response = await fetch(`/api/patients/${patientId}/bills`, {
         method: "POST",
@@ -184,31 +182,16 @@ export default function Home() {
       if (!response.ok) {
         throw new Error(data.message || "Failed to save bill");
       }
-      savedPatient = normalizePatient(data.patient);
-      setPatients((prev) => prev.map((p) => (p.id === patientId ? savedPatient : p)));
+      // A final bill also discharges the patient server-side, so the response
+      // already carries the updated status and discharge date/time.
+      setPatients((prev) => prev.map((p) => (p.id === patientId ? normalizePatient(data.patient) : p)));
     } catch (error: any) {
       setPatientsError(error.message || "Failed to save bill");
-      setIsSavingBill(false);
       throw error;
+    } finally {
+      setIsSavingBill(false);
     }
 
-    // A saved IP Final Bill is what discharges the patient.
-    if (bill.ipBillType === "final" && savedPatient.status !== "discharged") {
-      try {
-        const discharged = await savePatientToServer({
-          ...savedPatient,
-          status: "discharged",
-          dischargeDate: bill.dischargeDate || new Date().toISOString().split("T")[0],
-          dischargeTime: bill.dischargeTime || currentTimeValue(),
-        });
-        setPatients((prev) => prev.map((p) => (p.id === patientId ? discharged : p)));
-      } catch (error: any) {
-        // The bill itself is saved — surface the problem without blocking the printout.
-        setPatientsError(error.message || "Bill saved, but discharging the patient failed");
-      }
-    }
-
-    setIsSavingBill(false);
     setEditingBill(null);
   };
 
