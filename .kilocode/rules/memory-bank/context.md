@@ -1,5 +1,36 @@
 # Context
 
+- **Final bill writes the discharge date/time onto the patients row** (`api/patients/[id]/bills/route.ts`):
+  - Moved the discharge server-side into the bill POST: when `bill.ipBillType === "final"`, the route updates `patients.status = 'discharged'`, `patients.discharge_date` = the modal's discharge date (today if blank) and `patients.discharge_time` = the modal's discharge time, before re-reading and hydrating the patient. Missing-column fallback keeps it working pre-migration; a failure returns "Bill saved, but discharging the patient failed".
+  - `page.tsx#handleSaveBill` no longer issues a second PUT — the bill response already carries the discharged patient with its date/time.
+
+- **Discharge is now driven by the final bill** (Inpatients page `/`):
+  - Removed the Discharge icon button from `AdmittedPatientsTable` (props `onDischarge`/`dischargingId` dropped); Actions is now Add Bill / Edit Patient / Add Advance.
+  - `page.tsx`: deleted `handleDischarge` and the `dischargingPatientId` state. `handleSaveBill` now discharges the patient after a successful save when `bill.ipBillType === "final"` and the patient is not already discharged, using the bill's `dischargeDate`/`dischargeTime` (falling back to today/now). A failure there surfaces "Bill saved, but discharging the patient failed" without blocking the printout.
+  - `AddBillModal`: added the hint "Saving a final bill discharges the patient." under the IP Final Bill checkbox.
+
+- **Currently Admitted table UI** (`AdmittedPatientsTable.tsx`, Inpatients page `/`):
+  - Added a "Total Admitted <n>" badge next to the heading (driven by `patients.length`).
+  - Removed the whole `Bills` column (bill chips, running total, and the "+ Add Bill" button); the table is now Reg No / Patient Info / Ward-Bed / Admission / Attender / Actions. The `onEditBill` prop was dropped from the component and from `page.tsx` (the discharged table still uses `openEditBillModal` for viewing bills).
+  - Replaced the ⋮ dropdown with inline icon-only buttons in Actions — Add Bill (`ReceiptIndianRupee`), Edit Patient (`SquarePen`), Add Advance (`Wallet`), Discharge (`LogOut`, swaps to a `Loader2` spinner while discharging). Each has `title` + `aria-label`; the `openMenuFor` state is gone.
+
+- **Bill printout: no payment split, smaller services table** (`add-bill-modal/print.ts`):
+  - Removed the "Paid by Cash" / "Paid Online" / "Balance Due" rows from the printed bill and dropped `paidCash`/`paidOnline` from `buildBillPrintHtml`. The cash/online split is still captured in the Add Bill modal and saved on the bill record — it is just not printed.
+  - Shrank the services (items) table: body font 13px -> 11px, header font 12px -> 10px, header padding 10px/12px -> 7px/10px, item cell padding 8px/12px -> 5px/10px. Summary rows (Gross, Advance, Concession, Net, amount in words) keep their existing sizes.
+
+- **Add Bill modal: save-then-print + input order** (Inpatients page `/`):
+  - Removed the separate "Print Bill" button; the submit button is now "Save & Print Bill" / "Update & Print Bill" and prints automatically once the save succeeds (nothing prints if the save fails).
+  - `print.ts`: added `openPendingPrintWindow()` — the print tab is opened synchronously on click (while the user gesture is still trusted) and `openBillPrintWindow(html, targetWindow)` fills it in after the await, so popup blockers do not swallow the printout. Print is triggered via `onload` with a guarded timeout fallback.
+  - `BillItemInputRow`: Qty now sits directly after Item / Description, with Rate after it (order: Description -> Qty -> Rate -> line amount).
+
+- **IPD bill: DOA/DOD times + cash/online payment split** (Inpatients page `/`):
+  - `Bill` type gained `dischargeTime`, `paidCash`, `paidOnline`; `Patient` gained `dischargeTime`.
+  - `add-bill-modal/utils.ts`: new `formatDisplayTime` (24h -> "hh:mm AM/PM"), `formatDisplayDateTime`, `toTimeInputValue`, `currentTimeValue` helpers.
+  - `print.ts`: DOA now prints `admissionDate + admissionTime`, DOD prints the bill's `dischargeDate + dischargeTime`; summary adds "Paid by Cash" / "Paid Online" rows and a "Balance Due" row when the split is short of the net amount.
+  - `AddBillModal`: Discharge Date/Time are a 2-column pair (time defaults to the bill's, then the patient's, then now); new `PaymentSplitSection.tsx` with Cash + Online inputs, an "All cash" shortcut, and a live Collected / Balance / Excess indicator. Both values are saved on the bill and passed to the printout.
+  - Persistence: `patient_bills.discharge_time`, `patient_bills.paid_cash`, `patient_bills.paid_online`, `patients.discharge_time` (migration appended to `sql_command.sql`, columns added to `schema.json`). Writes degrade gracefully via `isMissingColumnError` in `api/patients/_utils.ts` (retry without the new columns) so billing keeps working until the migration is applied.
+  - Discharging from the patients table now records the discharge time; discharged/admitted tables show the time under the date.
+
 - **API loading states on Inpatients page** (`/`, PR #6):
   - Replaced the plain "Loading patients..." text with a shimmering `PatientsTableSkeleton` (rendered while the initial `/api/patients` fetch is in flight and the list is empty).
   - `AddPatientModal`: submit is now async — shows a spinner ("Saving…") on the submit button, disables Cancel, and stays open on save failure (page's `handleSavePatient` rethrows after surfacing the error). Ward/Doctor dropdowns show "Loading wards…/Loading doctors…" while `/api/ipd/wards` + `/api/ipd/doctors` are in flight.

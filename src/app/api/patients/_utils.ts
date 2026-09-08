@@ -5,6 +5,31 @@ function toNumber(value: unknown) {
   return Number.isFinite(n) ? n : 0;
 }
 
+/** Accepts "HH:mm" / "HH:mm:ss" and returns a Postgres `time` value, or null. */
+export function toTimeValue(value: unknown) {
+  if (!value) return null;
+  const match = String(value).trim().match(/^(\d{1,2}):(\d{2})/);
+  if (!match) return null;
+  const hours = Number(match[1]);
+  const minutes = Number(match[2]);
+  if (hours > 23 || minutes > 59) return null;
+  return `${String(hours).padStart(2, "0")}:${match[2]}`;
+}
+
+/**
+ * True when Postgres/PostgREST rejected the write because a column is not there yet
+ * (i.e. the migration in sql_command.sql has not been applied on this database).
+ */
+export function isMissingColumnError(error: { code?: string; message?: string } | null) {
+  if (!error) return false;
+  const message = String(error.message ?? "").toLowerCase();
+  return (
+    error.code === "42703" ||
+    error.code === "PGRST204" ||
+    (message.includes("column") && (message.includes("does not exist") || message.includes("could not find")))
+  );
+}
+
 export function mapPatientRow(row: any) {
   return {
     id: row.id,
@@ -28,6 +53,7 @@ export function mapPatientRow(row: any) {
     diagnosis: "",
     status: row.status,
     dischargeDate: row.discharge_date ?? undefined,
+    dischargeTime: row.discharge_time ?? undefined,
     advanceBalance: 0,
     bills: [],
   };
@@ -40,11 +66,14 @@ function mapBillRow(row: any) {
     billNo: row.bill_no ?? undefined,
     date: row.bill_date,
     dischargeDate: row.discharge_date ?? "",
+    dischargeTime: row.discharge_time ?? "",
     ipBillType: row.ip_bill_type === "final" ? "final" : "draft",
     grossAmount: toNumber(row.gross_amount),
     advanceUsed: toNumber(row.advance_used),
     concession: toNumber(row.concession),
     totalAmount: toNumber(row.total_amount),
+    paidCash: toNumber(row.paid_cash),
+    paidOnline: toNumber(row.paid_online),
     items: items.map((item: any, index: number) => ({
       id: String(item?.id ?? `${row.id}-item-${index + 1}`),
       description: String(item?.description ?? ""),

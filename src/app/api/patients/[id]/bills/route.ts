@@ -1,11 +1,19 @@
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { NextResponse } from "next/server";
-import { hydratePatient } from "@/app/api/patients/_utils";
+import { hydratePatient, isMissingColumnError, toTimeValue } from "@/app/api/patients/_utils";
 
 function toNumber(value: unknown) {
   const n = Number(value ?? 0);
   return Number.isFinite(n) ? n : 0;
 }
+
+/**
+ * Columns added by the discharge-time / payment-split migration (see sql_command.sql).
+ * If the migration has not been applied yet, the upsert is retried without them so
+ * billing keeps working instead of hard-failing.
+ */
+const OPTIONAL_BILL_COLUMNS = ["discharge_time", "paid_cash", "paid_online"] as const;
+
 
 async function generateBillNo(): Promise<string> {
   const { data, error } = await supabaseAdmin
@@ -65,13 +73,29 @@ export async function POST(
       advance_used: toNumber(bill.advanceUsed),
       concession: toNumber(bill.concession),
       total_amount: toNumber(bill.totalAmount),
+      discharge_time: toTimeValue(bill.dischargeTime),
+      paid_cash: toNumber(bill.paidCash),
+      paid_online: toNumber(bill.paidOnline),
       items_json: Array.isArray(bill.items) ? bill.items : [],
       updated_at: new Date().toISOString(),
     };
 
-    const { error: upsertError } = await supabaseAdmin
+    let { error: upsertError } = await supabaseAdmin
       .from("patient_bills")
       .upsert(payload, { onConflict: "id" });
+
+    if (isMissingColumnError(upsertError)) {
+      const fallbackPayload = { ...payload };
+      for (const column of OPTIONAL_BILL_COLUMNS) {
+        delete (fallbackPayload as Record<string, unknown>)[column];
+      }
+      console.warn(
+        "patient_bills is missing discharge_time/paid_cash/paid_online — saved without them. Run the migration in sql_command.sql."
+      );
+      ({ error: upsertError } = await supabaseAdmin
+        .from("patient_bills")
+        .upsert(fallbackPayload, { onConflict: "id" }));
+    }
 
     if (upsertError) {
       return NextResponse.json({ message: "Error saving bill", error: upsertError.message }, { status: 500 });
@@ -99,6 +123,38 @@ export async function POST(
 
       if (advanceError) {
         return NextResponse.json({ message: "Bill saved, but advance adjustment failed", error: advanceError.message }, { status: 500 });
+      }
+    }
+
+    // Saving an IP Final Bill is what discharges the patient: stamp the bill's
+    // discharge date/time onto the patients row, then flip the status.
+    if (bill.ipBillType === "final") {
+      const dischargePayload: Record<string, unknown> = {
+        status: "discharged",
+        discharge_date: bill.dischargeDate || new Date().toISOString().split("T")[0],
+        discharge_time: toTimeValue(bill.dischargeTime),
+        updated_at: new Date().toISOString(),
+      };
+
+      let { error: dischargeError } = await supabaseAdmin
+        .from("patients")
+        .update(dischargePayload)
+        .eq("id", patientId);
+
+      if (isMissingColumnError(dischargeError)) {
+        const { discharge_time: _dischargeTime, ...fallbackPayload } = dischargePayload;
+        console.warn("patients.discharge_time is missing — discharged without it. Run the migration in sql_command.sql.");
+        ({ error: dischargeError } = await supabaseAdmin
+          .from("patients")
+          .update(fallbackPayload)
+          .eq("id", patientId));
+      }
+
+      if (dischargeError) {
+        return NextResponse.json(
+          { message: "Bill saved, but discharging the patient failed", error: dischargeError.message },
+          { status: 500 }
+        );
       }
     }
 

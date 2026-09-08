@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { Patient } from "@/types/patient";
-import { formatDisplayDate } from "@/components/add-bill-modal/utils";
+import { formatDisplayDate, formatDisplayTime } from "@/components/add-bill-modal/utils";
 
 interface DischargedPatientsTableProps {
     patients: Patient[];
@@ -251,8 +251,18 @@ export default function DischargedPatientsTable({
                                             <div>{patient.wardName}</div>
                                             <div className="text-xs text-neutral-500">Bed: {patient.bedNo}</div>
                                         </td>
-                                        <td className="p-4 text-neutral-400">{formatDisplayDate(patient.admissionDate)}</td>
-                                        <td className="p-4 text-green-400">{formatDisplayDate(patient.dischargeDate)}</td>
+                                        <td className="p-4 text-neutral-400">
+                                            <div>{formatDisplayDate(patient.admissionDate)}</div>
+                                            {formatDisplayTime(patient.admissionTime) && (
+                                                <div className="text-xs text-neutral-500">{formatDisplayTime(patient.admissionTime)}</div>
+                                            )}
+                                        </td>
+                                        <td className="p-4 text-green-400">
+                                            <div>{formatDisplayDate(patient.dischargeDate)}</div>
+                                            {formatDisplayTime(patient.dischargeTime) && (
+                                                <div className="text-xs text-green-600">{formatDisplayTime(patient.dischargeTime)}</div>
+                                            )}
+                                        </td>
                                         <td className="p-4">
                                             <div className="flex flex-col gap-1">
                                                 {patient.bills && patient.bills.length > 0 ? (

@@ -42,10 +42,13 @@ const normalizePatient = (p: Patient): Patient => ({
   bills: (p.bills ?? []).map((b) => ({
     ...b,
     dischargeDate: b.dischargeDate ?? "",
+    dischargeTime: b.dischargeTime ?? "",
     ipBillType: b.ipBillType ?? "draft",
     grossAmount: b.grossAmount ?? b.totalAmount,
     advanceUsed: b.advanceUsed ?? 0,
     concession: b.concession ?? 0,
+    paidCash: b.paidCash ?? 0,
+    paidOnline: b.paidOnline ?? 0,
   })),
 });
 
@@ -66,7 +69,6 @@ export default function Home() {
   const [advanceInput, setAdvanceInput] = useState<number | string>('');
 
   // API in-flight states
-  const [dischargingPatientId, setDischargingPatientId] = useState<string | null>(null);
   const [isSavingBill, setIsSavingBill] = useState(false);
   const [isSavingAdvance, setIsSavingAdvance] = useState(false);
 
@@ -152,26 +154,6 @@ export default function Home() {
     setEditingPatient(null);
   };
 
-  const handleDischarge = async (id: string) => {
-    const current = patients.find((p) => p.id === id);
-    if (!current || dischargingPatientId) return;
-
-    setDischargingPatientId(id);
-    setPatientsError("");
-    try {
-      const saved = await savePatientToServer({
-        ...current,
-        status: "discharged",
-        dischargeDate: new Date().toISOString().split("T")[0],
-      });
-      setPatients((prev) => prev.map((p) => (p.id === id ? saved : p)));
-    } catch (error: any) {
-      setPatientsError(error.message || "Failed to discharge patient");
-    } finally {
-      setDischargingPatientId(null);
-    }
-  };
-
   const openBillModal = (patientId: string) => {
     setSelectedPatientId(patientId);
     setEditingBill(null);
@@ -189,6 +171,7 @@ export default function Home() {
   const handleSaveBill = async (patientId: string, bill: Bill) => {
     setPatientsError("");
     setIsSavingBill(true);
+
     try {
       const response = await fetch(`/api/patients/${patientId}/bills`, {
         method: "POST",
@@ -199,6 +182,8 @@ export default function Home() {
       if (!response.ok) {
         throw new Error(data.message || "Failed to save bill");
       }
+      // A final bill also discharges the patient server-side, so the response
+      // already carries the updated status and discharge date/time.
       setPatients((prev) => prev.map((p) => (p.id === patientId ? normalizePatient(data.patient) : p)));
     } catch (error: any) {
       setPatientsError(error.message || "Failed to save bill");
@@ -303,10 +288,7 @@ export default function Home() {
             {activeTab === 'admission' && (
               <AdmittedPatientsTable
                 patients={admittedPatients}
-                dischargingId={dischargingPatientId}
-                onDischarge={handleDischarge}
                 onAddBill={openBillModal}
-                onEditBill={openEditBillModal}
                 onEditPatient={openEditPatientModal}
                 onAddAdvance={openAdvanceModal}
                 onAddNew={() => { setEditingPatient(null); setIsAddModalOpen(true); }}

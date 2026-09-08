@@ -171,6 +171,7 @@ export default function AddPatientModal({
             diagnosis: existingPatient?.diagnosis ?? '',
             status: existingPatient?.status || 'admitted',
             dischargeDate: existingPatient?.dischargeDate,
+            dischargeTime: existingPatient?.dischargeTime,
             advanceBalance: existingPatient?.advanceBalance ?? 0,
             bills: existingPatient?.bills || [],
         };

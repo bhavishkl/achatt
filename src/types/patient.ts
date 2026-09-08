@@ -11,11 +11,16 @@ export interface Bill {
     billNo?: string;
     date: string;
     dischargeDate?: string;
+    dischargeTime?: string; // HH:mm
     ipBillType?: "draft" | "final";
     grossAmount?: number;
     advanceUsed?: number;
     concession?: number;
     totalAmount: number;
+    /** Part of the net amount collected in cash. */
+    paidCash?: number;
+    /** Part of the net amount collected online (UPI / card / bank transfer). */
+    paidOnline?: number;
     items: BillItem[];
 }
 
@@ -54,6 +59,7 @@ export interface Patient {
     diagnosis: string; // Kept for backward compatibility/quick view
     status: 'admitted' | 'discharged';
     dischargeDate?: string;
+    dischargeTime?: string; // HH:mm
     advanceBalance: number;
     bills: Bill[];
 }

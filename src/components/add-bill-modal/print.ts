@@ -1,7 +1,7 @@
 import type { Company } from "@/lib/types";
 import type { Patient } from "@/types/patient";
 import type { BillDraftItem } from "@/components/add-bill-modal/types";
-import { formatDisplayDate, amountToWords } from "@/components/add-bill-modal/utils";
+import { formatDisplayDate, formatDisplayDateTime, amountToWords } from "@/components/add-bill-modal/utils";
 
 export function buildBillPrintHtml({
   patient,
@@ -9,6 +9,7 @@ export function buildBillPrintHtml({
   billDate,
   billNo,
   dischargeDate,
+  dischargeTime,
   ipBillType,
   grossAmount,
   advanceUsed,
@@ -21,6 +22,7 @@ export function buildBillPrintHtml({
   billDate: string;
   billNo?: string;
   dischargeDate: string;
+  dischargeTime?: string;
   ipBillType: "draft" | "final";
   grossAmount: number;
   advanceUsed: number;
@@ -36,8 +38,8 @@ export function buildBillPrintHtml({
   const companyOwner = companyProfile?.ownerName || "";
 
   const formattedBillDate = formatDisplayDate(billDate);
-  const formattedAdmissionDate = formatDisplayDate(patient.admissionDate);
-  const formattedDischargeDate = dischargeDate ? formatDisplayDate(dischargeDate) : "-";
+  const formattedAdmissionDate = formatDisplayDateTime(patient.admissionDate, patient.admissionTime);
+  const formattedDischargeDate = dischargeDate ? formatDisplayDateTime(dischargeDate, dischargeTime) : "-";
     const printDateTime = new Date().toLocaleString(undefined, {
         day: "2-digit",
         month: "2-digit",
@@ -47,16 +49,18 @@ export function buildBillPrintHtml({
     });
   const netAmountWords = amountToWords(netAmount);
   const isFinal = ipBillType === "final";
+  const formatAmount = (value: number) =>
+    value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
   const itemsRows = items
     .map(
       (item, i) => `
             <tr>
-                <td style="padding:8px 12px;text-align:center">${i + 1}</td>
-                <td style="padding:8px 12px">${item.description}</td>
-                <td style="padding:8px 12px;text-align:right">Rs ${item.rate.toFixed(2)}</td>
-                <td style="padding:8px 12px;text-align:center">${item.quantity}</td>
-                <td style="padding:8px 12px;text-align:right;font-weight:700;color:#000">Rs ${(item.rate * item.quantity).toFixed(2)}</td>
+                <td style="padding:5px 10px;text-align:center">${i + 1}</td>
+                <td style="padding:5px 10px">${item.description}</td>
+                <td style="padding:5px 10px;text-align:right">Rs ${item.rate.toFixed(2)}</td>
+                <td style="padding:5px 10px;text-align:center">${item.quantity}</td>
+                <td style="padding:5px 10px;text-align:right;font-weight:700;color:#000">Rs ${(item.rate * item.quantity).toFixed(2)}</td>
             </tr>
         `
     )
@@ -70,10 +74,11 @@ export function buildBillPrintHtml({
             <style>
                 * { margin: 0; padding: 0; box-sizing: border-box; }
                 body { font-family: 'Segoe UI', Arial, sans-serif; color: #1a1a1a; padding: 32px; max-width: 800px; margin: 0 auto; }
+                body.final-bill { padding-top: 10px; }
                 .header { text-align: center; padding-top: 10px; padding-bottom: 10px; margin-bottom: 10px; }
                 .header h1 { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
                 .header p { font-size: 12px; color: #000; }
-                .letterhead-space { height: 140px; }
+                .letterhead-space { height: 90px; }
                 .bill-type-banner { width: 100%; background: #f3f4f6; color: #000; border: 1px solid #000; text-align: center; font-size: 12px; font-weight: 700; letter-spacing: 0.7px; text-transform: uppercase; padding: 7px 10px; margin-bottom: 16px; }
                 .bill-meta { display: flex; justify-content: space-between; margin-bottom: 20px; font-size: 13px; }
                 .bill-meta div { line-height: 1.6; }
@@ -83,8 +88,8 @@ export function buildBillPrintHtml({
                 .meta-row { display: flex; align-items: center; gap: 8px; }
                 .meta-row .label-inline { color: #000; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; min-width: 70px; font-weight: 600; }
                 .meta-row .value-inline { color: #000; font-weight: 700; }
-                table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 13px; border: 1px solid #000; }
-                thead th { background: #f3f4f6; padding: 10px 12px; text-align: left; font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: #000; border: 1px solid #000; }
+                table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 11px; border: 1px solid #000; }
+                thead th { background: #f3f4f6; padding: 7px 10px; text-align: left; font-weight: 600; font-size: 10px; text-transform: uppercase; letter-spacing: 0.4px; color: #000; border: 1px solid #000; }
                 tbody td { color: #000; border: 1px solid #000; }
                 thead th:first-child { text-align: center; }
                 thead th:nth-child(3), thead th:nth-child(5) { text-align: right; }
@@ -97,11 +102,12 @@ export function buildBillPrintHtml({
                 .print-date { color: #6b7280; font-size: 10px; margin-bottom: 4px; }
                 @media print {
                     body { padding: 16px; }
+                    body.final-bill { padding-top: 0; }
                     @page { margin: 12mm; }
                 }
             </style>
         </head>
-        <body>
+        <body${isFinal ? ` class="final-bill"` : ""}>
             ${
               isFinal
                 ? `<div class="letterhead-space"></div>`
@@ -160,7 +166,7 @@ export function buildBillPrintHtml({
                     }
                     <tr class="summary-total">
                         <td colspan="4" style="text-align:right">${isFinal ? "Net Paid Amount" : "Net Payable"}</td>
-                        <td style="text-align:right">Rs ${netAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                        <td style="text-align:right">Rs ${formatAmount(netAmount)}</td>
                     </tr>
                     <tr>
                         <td colspan="5" style="padding:8px 12px;font-size:12px;color:#000;border:1px solid #000;background:#f9fafb;">
@@ -179,13 +185,42 @@ export function buildBillPrintHtml({
         `;
 }
 
-export function openBillPrintWindow(html: string) {
+/**
+ * Opens the print window up-front, while the click is still a trusted user gesture.
+ * Saving happens before the bill HTML is ready, and browsers block `window.open`
+ * once the gesture has expired — so the tab is reserved first and filled in later.
+ */
+export function openPendingPrintWindow(): Window | null {
   const printWindow = window.open("", "_blank", "width=800,height=600");
   if (printWindow) {
-    printWindow.document.write(html);
+    printWindow.document.write(
+      `<!DOCTYPE html><html><head><title>Preparing bill…</title></head>
+       <body style="font-family:'Segoe UI',Arial,sans-serif;padding:32px;color:#444">Preparing bill…</body></html>`
+    );
     printWindow.document.close();
-    printWindow.onload = () => {
-      printWindow.print();
-    };
   }
+  return printWindow;
+}
+
+export function openBillPrintWindow(html: string, targetWindow?: Window | null) {
+  const printWindow = targetWindow && !targetWindow.closed
+    ? targetWindow
+    : window.open("", "_blank", "width=800,height=600");
+  if (!printWindow) return;
+
+  printWindow.document.open();
+  printWindow.document.write(html);
+  printWindow.document.close();
+
+  let hasPrinted = false;
+  const triggerPrint = () => {
+    if (hasPrinted || printWindow.closed) return;
+    hasPrinted = true;
+    printWindow.focus();
+    printWindow.print();
+  };
+
+  // `onload` may never fire for a reused window whose document already loaded.
+  printWindow.onload = triggerPrint;
+  setTimeout(triggerPrint, 600);
 }
