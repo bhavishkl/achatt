@@ -154,7 +154,18 @@ export default function Home() {
     setEditingPatient(null);
   };
 
-  const openBillModal = (patientId: string) => {
+  const openInpatientBillModal = (patientId: string) => {
+    const patient = patients.find((p) => p.id === patientId);
+
+    setSelectedPatientId(patientId);
+    // An admission has one active bill. Reopening billing must continue the
+    // most recently saved bill instead of assigning another bill number and
+    // inserting a second bill for the same stay. Bills are returned newest-first.
+    setEditingBill(patient?.bills?.[0] ?? null);
+    setIsBillModalOpen(true);
+  };
+
+  const openNewBillModal = (patientId: string) => {
     setSelectedPatientId(patientId);
     setEditingBill(null);
     setIsBillModalOpen(true);
@@ -288,7 +299,7 @@ export default function Home() {
             {activeTab === 'admission' && (
               <AdmittedPatientsTable
                 patients={admittedPatients}
-                onAddBill={openBillModal}
+                onAddBill={openInpatientBillModal}
                 onEditPatient={openEditPatientModal}
                 onAddAdvance={openAdvanceModal}
                 onAddNew={() => { setEditingPatient(null); setIsAddModalOpen(true); }}
@@ -299,7 +310,7 @@ export default function Home() {
               <DischargedPatientsTable
                 patients={dischargedPatients}
                 onViewBill={openEditBillModal}
-                onAddBill={openBillModal}
+                onAddBill={openNewBillModal}
               />
             )}
           </>

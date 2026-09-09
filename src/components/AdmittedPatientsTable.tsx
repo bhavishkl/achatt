@@ -102,8 +102,8 @@ export default function AdmittedPatientsTable({
                         <button
                           onClick={() => onAddBill(patient.id)}
                           className={`${actionButtonClass} text-blue-400`}
-                          title="Add Bill"
-                          aria-label="Add Bill"
+                          title={patient.bills?.length ? "Edit Bill" : "Add Bill"}
+                          aria-label={patient.bills?.length ? "Edit Bill" : "Add Bill"}
                         >
                           <ReceiptIndianRupee className="h-4 w-4" />
                         </button>
