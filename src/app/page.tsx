@@ -8,6 +8,7 @@ import DischargedPatientsTable from "@/components/DischargedPatientsTable";
 import AddPatientModal from "@/components/AddPatientModal";
 import AddBillModal from "@/components/AddBillModal";
 import { useAppStore } from "@/lib/store";
+import { currentTimeValue } from "@/components/add-bill-modal/utils";
 
 function PatientsTableSkeleton() {
   return (
@@ -69,6 +70,7 @@ export default function Home() {
   const [advanceInput, setAdvanceInput] = useState<number | string>('');
 
   // API in-flight states
+  const [dischargingPatientId, setDischargingPatientId] = useState<string | null>(null);
   const [isSavingBill, setIsSavingBill] = useState(false);
   const [isSavingAdvance, setIsSavingAdvance] = useState(false);
 
@@ -154,18 +156,28 @@ export default function Home() {
     setEditingPatient(null);
   };
 
-  const openInpatientBillModal = (patientId: string) => {
-    const patient = patients.find((p) => p.id === patientId);
+  const handleDischarge = async (id: string) => {
+    const current = patients.find((p) => p.id === id);
+    if (!current || dischargingPatientId) return;
 
-    setSelectedPatientId(patientId);
-    // An admission has one active bill. Reopening billing must continue the
-    // most recently saved bill instead of assigning another bill number and
-    // inserting a second bill for the same stay. Bills are returned newest-first.
-    setEditingBill(patient?.bills?.[0] ?? null);
-    setIsBillModalOpen(true);
+    setDischargingPatientId(id);
+    setPatientsError("");
+    try {
+      const saved = await savePatientToServer({
+        ...current,
+        status: "discharged",
+        dischargeDate: new Date().toISOString().split("T")[0],
+        dischargeTime: currentTimeValue(),
+      });
+      setPatients((prev) => prev.map((p) => (p.id === id ? saved : p)));
+    } catch (error: any) {
+      setPatientsError(error.message || "Failed to discharge patient");
+    } finally {
+      setDischargingPatientId(null);
+    }
   };
 
-  const openNewBillModal = (patientId: string) => {
+  const openBillModal = (patientId: string) => {
     setSelectedPatientId(patientId);
     setEditingBill(null);
     setIsBillModalOpen(true);
@@ -182,7 +194,6 @@ export default function Home() {
   const handleSaveBill = async (patientId: string, bill: Bill) => {
     setPatientsError("");
     setIsSavingBill(true);
-
     try {
       const response = await fetch(`/api/patients/${patientId}/bills`, {
         method: "POST",
@@ -193,8 +204,6 @@ export default function Home() {
       if (!response.ok) {
         throw new Error(data.message || "Failed to save bill");
       }
-      // A final bill also discharges the patient server-side, so the response
-      // already carries the updated status and discharge date/time.
       setPatients((prev) => prev.map((p) => (p.id === patientId ? normalizePatient(data.patient) : p)));
     } catch (error: any) {
       setPatientsError(error.message || "Failed to save bill");
@@ -299,7 +308,10 @@ export default function Home() {
             {activeTab === 'admission' && (
               <AdmittedPatientsTable
                 patients={admittedPatients}
-                onAddBill={openInpatientBillModal}
+                dischargingId={dischargingPatientId}
+                onDischarge={handleDischarge}
+                onAddBill={openBillModal}
+                onEditBill={openEditBillModal}
                 onEditPatient={openEditPatientModal}
                 onAddAdvance={openAdvanceModal}
                 onAddNew={() => { setEditingPatient(null); setIsAddModalOpen(true); }}
@@ -310,7 +322,7 @@ export default function Home() {
               <DischargedPatientsTable
                 patients={dischargedPatients}
                 onViewBill={openEditBillModal}
-                onAddBill={openNewBillModal}
+                onAddBill={openBillModal}
               />
             )}
           </>

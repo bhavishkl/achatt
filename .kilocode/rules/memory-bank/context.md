@@ -1,19 +1,5 @@
 # Context
 
-- **Final bill writes the discharge date/time onto the patients row** (`api/patients/[id]/bills/route.ts`):
-  - Moved the discharge server-side into the bill POST: when `bill.ipBillType === "final"`, the route updates `patients.status = 'discharged'`, `patients.discharge_date` = the modal's discharge date (today if blank) and `patients.discharge_time` = the modal's discharge time, before re-reading and hydrating the patient. Missing-column fallback keeps it working pre-migration; a failure returns "Bill saved, but discharging the patient failed".
-  - `page.tsx#handleSaveBill` no longer issues a second PUT — the bill response already carries the discharged patient with its date/time.
-
-- **Discharge is now driven by the final bill** (Inpatients page `/`):
-  - Removed the Discharge icon button from `AdmittedPatientsTable` (props `onDischarge`/`dischargingId` dropped); Actions is now Add Bill / Edit Patient / Add Advance.
-  - `page.tsx`: deleted `handleDischarge` and the `dischargingPatientId` state. `handleSaveBill` now discharges the patient after a successful save when `bill.ipBillType === "final"` and the patient is not already discharged, using the bill's `dischargeDate`/`dischargeTime` (falling back to today/now). A failure there surfaces "Bill saved, but discharging the patient failed" without blocking the printout.
-  - `AddBillModal`: added the hint "Saving a final bill discharges the patient." under the IP Final Bill checkbox.
-
-- **Currently Admitted table UI** (`AdmittedPatientsTable.tsx`, Inpatients page `/`):
-  - Added a "Total Admitted <n>" badge next to the heading (driven by `patients.length`).
-  - Removed the whole `Bills` column (bill chips, running total, and the "+ Add Bill" button); the table is now Reg No / Patient Info / Ward-Bed / Admission / Attender / Actions. The `onEditBill` prop was dropped from the component and from `page.tsx` (the discharged table still uses `openEditBillModal` for viewing bills).
-  - Replaced the ⋮ dropdown with inline icon-only buttons in Actions — Add Bill (`ReceiptIndianRupee`), Edit Patient (`SquarePen`), Add Advance (`Wallet`), Discharge (`LogOut`, swaps to a `Loader2` spinner while discharging). Each has `title` + `aria-label`; the `openMenuFor` state is gone.
-
 - **Bill printout: no payment split, smaller services table** (`add-bill-modal/print.ts`):
   - Removed the "Paid by Cash" / "Paid Online" / "Balance Due" rows from the printed bill and dropped `paidCash`/`paidOnline` from `buildBillPrintHtml`. The cash/online split is still captured in the Add Bill modal and saved on the bill record — it is just not printed.
   - Shrank the services (items) table: body font 13px -> 11px, header font 12px -> 10px, header padding 10px/12px -> 7px/10px, item cell padding 8px/12px -> 5px/10px. Summary rows (Gross, Advance, Concession, Net, amount in words) keep their existing sizes.
