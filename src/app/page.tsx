@@ -7,8 +7,8 @@ import AdmittedPatientsTable from "@/components/AdmittedPatientsTable";
 import DischargedPatientsTable from "@/components/DischargedPatientsTable";
 import AddPatientModal from "@/components/AddPatientModal";
 import AddBillModal from "@/components/AddBillModal";
+import DischargePatientModal from "@/components/DischargePatientModal";
 import { useAppStore } from "@/lib/store";
-import { currentTimeValue } from "@/components/add-bill-modal/utils";
 
 function PatientsTableSkeleton() {
   return (
@@ -70,6 +70,7 @@ export default function Home() {
   const [advanceInput, setAdvanceInput] = useState<number | string>('');
 
   // API in-flight states
+  const [dischargePatient, setDischargePatient] = useState<Patient | null>(null);
   const [dischargingPatientId, setDischargingPatientId] = useState<string | null>(null);
   const [isSavingBill, setIsSavingBill] = useState(false);
   const [isSavingAdvance, setIsSavingAdvance] = useState(false);
@@ -156,22 +157,38 @@ export default function Home() {
     setEditingPatient(null);
   };
 
-  const handleDischarge = async (id: string) => {
+  const openDischargeModal = (id: string) => {
     const current = patients.find((p) => p.id === id);
     if (!current || dischargingPatientId) return;
+    setDischargePatient(current);
+  };
 
+  const closeDischargeModal = () => {
+    if (dischargingPatientId) return;
+    setDischargePatient(null);
+  };
+
+  const handleConfirmDischarge = async (dischargeDate: string, dischargeTime: string) => {
+    if (!dischargePatient || dischargingPatientId) return;
+
+    const id = dischargePatient.id;
     setDischargingPatientId(id);
     setPatientsError("");
     try {
-      const saved = await savePatientToServer({
-        ...current,
-        status: "discharged",
-        dischargeDate: new Date().toISOString().split("T")[0],
-        dischargeTime: currentTimeValue(),
+      const response = await fetch(`/api/patients/${id}/discharge`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ dischargeDate, dischargeTime }),
       });
-      setPatients((prev) => prev.map((p) => (p.id === id ? saved : p)));
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to discharge patient");
+      }
+      setPatients((prev) => prev.map((p) => (p.id === id ? normalizePatient(data.patient) : p)));
+      setDischargePatient(null);
     } catch (error: any) {
       setPatientsError(error.message || "Failed to discharge patient");
+      throw error;
     } finally {
       setDischargingPatientId(null);
     }
@@ -309,7 +326,7 @@ export default function Home() {
               <AdmittedPatientsTable
                 patients={admittedPatients}
                 dischargingId={dischargingPatientId}
-                onDischarge={handleDischarge}
+                onDischarge={openDischargeModal}
                 onAddBill={openBillModal}
                 onEditBill={openEditBillModal}
                 onEditPatient={openEditPatientModal}
@@ -345,6 +362,14 @@ export default function Home() {
         isSaving={isSavingBill}
         onClose={closeBillModal}
         onSaveBill={handleSaveBill}
+      />
+
+      <DischargePatientModal
+        isOpen={!!dischargePatient}
+        patient={dischargePatient}
+        isSaving={!!dischargingPatientId}
+        onClose={closeDischargeModal}
+        onConfirm={handleConfirmDischarge}
       />
 
       {advancePatientId && (

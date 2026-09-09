@@ -132,6 +132,12 @@ export function formatDisplayDateTime(
   return time ? `${date} ${time}` : date;
 }
 
+/** Current local calendar date as "YYYY-MM-DD", ready for an <input type="date">. */
+export function currentDateValue(): string {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+}
+
 /** Current wall-clock time as "HH:mm", ready for an <input type="time">. */
 export function currentTimeValue(): string {
   const now = new Date();

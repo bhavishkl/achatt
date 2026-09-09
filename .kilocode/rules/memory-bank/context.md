@@ -1,5 +1,11 @@
 # Context
 
+- **Discharge date/time modal on Current Admissions** (Inpatients page `/`):
+  - Clicking Discharge in the admitted-patients actions menu now opens `DischargePatientModal` instead of immediately discharging with the current timestamp.
+  - Modal collects discharge date and time (defaults to now), shows patient/admission context, and blocks discharge earlier than admission.
+  - New `POST /api/patients/[id]/discharge` persists `status=discharged` plus `discharge_date`/`discharge_time`, validates the datetime, rejects already-discharged patients, and degrades if `discharge_time` is not migrated yet.
+  - Added `currentDateValue()` helper in `add-bill-modal/utils.ts` for local `YYYY-MM-DD` defaults.
+
 - **Bill printout: no payment split, smaller services table** (`add-bill-modal/print.ts`):
   - Removed the "Paid by Cash" / "Paid Online" / "Balance Due" rows from the printed bill and dropped `paidCash`/`paidOnline` from `buildBillPrintHtml`. The cash/online split is still captured in the Add Bill modal and saved on the bill record — it is just not printed.
   - Shrank the services (items) table: body font 13px -> 11px, header font 12px -> 10px, header padding 10px/12px -> 7px/10px, item cell padding 8px/12px -> 5px/10px. Summary rows (Gross, Advance, Concession, Net, amount in words) keep their existing sizes.
