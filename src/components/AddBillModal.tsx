@@ -59,6 +59,22 @@ export default function AddBillModal({
   const [inputRate, setInputRate] = useState<number | string>("");
   const [inputQty, setInputQty] = useState<number | string>(1);
   const descRef = useRef<HTMLInputElement>(null);
+  const billIdRef = useRef("");
+  const submitInFlightRef = useRef(false);
+
+  useEffect(() => {
+    if (!isOpen) {
+      billIdRef.current = "";
+      submitInFlightRef.current = false;
+      return;
+    }
+
+    // Keep one identity for the lifetime of this modal. This makes retries
+    // idempotent and prevents rapid duplicate submissions from creating bills
+    // with different Date.now() IDs.
+    billIdRef.current = existingBill?.id || crypto.randomUUID();
+    submitInFlightRef.current = false;
+  }, [isOpen, patient?.id, existingBill?.id]);
 
   const addItemLine = (description: string, rate: number, quantity: number) => {
     const newItem: BillDraftItem = {
@@ -242,11 +258,12 @@ export default function AddBillModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!patient || billItems.length === 0 || isSaving) return;
+    if (!patient || billItems.length === 0 || isSaving || submitInFlightRef.current) return;
 
+    submitInFlightRef.current = true;
     const billDate = existingBill?.date || new Date().toISOString().split("T")[0];
     const bill: Bill = {
-      id: existingBill?.id || Date.now().toString(),
+      id: existingBill?.id || billIdRef.current || crypto.randomUUID(),
       billNo: billNo || existingBill?.billNo,
       date: billDate,
       dischargeDate,
@@ -270,7 +287,9 @@ export default function AddBillModal({
     try {
       await onSaveBill(patient.id, bill);
     } catch {
-      // Error state is displayed by the parent page.
+      // Error state is displayed by the parent page. Permit an explicit retry
+      // with the same bill ID rather than creating another bill.
+      submitInFlightRef.current = false;
       printWindow?.close();
       return;
     }
