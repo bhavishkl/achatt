@@ -80,12 +80,17 @@ export function buildBillPrintHtml({
                 .header p { font-size: 12px; color: #000; }
                 .letterhead-space { height: 90px; }
                 .bill-type-banner { width: 100%; background: #f3f4f6; color: #000; border: 1px solid #000; text-align: center; font-size: 12px; font-weight: 700; letter-spacing: 0.7px; text-transform: uppercase; padding: 7px 10px; margin-bottom: 16px; }
-                .bill-meta { display: flex; justify-content: space-between; margin-bottom: 20px; font-size: 13px; }
-                .bill-meta div { line-height: 1.6; }
+                /* Explicit column tracks: the right-hand column keeps a fixed minimum width so its
+                   values stay inside the column (and aligned to its right edge) instead of being
+                   squeezed and pushed against the page margin. */
+                .bill-meta { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(210px, auto); column-gap: 18px; align-items: start; margin-bottom: 20px; font-size: 13px; }
+                .bill-meta > div { line-height: 1.6; min-width: 0; }
+                .bill-meta .meta-col-right { text-align: right; }
+                .bill-meta .meta-col-right .meta-row { justify-content: flex-end; }
                 .bill-meta .label { color: #000; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
                 .bill-meta .value { color: #000; font-weight: 700; }
                 .contact-row { display: flex; justify-content: space-between; align-items: center; width: 100%; font-size: 12px; color: #000; margin-top: 2px; }
-                .meta-row { display: flex; align-items: center; gap: 8px; }
+                .meta-row { display: flex; align-items: flex-start; gap: 8px; }
                 .meta-row .label-inline { color: #000; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; min-width: 70px; font-weight: 600; }
                 .meta-row .value-inline { color: #000; font-weight: 700; }
                 table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 11px; border: 1px solid #000; }
@@ -130,11 +135,11 @@ export function buildBillPrintHtml({
                     <div class="meta-row"><span class="label-inline">Ward / Bed</span><span class="value-inline">${patient.wardName} - Bed ${patient.bedNo}</span></div>
                     <div class="meta-row"><span class="label-inline">Doctor</span><span class="value-inline">${patient.doctorName || "-"}</span></div>
                 </div>
-                <div style="text-align:right">
-                    <div class="meta-row" style="justify-content:flex-end"><span class="label-inline">Bill No</span><span class="value-inline">${billNo || "-"}</span></div>
-                    <div class="meta-row" style="justify-content:flex-end"><span class="label-inline">Bill Date</span><span class="value-inline">${formattedBillDate}</span></div>
-                    <div class="meta-row" style="justify-content:flex-end"><span class="label-inline">DOA</span><span class="value-inline">${formattedAdmissionDate}</span></div>
-                    <div class="meta-row" style="justify-content:flex-end"><span class="label-inline">DOD</span><span class="value-inline">${formattedDischargeDate}</span></div>
+                <div class="meta-col-right">
+                    <div class="meta-row"><span class="label-inline">Bill No</span><span class="value-inline">${billNo || "-"}</span></div>
+                    <div class="meta-row"><span class="label-inline">Bill Date</span><span class="value-inline">${formattedBillDate}</span></div>
+                    <div class="meta-row"><span class="label-inline">DOA</span><span class="value-inline">${formattedAdmissionDate}</span></div>
+                    <div class="meta-row"><span class="label-inline">DOD</span><span class="value-inline">${formattedDischargeDate}</span></div>
                 </div>
             </div>
 

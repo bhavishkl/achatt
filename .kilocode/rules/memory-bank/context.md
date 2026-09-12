@@ -1,5 +1,10 @@
 # Context
 
+- **Bill printout: patient info columns aligned inside the column** (`add-bill-modal/print.ts`):
+  - `.bill-meta` was `display:flex; justify-content:space-between`, so with longer patient/ward/doctor values the browser shrank the right-hand (Bill No / Bill Date / DOA / DOD) column and its values wrapped character-wise ("12-09-" / "2026") hard against the page margin.
+  - It is now a grid — `grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(210px, auto)` with an 18px column gap — so the right column keeps a minimum width and every row stays on one line. The right column is right-aligned via the `.meta-col-right` class (rows use `justify-content: flex-end`), and `.meta-row` uses `align-items: flex-start` so wrapped values align with their label's first line.
+  - Verified by rendering `buildBillPrintHtml` in headless Chromium at print media from 380px to A4 content width (703px) with typical and very long patient/ward/doctor values: no horizontal overflow, DOD/DOA single-line, values right-aligned to the column edge which lines up with the services table's right edge.
+
 - **DOD only on final bills + auto-discharge on first final bill** (Inpatients page `/`):
   - DOD (discharge date/time) is no longer persisted for draft bills. `AddBillModal.handleSubmit` sends `dischargeDate`/`dischargeTime` as empty strings unless "IP Final Bill" is ticked, and `api/patients/[id]/bills/route.ts` enforces the same rule server-side (`discharge_date`/`discharge_time` are written as `null` for drafts), so a draft can never store a DOD.
   - Draft printouts still show a DOD: the modal passes the current local date/time to `buildBillPrintHtml` when the bill is a draft, while final bills print the DOD entered on the bill. A hint under the "IP Final Bill" checkbox explains this.
