@@ -1,5 +1,11 @@
 # Context
 
+- **DOD only on final bills + auto-discharge on first final bill** (Inpatients page `/`):
+  - DOD (discharge date/time) is no longer persisted for draft bills. `AddBillModal.handleSubmit` sends `dischargeDate`/`dischargeTime` as empty strings unless "IP Final Bill" is ticked, and `api/patients/[id]/bills/route.ts` enforces the same rule server-side (`discharge_date`/`discharge_time` are written as `null` for drafts), so a draft can never store a DOD.
+  - Draft printouts still show a DOD: the modal passes the current local date/time to `buildBillPrintHtml` when the bill is a draft, while final bills print the DOD entered on the bill. A hint under the "IP Final Bill" checkbox explains this.
+  - New `currentDateValue()` helper in `add-bill-modal/utils.ts` (local `YYYY-MM-DD`, mirrors `currentTimeValue()`); used for the modal's default discharge date, the draft printout DOD, and table discharge (previously UTC-based `toISOString()`).
+  - Saving the patient's first final bill now also discharges them: `page.tsx` `handleSaveBill` calls the shared `dischargePatientOnServer()` (extracted from `handleDischarge`) with the bill's DOD when `isFirstFinalBill()` is true (patient still `admitted` and no other final bill exists). The patient therefore moves straight to the Discharged History after a final bill; re-saving an edited final bill or billing an already-discharged patient does not re-trigger discharge. A discharge failure surfaces as "Bill saved, but patient discharge failed: …" and does not fail the bill save (the bill still prints).
+
 - **Bill printout: no payment split, smaller services table** (`add-bill-modal/print.ts`):
   - Removed the "Paid by Cash" / "Paid Online" / "Balance Due" rows from the printed bill and dropped `paidCash`/`paidOnline` from `buildBillPrintHtml`. The cash/online split is still captured in the Add Bill modal and saved on the bill record — it is just not printed.
   - Shrank the services (items) table: body font 13px -> 11px, header font 12px -> 10px, header padding 10px/12px -> 7px/10px, item cell padding 8px/12px -> 5px/10px. Summary rows (Gross, Advance, Concession, Net, amount in words) keep their existing sizes.

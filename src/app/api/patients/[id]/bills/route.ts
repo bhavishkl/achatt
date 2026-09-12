@@ -62,18 +62,22 @@ export async function POST(
 
     const billNo = existingBill?.bill_no || await generateBillNo();
 
+    // DOD (discharge date/time) is stored with the final bill only. Draft bills are
+    // saved without it — their printout shows the current date/time instead.
+    const isFinalBill = bill.ipBillType === "final";
+
     const payload = {
       id: String(bill.id),
       patient_id: patientId,
       bill_no: billNo,
       bill_date: String(bill.date),
-      discharge_date: bill.dischargeDate || null,
-      ip_bill_type: bill.ipBillType === "final" ? "final" : "draft",
+      discharge_date: isFinalBill ? bill.dischargeDate || null : null,
+      ip_bill_type: isFinalBill ? "final" : "draft",
       gross_amount: toNumber(bill.grossAmount),
       advance_used: toNumber(bill.advanceUsed),
       concession: toNumber(bill.concession),
       total_amount: toNumber(bill.totalAmount),
-      discharge_time: toTimeValue(bill.dischargeTime),
+      discharge_time: isFinalBill ? toTimeValue(bill.dischargeTime) : null,
       paid_cash: toNumber(bill.paidCash),
       paid_online: toNumber(bill.paidOnline),
       items_json: Array.isArray(bill.items) ? bill.items : [],
