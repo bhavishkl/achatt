@@ -204,7 +204,23 @@ export default function Home() {
       if (!response.ok) {
         throw new Error(data.message || "Failed to save bill");
       }
-      setPatients((prev) => prev.map((p) => (p.id === patientId ? normalizePatient(data.patient) : p)));
+      const savedPatient = normalizePatient(data.patient);
+      setPatients((prev) => prev.map((p) => (p.id === patientId ? savedPatient : p)));
+
+      // When a bill is saved as final for the first time, discharge the patient too.
+      const previousBill = patients
+        .find((p) => p.id === patientId)
+        ?.bills?.find((b) => b.id === bill.id);
+      const becameFinal = bill.ipBillType === "final" && previousBill?.ipBillType !== "final";
+      if (becameFinal && savedPatient.status !== "discharged") {
+        const discharged = await savePatientToServer({
+          ...savedPatient,
+          status: "discharged",
+          dischargeDate: bill.dischargeDate || new Date().toISOString().split("T")[0],
+          dischargeTime: bill.dischargeTime || currentTimeValue(),
+        });
+        setPatients((prev) => prev.map((p) => (p.id === patientId ? discharged : p)));
+      }
     } catch (error: any) {
       setPatientsError(error.message || "Failed to save bill");
       throw error;
