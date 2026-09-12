@@ -9,6 +9,7 @@ import { useAppStore } from "@/lib/store";
 import {
   calculateTotal,
   createItemId,
+  currentDateValue,
   currentTimeValue,
   getPackageByWard,
   toDraftItemsFromBill,
@@ -85,7 +86,7 @@ export default function AddBillModal({
      
     setConcession(existingBill?.concession ?? 0);
      
-    const today = new Date().toISOString().split("T")[0];
+    const today = currentDateValue();
     setDischargeDate(existingBill?.dischargeDate || patient?.dischargeDate || today);
 
     setDischargeTime(
@@ -245,13 +246,22 @@ export default function AddBillModal({
     if (!patient || billItems.length === 0 || isSaving) return;
 
     const billDate = existingBill?.date || new Date().toISOString().split("T")[0];
+    const isFinalBill = isIpFinalBill;
+
+    // DOD is only persisted once the bill is final — draft bills keep it out of the database.
+    const storedDischargeDate = isFinalBill ? dischargeDate : "";
+    const storedDischargeTime = isFinalBill ? dischargeTime : "";
+    // Draft printouts still show a DOD, so fall back to the current date and time.
+    const printedDischargeDate = isFinalBill ? dischargeDate : currentDateValue();
+    const printedDischargeTime = isFinalBill ? dischargeTime : currentTimeValue();
+
     const bill: Bill = {
       id: existingBill?.id || Date.now().toString(),
       billNo: billNo || existingBill?.billNo,
       date: billDate,
-      dischargeDate,
-      dischargeTime,
-      ipBillType: isIpFinalBill ? "final" : "draft",
+      dischargeDate: storedDischargeDate,
+      dischargeTime: storedDischargeTime,
+      ipBillType: isFinalBill ? "final" : "draft",
       grossAmount: totalAmount,
       advanceUsed: autoAdvanceUsed,
       concession: concessionAmount,
@@ -281,9 +291,9 @@ export default function AddBillModal({
         items: billItems,
         billDate,
         billNo: bill.billNo,
-        dischargeDate,
-        dischargeTime,
-        ipBillType: isIpFinalBill ? "final" : "draft",
+        dischargeDate: printedDischargeDate,
+        dischargeTime: printedDischargeTime,
+        ipBillType: isFinalBill ? "final" : "draft",
         grossAmount: totalAmount,
         advanceUsed: autoAdvanceUsed,
         concession: concessionAmount,
@@ -400,6 +410,12 @@ export default function AddBillModal({
                   />
                   IP Final Bill
                 </label>
+                {!isIpFinalBill && (
+                  <p className="mt-1.5 text-xs text-neutral-500">
+                    DOD is saved with the final bill only — a draft bill printout shows the current
+                    date and time.
+                  </p>
+                )}
               </div>
 
               <PaymentSplitSection

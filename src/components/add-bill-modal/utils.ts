@@ -138,6 +138,12 @@ export function currentTimeValue(): string {
   return `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
 }
 
+/** Current local date as "YYYY-MM-DD", ready for an <input type="date"> or storage. */
+export function currentDateValue(): string {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+}
+
 export function amountToWords(num: number): string {
   if (isNaN(num) || num < 0) return "";
   if (num === 0) return "Rupees Zero Only";

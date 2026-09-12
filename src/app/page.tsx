@@ -8,7 +8,7 @@ import DischargedPatientsTable from "@/components/DischargedPatientsTable";
 import AddPatientModal from "@/components/AddPatientModal";
 import AddBillModal from "@/components/AddBillModal";
 import { useAppStore } from "@/lib/store";
-import { currentTimeValue } from "@/components/add-bill-modal/utils";
+import { currentDateValue, currentTimeValue } from "@/components/add-bill-modal/utils";
 
 function PatientsTableSkeleton() {
   return (
@@ -156,6 +156,19 @@ export default function Home() {
     setEditingPatient(null);
   };
 
+  /** Marks a patient discharged on the server, keeping the given DOD. */
+  const dischargePatientOnServer = async (
+    patient: Patient,
+    dischargeDate: string,
+    dischargeTime: string
+  ) =>
+    savePatientToServer({
+      ...patient,
+      status: "discharged",
+      dischargeDate,
+      dischargeTime,
+    });
+
   const handleDischarge = async (id: string) => {
     const current = patients.find((p) => p.id === id);
     if (!current || dischargingPatientId) return;
@@ -163,12 +176,7 @@ export default function Home() {
     setDischargingPatientId(id);
     setPatientsError("");
     try {
-      const saved = await savePatientToServer({
-        ...current,
-        status: "discharged",
-        dischargeDate: new Date().toISOString().split("T")[0],
-        dischargeTime: currentTimeValue(),
-      });
+      const saved = await dischargePatientOnServer(current, currentDateValue(), currentTimeValue());
       setPatients((prev) => prev.map((p) => (p.id === id ? saved : p)));
     } catch (error: any) {
       setPatientsError(error.message || "Failed to discharge patient");
@@ -176,6 +184,15 @@ export default function Home() {
       setDischargingPatientId(null);
     }
   };
+
+  /**
+   * True when this save is the patient's first final bill — i.e. the patient is still
+   * admitted and no other final bill exists yet. Only then do we also discharge them.
+   */
+  const isFirstFinalBill = (patient: Patient, bill: Bill) =>
+    bill.ipBillType === "final" &&
+    patient.status !== "discharged" &&
+    !(patient.bills ?? []).some((b) => b.id !== bill.id && b.ipBillType === "final");
 
   const openBillModal = (patientId: string) => {
     setSelectedPatientId(patientId);
@@ -194,6 +211,9 @@ export default function Home() {
   const handleSaveBill = async (patientId: string, bill: Bill) => {
     setPatientsError("");
     setIsSavingBill(true);
+
+    let savedPatient: Patient | null = null;
+
     try {
       const response = await fetch(`/api/patients/${patientId}/bills`, {
         method: "POST",
@@ -204,12 +224,31 @@ export default function Home() {
       if (!response.ok) {
         throw new Error(data.message || "Failed to save bill");
       }
-      setPatients((prev) => prev.map((p) => (p.id === patientId ? normalizePatient(data.patient) : p)));
+      savedPatient = normalizePatient(data.patient);
+
+      // Saving the first final bill also discharges the patient, so the admission
+      // moves to the discharged history with the DOD entered on the bill.
+      if (isFirstFinalBill(savedPatient, bill)) {
+        try {
+          savedPatient = await dischargePatientOnServer(
+            savedPatient,
+            bill.dischargeDate || savedPatient.dischargeDate || currentDateValue(),
+            bill.dischargeTime || savedPatient.dischargeTime || currentTimeValue()
+          );
+        } catch (error: any) {
+          // The bill is already saved — surface the discharge failure without failing the save.
+          setPatientsError(`Bill saved, but patient discharge failed: ${error.message || "unknown error"}`);
+        }
+      }
     } catch (error: any) {
       setPatientsError(error.message || "Failed to save bill");
       throw error;
     } finally {
       setIsSavingBill(false);
+    }
+
+    if (savedPatient) {
+      setPatients((prev) => prev.map((p) => (p.id === patientId ? savedPatient! : p)));
     }
 
     setEditingBill(null);
