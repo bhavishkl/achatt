@@ -11,6 +11,24 @@ export const CHIEF_COMPLAINTS_TERMS = [
   "Loss of appetite",
 ];
 
+export const HISTORY_TERMS = [
+  "Known case of Type 2 Diabetes Mellitus",
+  "Known case of Systemic Hypertension",
+  "Known case of Bronchial Asthma",
+  "Known case of COPD",
+  "Known case of Ischemic Heart Disease (CAD)",
+  "Known case of Hypothyroidism",
+  "Past history of Pulmonary Tuberculosis",
+  "Past history of Pneumonia",
+  "No known comorbidities",
+  "No past history of major medical or surgical illness",
+  "No known drug or food allergies",
+  "Smoker",
+  "Non-smoker",
+  "Ex-smoker",
+  "Past surgical history: None",
+];
+
 export const RESPIRATORY_EXAMINATION_TERMS = [
   "Bilateral normal vesicular breath sounds, no added sounds.",
   "Bilateral wheeze present.",

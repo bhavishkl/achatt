@@ -198,7 +198,7 @@ export async function fetchOpdOptions(companyId: string) {
   );
   if (error || !data) {
     console.error("fetchOpdOptions error:", error);
-    return { diagnoses: [], medicines: [], chiefComplaints: [], tests: [] };
+    return { diagnoses: [], medicines: [], chiefComplaints: [], history: [], tests: [] };
   }
   return data;
 }

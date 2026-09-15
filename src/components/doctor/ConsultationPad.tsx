@@ -5,22 +5,23 @@ import { Plus, Trash2, ChevronDown, ChevronUp, Save, CheckCircle, GripVertical, 
 import { useAppStore } from "@/lib/store";
 import type { Prescription, MedicineEntry, TestEntry, TestResultEntry, CustomSection } from "@/types/opd";
 import { MEDICINE_FREQUENCIES, MEDICINE_ROUTES, DEFAULT_SECTION_HEADINGS, getMergedFormatConfig } from "@/types/opd";
-import { PULMONOLOGY_MEDICINES, PULMONOLOGY_TESTS, PULMONOLOGY_DIAGNOSES } from "@/data/opdSeedData";
+import { PULMONOLOGY_TESTS, PULMONOLOGY_DIAGNOSES } from "@/data/opdSeedData";
 import { PrescriptionFormatSettings } from "@/components/doctor/PrescriptionFormatSettings";
-import { CHIEF_COMPLAINTS_TERMS, RESPIRATORY_EXAMINATION_TERMS, MEDICINE_TIMING_TERMS, MEDICINE_ROUTINE_TERMS, MEDICINE_DURATION_TERMS, NEXT_VISIT_REASON_TERMS, ADVICE_TERMS } from "@/data/consultationTerms";
+import { CHIEF_COMPLAINTS_TERMS, HISTORY_TERMS, RESPIRATORY_EXAMINATION_TERMS, MEDICINE_TIMING_TERMS, MEDICINE_ROUTINE_TERMS, MEDICINE_DURATION_TERMS, NEXT_VISIT_REASON_TERMS, ADVICE_TERMS } from "@/data/consultationTerms";
 import { useOpdApi } from "@/hooks/useOpdApi";
 
 type Props = {
   prescription: Prescription;
   onChange: (p: Prescription) => void;
-  onSave: () => void;
+  onSave?: () => void;
   onComplete: () => void;
+  saveStatus?: "saved" | "saving" | "error";
 };
 
 let _counter = 0;
 const uid = () => `rx-${Date.now()}-${++_counter}`;
 
-import { SeedMedicine } from "@/data/opdSeedData";
+
 type SuggestionOption = string | { label: string; value: string; searchStr: string; frequency?: string; timing?: string; routine?: string; duration?: string; };
 
 function AutocompleteInput({
@@ -29,6 +30,7 @@ function AutocompleteInput({
   suggestions,
   placeholder,
   className = "",
+  id,
   onSelect,
   onSelectOption,
   isTextarea = false,
@@ -39,6 +41,7 @@ function AutocompleteInput({
   suggestions: SuggestionOption[];
   placeholder: string;
   className?: string;
+  id?: string;
   onSelect?: (v: string) => void;
   onSelectOption?: (s: SuggestionOption) => void;
   isTextarea?: boolean;
@@ -49,7 +52,29 @@ function AutocompleteInput({
   const [show, setShow] = useState(false);
   const [activeIndex, setActiveIndex] = useState(isMulti ? -1 : 0);
   const [cursorPos, setCursorPos] = useState(value?.length || 0);
+  const [pendingCursorPos, setPendingCursorPos] = useState<number | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (show && listRef.current && activeIndex >= 0) {
+      const activeElement = listRef.current.children[activeIndex] as HTMLElement;
+      if (activeElement) {
+        activeElement.scrollIntoView({ block: "nearest" });
+      }
+    }
+  }, [activeIndex, show]);
+
+  // After a suggestion is selected, move cursor to the right position
+  useEffect(() => {
+    if (pendingCursorPos !== null && textareaRef.current) {
+      const el = textareaRef.current;
+      el.focus();
+      el.setSelectionRange(pendingCursorPos, pendingCursorPos);
+      setCursorPos(pendingCursorPos);
+      setPendingCursorPos(null);
+    }
+  }, [pendingCursorPos, value]);
 
   const getLabel = (s: SuggestionOption) => (typeof s === "string" ? s : s.label);
   const getValue = (s: SuggestionOption) => (typeof s === "string" ? s : s.value);
@@ -81,11 +106,22 @@ function AutocompleteInput({
     if (isMulti) {
       const before = (value || "").substring(0, currentLineStart);
       const after = (value || "").substring(cursorPos);
-      let append = mode === "comma" ? ", " : "\n";
-      if (after.trimStart().startsWith(mode === "comma" ? "," : "\n")) {
-         append = "";
+
+      if (mode === "comma") {
+        // comma mode: append ", " separator
+        let append = ", ";
+        if (after.trimStart().startsWith(",")) append = "";
+        onChange(before + val + append + after.trimStart());
+      } else {
+        // newline mode: DON'T append "\n" immediately — let the user type
+        // duration on the same line first (e.g. " 3dd → since 3 days").
+        // A newline is only inserted if there's already content after cursor.
+        const afterTrimmed = after.trimStart();
+        const newValue = before + val + (afterTrimmed.startsWith("\n") ? "" : "") + afterTrimmed;
+        const insertedEnd = before.length + val.length;
+        onChange(newValue);
+        setPendingCursorPos(insertedEnd);
       }
-      onChange(before + val + append + after.trimStart());
     } else {
       onChange(val);
     }
@@ -121,6 +157,7 @@ function AutocompleteInput({
   };
 
   const innerProps = {
+    id,
     value,
     onChange: (e: any) => { 
       onChange(e.target.value); 
@@ -149,7 +186,7 @@ function AutocompleteInput({
         <input type="text" {...innerProps} />
       )}
       {show && filtered.length > 0 && (
-        <div className="absolute left-0 right-0 top-full z-30 mt-1 max-h-40 overflow-y-auto rounded-lg border border-neutral-700 bg-neutral-800 shadow-xl">
+        <div ref={listRef} className="absolute left-0 right-0 top-full z-30 mt-1 max-h-40 overflow-y-auto rounded-lg border border-neutral-700 bg-neutral-800 shadow-xl">
           {filtered.map((s, i) => {
             const lbl = getLabel(s);
             const val = getValue(s);
@@ -176,7 +213,7 @@ function AutocompleteInput({
   );
 }
 
-export function ConsultationPad({ prescription, onChange, onSave, onComplete }: Props) {
+export function ConsultationPad({ prescription, onChange, onSave, onComplete, saveStatus = "saved" }: Props) {
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
   const [showFormatSettings, setShowFormatSettings] = useState(false);
   const [followUpText, setFollowUpText] = useState("");
@@ -188,6 +225,7 @@ export function ConsultationPad({ prescription, onChange, onSave, onComplete }: 
   const historicDiagnoses = useAppStore((s) => s.historicDiagnoses);
   const historicMedicines = useAppStore((s) => s.historicMedicines);
   const historicChiefComplaints = useAppStore((s) => s.historicChiefComplaints);
+  const historicHistory = useAppStore((s) => s.historicHistory);
   const historicTests = useAppStore((s) => s.historicTests);
   
   const addCustomMedicine = useAppStore((s) => s.addCustomMedicine);
@@ -201,26 +239,6 @@ export function ConsultationPad({ prescription, onChange, onSave, onComplete }: 
 
   const allMedicines = useMemo(() => {
     const opts: SuggestionOption[] = [];
-    PULMONOLOGY_MEDICINES.forEach((medObj) => {
-      // Type might be string for custom medicines if mixed, but PULMONOLOGY_MEDICINES is SeedMedicine[]
-      const medName = typeof medObj === "string" ? medObj : (medObj as SeedMedicine).name;
-      const metadata = typeof medObj === "object" ? {
-        frequency: medObj.frequency,
-        timing: medObj.timing,
-        routine: medObj.routine,
-        duration: medObj.duration
-      } : {};
-
-      const match = medName.match(/\(([^)]+)\)$/);
-      if (match) {
-        const generic = medName.substring(0, match.index).trim();
-        match[1].split(',').forEach((brand) => {
-          opts.push({ label: brand.trim(), value: generic, searchStr: brand.trim().toLowerCase(), ...metadata });
-        });
-      } else {
-        opts.push({ label: medName, value: medName, searchStr: medName.toLowerCase(), ...metadata });
-      }
-    });
     customMedicines.forEach((med) => {
       opts.push({ label: med, value: med, searchStr: med.toLowerCase() });
     });
@@ -248,6 +266,24 @@ export function ConsultationPad({ prescription, onChange, onSave, onComplete }: 
   const allTests = useMemo(() => Array.from(new Set([...PULMONOLOGY_TESTS, ...customTests, ...historicTests])), [customTests, historicTests]);
   const allDiagnoses = useMemo(() => Array.from(new Set([...PULMONOLOGY_DIAGNOSES, ...customDiagnoses, ...historicDiagnoses])), [customDiagnoses, historicDiagnoses]);
   const allChiefComplaints = useMemo(() => Array.from(new Set([...CHIEF_COMPLAINTS_TERMS, ...historicChiefComplaints])), [historicChiefComplaints]);
+  const allHistoryTerms = useMemo(() => Array.from(new Set([...HISTORY_TERMS, ...(historicHistory || [])])), [historicHistory]);
+
+  // Expand duration abbreviations in chief complaints.
+  // Patterns (as standalone tokens — preceded by space/comma/newline or line start):
+  //   2dd  → since 2 days    |  dd  → days
+  //   3ww  → since 3 weeks   |  ww  → weeks
+  //   5mm  → since 5 months  |  mm  → months
+  const expandDurationAbbreviations = (text: string): string => {
+    return text
+      // number+abbreviation: "2dd" → "since 2 days"
+      .replace(/(^|[\s,;\n])(\d+)dd(?=\s|$)/gm, "$1since $2 days")
+      .replace(/(^|[\s,;\n])(\d+)ww(?=\s|$)/gm, "$1since $2 weeks")
+      .replace(/(^|[\s,;\n])(\d+)mm(?=\s|$)/gm, "$1since $2 months")
+      // standalone abbreviation: "dd" → "days"
+      .replace(/(^|[\s,;\n])dd(?=\s|$)/gm, "$1days")
+      .replace(/(^|[\s,;\n])ww(?=\s|$)/gm, "$1weeks")
+      .replace(/(^|[\s,;\n])mm(?=\s|$)/gm, "$1months");
+  };
 
   const toggle = (key: string) => setCollapsed((p) => ({ ...p, [key]: !p[key] }));
 
@@ -281,6 +317,15 @@ export function ConsultationPad({ prescription, onChange, onSave, onComplete }: 
     }
     return ["1 week", "2 weeks", "1 month"];
   }, [followUpText]);
+
+  const getDurationSuggestions = (val: string) => {
+    const numMatch = val.match(/^\d+/);
+    if (numMatch) {
+      const num = numMatch[0];
+      return [`${num} days`, `${num} weeks`, `${num} months`];
+    }
+    return MEDICINE_DURATION_TERMS;
+  };
 
   // Medicines
   const addMedicine = () => {
@@ -362,15 +407,6 @@ export function ConsultationPad({ prescription, onChange, onSave, onComplete }: 
   const [templateName, setTemplateName] = useState("");
   const [showTemplates, setShowTemplates] = useState(false);
   const [showMetaActions, setShowMetaActions] = useState(false);
-  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved">("idle");
-
-  const handleSaveClick = async () => {
-    setSaveState("saving");
-    await new Promise((r) => setTimeout(r, 400));
-    onSave();
-    setSaveState("saved");
-    setTimeout(() => setSaveState("idle"), 2000);
-  };
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -466,9 +502,22 @@ export function ConsultationPad({ prescription, onChange, onSave, onComplete }: 
       <Section title={sectionHeading("chiefComplaints")} sectionKey="chiefComplaints" collapsed={collapsed} onToggle={toggle}>
         <AutocompleteInput
           value={prescription.chiefComplaints}
-          onChange={(v) => update("chiefComplaints", v)}
+          onChange={(v) => update("chiefComplaints", expandDurationAbbreviations(v))}
           suggestions={allChiefComplaints}
           placeholder="Describe chief complaints..."
+          className={inputCls}
+          isTextarea
+          multiEntryMode="newline"
+        />
+      </Section>
+
+      {/* History */}
+      <Section title={sectionHeading("history")} sectionKey="history" collapsed={collapsed} onToggle={toggle}>
+        <AutocompleteInput
+          value={prescription.history || ""}
+          onChange={(v) => update("history", v)}
+          suggestions={allHistoryTerms}
+          placeholder="Describe patient history (medical, past, surgical, family, personal)..."
           className={inputCls}
           isTextarea
           multiEntryMode="newline"
@@ -537,58 +586,79 @@ export function ConsultationPad({ prescription, onChange, onSave, onComplete }: 
                   <Trash2 className="h-4 w-4" />
                 </button>
               </div>
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                <AutocompleteInput
-                  value={med.name}
-                  onChange={(v) => updateMedicine(med.id, { name: v })}
-                  suggestions={allMedicines}
-                  placeholder="Medicine name"
-                  className={inputCls}
-                  onSelect={(v) => { addCustomMedicine(v); addCustomItem("medicine", v); }}
-                  onSelectOption={(s) => {
-                    if (typeof s !== "string") {
-                      updateMedicine(med.id, {
-                        name: s.value,
-                        ...(s.timing && { timing: s.timing }),
-                        ...(s.routine && { routine: s.routine }),
-                        ...(s.frequency && { frequency: s.frequency }),
-                        ...(s.duration && { duration: s.duration })
-                      });
-                    }
-                  }}
-                />
-                <AutocompleteInput
-                  value={med.timing || ""}
-                  onChange={(v) => updateMedicine(med.id, { timing: v })}
-                  suggestions={MEDICINE_TIMING_TERMS}
-                  placeholder="Timing (e.g. After food)"
-                  className={inputCls}
-                />
-                <select
-                  value={med.frequency}
-                  onChange={(e) => updateMedicine(med.id, { frequency: e.target.value })}
-                  className={inputCls}
-                >
-                  {MEDICINE_FREQUENCIES.map((f) => (
-                    <option key={f} value={f}>{f}</option>
-                  ))}
-                </select>
-                <AutocompleteInput
-                  value={med.routine || ""}
-                  onChange={(v) => updateMedicine(med.id, { routine: v })}
-                  suggestions={MEDICINE_ROUTINE_TERMS}
-                  placeholder="Routine (e.g. Daily)"
-                  className={inputCls}
-                />
-                <AutocompleteInput
-                  value={med.duration}
-                  onChange={(v) => {
-                    updateMedicine(med.id, { duration: v });
-                  }}
-                  suggestions={MEDICINE_DURATION_TERMS}
-                  placeholder="Duration (e.g. 5 days)"
-                  className={inputCls}
-                />
+              <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+                <div className="flex-[3] min-w-[200px]">
+                  <AutocompleteInput
+                    id={`med-name-${med.id}`}
+                    value={med.name}
+                    onChange={(v) => updateMedicine(med.id, { name: v })}
+                    suggestions={allMedicines}
+                    placeholder="Medicine name"
+                    className={inputCls}
+                    onSelect={(v) => { addCustomMedicine(v); addCustomItem("medicine", v); }}
+                    onSelectOption={(s) => {
+                      if (typeof s !== "string") {
+                        updateMedicine(med.id, {
+                          name: s.value,
+                          ...(s.timing && { timing: s.timing }),
+                          ...(s.routine && { routine: s.routine }),
+                          ...(s.frequency && { frequency: s.frequency }),
+                          ...(s.duration && { duration: s.duration })
+                        });
+                      }
+                      setTimeout(() => document.getElementById(`med-timing-${med.id}`)?.focus(), 0);
+                    }}
+                  />
+                </div>
+                <div className="flex-1 min-w-[130px]">
+                  <AutocompleteInput
+                    id={`med-timing-${med.id}`}
+                    value={med.timing || ""}
+                    onChange={(v) => updateMedicine(med.id, { timing: v })}
+                    suggestions={MEDICINE_TIMING_TERMS}
+                    placeholder="Timing (e.g. After food)"
+                    className={inputCls}
+                    onSelect={() => setTimeout(() => document.getElementById(`med-frequency-${med.id}`)?.focus(), 0)}
+                  />
+                </div>
+                <div className="w-full sm:w-[110px] shrink-0">
+                  <select
+                    id={`med-frequency-${med.id}`}
+                    value={med.frequency}
+                    onChange={(e) => {
+                      updateMedicine(med.id, { frequency: e.target.value });
+                      setTimeout(() => document.getElementById(`med-routine-${med.id}`)?.focus(), 0);
+                    }}
+                    className={inputCls}
+                  >
+                    {MEDICINE_FREQUENCIES.map((f) => (
+                      <option key={f} value={f}>{f}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex-1 min-w-[130px]">
+                  <AutocompleteInput
+                    id={`med-routine-${med.id}`}
+                    value={med.routine || ""}
+                    onChange={(v) => updateMedicine(med.id, { routine: v })}
+                    suggestions={MEDICINE_ROUTINE_TERMS}
+                    placeholder="Routine (e.g. Daily)"
+                    className={inputCls}
+                    onSelect={() => setTimeout(() => document.getElementById(`med-duration-${med.id}`)?.focus(), 0)}
+                  />
+                </div>
+                <div className="flex-1 min-w-[120px]">
+                  <AutocompleteInput
+                    id={`med-duration-${med.id}`}
+                    value={med.duration}
+                    onChange={(v) => {
+                      updateMedicine(med.id, { duration: v });
+                    }}
+                    suggestions={getDurationSuggestions(med.duration)}
+                    placeholder="Duration (e.g. 5 days)"
+                    className={inputCls}
+                  />
+                </div>
               </div>
             </div>
           ))}
@@ -666,35 +736,25 @@ export function ConsultationPad({ prescription, onChange, onSave, onComplete }: 
       </button>
 
       {/* Action Buttons */}
-      <div className="flex flex-col gap-3 sm:flex-row">
-        <button
-          onClick={handleSaveClick}
-          disabled={saveState !== "idle"}
-          className={`flex flex-1 items-center justify-center gap-2 rounded-xl border py-3 text-sm font-medium transition-colors ${
-            saveState === "saved"
-              ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400"
-              : saveState === "saving"
-              ? "border-neutral-700 bg-neutral-800 text-neutral-400"
-              : "border-neutral-700 bg-neutral-800 text-white hover:bg-neutral-700"
-          }`}
-        >
-          {saveState === "saved" ? (
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
+        <div className="flex items-center gap-2 text-xs text-neutral-400">
+          {saveStatus === "saving" ? (
             <>
-              <CheckCircle className="h-4 w-4" /> Saved!
+              <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-blue-400 border-t-transparent" />
+              <span>Saving draft...</span>
             </>
-          ) : saveState === "saving" ? (
-            <>
-              <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" /> Saving...
-            </>
+          ) : saveStatus === "error" ? (
+            <span className="text-amber-400">Failed to auto-save draft</span>
           ) : (
             <>
-              <Save className="h-4 w-4" /> Save Draft
+              <CheckCircle className="h-3.5 w-3.5 text-emerald-400" />
+              <span>Draft auto-saved</span>
             </>
           )}
-        </button>
+        </div>
         <button
           onClick={onComplete}
-          className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-emerald-600 py-3 text-sm font-semibold text-white transition-colors hover:bg-emerald-700"
+          className="flex flex-1 sm:flex-initial sm:min-w-[220px] items-center justify-center gap-2 rounded-xl bg-emerald-600 py-3 px-6 text-sm font-semibold text-white transition-colors hover:bg-emerald-700"
         >
           <CheckCircle className="h-4 w-4" />
           Complete Consultation

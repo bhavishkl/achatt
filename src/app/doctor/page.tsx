@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useAppStore } from "@/lib/store";
 import type { OpdVisit, OpdPatient, Prescription } from "@/types/opd";
 import { createEmptyPrescription } from "@/types/opd";
@@ -54,6 +54,21 @@ export default function DoctorPage() {
   const [activeVisitId, setActiveVisitId] = useState<string | null>(null);
   const [prescription, setPrescription] = useState<Prescription>(createEmptyPrescription());
   const [isLoading, setIsLoading] = useState(true);
+  const [showVisitHistory, setShowVisitHistory] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<"saved" | "saving" | "error">("saved");
+  const [showCompleted, setShowCompleted] = useState(false);
+
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const latestPrescriptionRef = useRef<Prescription>(prescription);
+  const activeVisitIdRef = useRef<string | null>(activeVisitId);
+
+  useEffect(() => {
+    latestPrescriptionRef.current = prescription;
+  }, [prescription]);
+
+  useEffect(() => {
+    activeVisitIdRef.current = activeVisitId;
+  }, [activeVisitId]);
 
   const opdVisits = useAppStore((s) => s.opdVisits);
   const opdPatients = useAppStore((s) => s.opdPatients);
@@ -132,8 +147,60 @@ export default function DoctorPage() {
 
   const getPatient = (id: string) => opdPatients.find((p) => p.id === id);
 
+  const flushPendingSave = async () => {
+    if (saveTimeoutRef.current && activeVisitIdRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+      saveTimeoutRef.current = null;
+      try {
+        await updateVisit(activeVisitIdRef.current, { prescription: latestPrescriptionRef.current });
+        setSaveStatus("saved");
+      } catch (err) {
+        console.error("Error flushing draft save:", err);
+      }
+    }
+  };
+
+  const handlePrescriptionChange = (updated: Prescription) => {
+    setPrescription(updated);
+    latestPrescriptionRef.current = updated;
+
+    if (!activeVisitId) return;
+
+    // Immediately update in-memory Zustand store optimistically
+    updateOpdVisitPrescription(activeVisitId, updated);
+
+    // Debounce API sync (600ms) to auto-save draft to backend
+    setSaveStatus("saving");
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+
+    const currentVisitId = activeVisitId;
+    saveTimeoutRef.current = setTimeout(async () => {
+      try {
+        await updateVisit(currentVisitId, { prescription: updated });
+        setSaveStatus("saved");
+      } catch (err) {
+        console.error("Auto-save draft error:", err);
+        setSaveStatus("error");
+      }
+    }, 600);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (saveTimeoutRef.current && activeVisitIdRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+        updateVisit(activeVisitIdRef.current, { prescription: latestPrescriptionRef.current });
+      }
+    };
+  }, [updateVisit]);
+
   const handleSelectVisit = async (visit: OpdVisit) => {
+    await flushPendingSave();
     setActiveVisitId(visit.id);
+    setShowVisitHistory(false);
+    setSaveStatus("saved");
     setPrescription(visit.prescription ?? createEmptyPrescription());
     if (visit.status === "vitals_done") {
       // Optimistic update
@@ -143,21 +210,28 @@ export default function DoctorPage() {
     }
   };
 
-  const handleSavePrescription = async () => {
-    if (!activeVisitId) return;
-    // Optimistic update
-    updateOpdVisitPrescription(activeVisitId, prescription);
-    // Sync to API
-    await updateVisit(activeVisitId, { prescription });
-  };
-
   const handleCompleteVisit = async () => {
     if (!activeVisit) return;
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+      saveTimeoutRef.current = null;
+    }
+    setSaveStatus("saved");
     // Optimistic updates
     updateOpdVisitPrescription(activeVisit.id, prescription);
     updateOpdVisitStatus(activeVisit.id, "completed");
     // Sync to API
     await updateVisit(activeVisit.id, { prescription, status: "completed" });
+    
+    // Sync medicines to DB
+    if (prescription.medicines && prescription.medicines.length > 0) {
+      fetch('/api/medicines/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ medicines: prescription.medicines })
+      }).catch(console.error);
+    }
+    
     setActiveVisitId(null);
     setPrescription(createEmptyPrescription());
   };
@@ -263,10 +337,20 @@ export default function DoctorPage() {
               {/* Completed Section */}
               {todayVisits.filter(v => v.status === "completed").length > 0 && (
                 <div>
-                  <h4 className="mb-2 text-xs font-semibold uppercase tracking-wider text-neutral-500">Completed</h4>
-                  <div className="space-y-1.5">
-                    {todayVisits.filter(v => v.status === "completed").map(renderVisitButton)}
-                  </div>
+                  <button 
+                    onClick={() => setShowCompleted(!showCompleted)}
+                    className="group mb-2 flex w-full items-center justify-between"
+                  >
+                    <h4 className="text-xs font-semibold uppercase tracking-wider text-neutral-500 transition-colors group-hover:text-neutral-300">Completed</h4>
+                    <span className="text-[10px] text-neutral-500 transition-colors group-hover:text-neutral-300">
+                      {showCompleted ? "▲ Hide" : "▼ Show"}
+                    </span>
+                  </button>
+                  {showCompleted && (
+                    <div className="space-y-1.5">
+                      {todayVisits.filter(v => v.status === "completed").map(renderVisitButton)}
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -305,9 +389,13 @@ export default function DoctorPage() {
                     <p className="text-sm text-neutral-400">
                       {activePatient.age}y / {activePatient.gender}
                       {patientVisitHistory.length > 0 && (
-                        <span className="ml-2 rounded-full bg-blue-500/15 px-2 py-0.5 text-[10px] font-semibold text-blue-400">
-                          {patientVisitHistory.length} past visit{patientVisitHistory.length > 1 ? "s" : ""}
-                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setShowVisitHistory((prev) => !prev)}
+                          className="ml-2 rounded-full bg-blue-500/15 px-2.5 py-0.5 text-[10px] font-semibold text-blue-400 hover:bg-blue-500/25 transition-colors cursor-pointer inline-flex items-center gap-1"
+                        >
+                          🕒 {patientVisitHistory.length} past visit{patientVisitHistory.length > 1 ? "s" : ""} {showVisitHistory ? "▲" : "▼"}
+                        </button>
                       )}
                     </p>
                   </div>
@@ -345,14 +433,41 @@ export default function DoctorPage() {
                 )}
               </div>
 
+              {/* Previous Visits Panel */}
+              {showVisitHistory && patientVisitHistory.length > 0 && (
+                <div className="mb-6 rounded-2xl border border-neutral-800 bg-neutral-900/70 p-4 print:hidden">
+                  <div className="mb-3 flex items-center justify-between">
+                    <h3 className="text-sm font-semibold text-white">
+                      Previous Visits History ({patientVisitHistory.length})
+                    </h3>
+                    <button
+                      type="button"
+                      onClick={() => setShowVisitHistory(false)}
+                      className="text-xs text-neutral-400 hover:text-white"
+                    >
+                      Close ✕
+                    </button>
+                  </div>
+                  <VisitHistory
+                    visits={patientVisitHistory}
+                    patients={opdPatients}
+                    onLoadPrescription={(loadedRx) => {
+                      const updated = { ...createEmptyPrescription(), ...loadedRx };
+                      handlePrescriptionChange(updated);
+                      setShowVisitHistory(false);
+                    }}
+                  />
+                </div>
+              )}
+
               {/* Content */}
               <div className="space-y-6">
                 <div className="print:hidden">
                   <ConsultationPad
                     prescription={prescription}
-                    onChange={setPrescription}
-                    onSave={handleSavePrescription}
+                    onChange={handlePrescriptionChange}
                     onComplete={handleCompleteVisit}
+                    saveStatus={saveStatus}
                   />
                 </div>
                 <div className="border-t border-neutral-800 pt-6">

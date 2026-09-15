@@ -229,6 +229,11 @@ export async function generatePrescriptionDocx(
       children.push(heading(getHead("chiefComplaints")));
       children.push(bodyText(formatSingleLineText(prescription.chiefComplaints)));
     },
+    history: () => {
+      if (!prescription.history) return;
+      children.push(heading(getHead("history")));
+      children.push(bodyText(formatSingleLineText(prescription.history)));
+    },
     diagnosis: () => {
       if (!prescription.diagnosis) return;
       children.push(heading(getHead("diagnosis")));

@@ -75,6 +75,14 @@ export function PrescriptionPreview({ patient, visit, prescription }: Props) {
         </div>
       ) : null,
 
+    history: () =>
+      prescription.history ? (
+        <div className="text-sm text-neutral-700">
+          <h3 className="mb-0.5 text-sm font-bold text-neutral-800">{getHeading("history")}</h3>
+          <p className="whitespace-normal">{formatSingleLineText(prescription.history)}</p>
+        </div>
+      ) : null,
+
     diagnosis: () =>
       prescription.diagnosis ? (
         <div className="text-sm text-neutral-800">

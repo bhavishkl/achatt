@@ -1,5 +1,23 @@
 # Context
 
+- **OPD Consultation Pad: Auto-save Draft by Default & Removed Save Draft Button**:
+  - Removed the manual "Save Draft" button from `src/components/doctor/ConsultationPad.tsx`.
+  - Replaced it with an unobtrusive live auto-save draft status indicator (`Draft auto-saved` / `Saving draft...`).
+  - `src/app/doctor/page.tsx`:
+    - Updated `handlePrescriptionChange` to immediately update the in-memory Zustand store optimistically on each keystroke or change.
+    - Added debounced (600ms) sync to the Supabase API `updateVisit` endpoint, eliminating excessive network requests while guaranteeing background persistence.
+    - Added `flushPendingSave` to instantly flush pending draft saves when switching patients, completing a consultation, or unmounting the page.
+
+- **OPD Consultation Pad: Added 'History' field placed directly after Chief Complaints**:
+  - `src/types/opd.ts`: Added `history?: string` to `Prescription` interface, defaulted `history: ""` in `createEmptyPrescription()`, added `"history"` right after `"chiefComplaints"` in `DEFAULT_FORMAT_CONFIG.sectionOrder`, ensured `getMergedFormatConfig()` places `"history"` immediately after `"chiefComplaints"`, and mapped `history: "History"` in `DEFAULT_SECTION_HEADINGS`.
+  - `src/data/consultationTerms.ts`: Added `HISTORY_TERMS` list for common clinical comorbidities, allergic, surgical, and habit history terms.
+  - `src/components/doctor/ConsultationPad.tsx`: Added collapsible `History` section right below `Chief Complaints` with newline-mode autocomplete and clinical suggestions.
+  - `src/components/doctor/PrescriptionPreview.tsx`: Added `history` section renderer right after `chiefComplaints`.
+  - `src/components/doctor/VisitHistory.tsx`: Added `History` display to past visit cards directly below `Chief Complaints`.
+  - `src/lib/exportPrescriptionDocx.ts`: Added `history` section builder to Word document export.
+  - `src/app/api/opd-options/route.ts` & `src/lib/store.ts` & `src/hooks/useOpdApi.ts`: Added dynamic extraction and storage for historic history suggestions.
+  - `src/app/doctor/page.tsx`: Connected `VisitHistory` via an interactive past visits toggle button allowing doctors to review previous visits and load past prescriptions.
+
 - **Bill printout: no payment split, smaller services table** (`add-bill-modal/print.ts`):
   - Removed the "Paid by Cash" / "Paid Online" / "Balance Due" rows from the printed bill and dropped `paidCash`/`paidOnline` from `buildBillPrintHtml`. The cash/online split is still captured in the Add Bill modal and saved on the bill record — it is just not printed.
   - Shrank the services (items) table: body font 13px -> 11px, header font 12px -> 10px, header padding 10px/12px -> 7px/10px, item cell padding 8px/12px -> 5px/10px. Summary rows (Gross, Advance, Concession, Net, amount in words) keep their existing sizes.

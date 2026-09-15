@@ -115,6 +115,7 @@ export interface PrescriptionFormatConfig {
 
 export interface Prescription {
   chiefComplaints: string;
+  history?: string;
   diagnosis: string;
   testsAdvised: TestEntry[];
   respiratoryExamination: string;
@@ -165,6 +166,7 @@ export const createEmptyVitals = (): Vitals => ({
 
 export const createEmptyPrescription = (): Prescription => ({
   chiefComplaints: "",
+  history: "",
   diagnosis: "",
   testsAdvised: [],
   respiratoryExamination: "",
@@ -178,6 +180,7 @@ export const createEmptyPrescription = (): Prescription => ({
 export const DEFAULT_FORMAT_CONFIG: PrescriptionFormatConfig = {
   sectionOrder: [
     "chiefComplaints",
+    "history",
     "diagnosis",
     "testsAdvised",
     "respiratoryExamination",
@@ -218,7 +221,18 @@ export const getMergedFormatConfig = (config?: Partial<PrescriptionFormatConfig>
     });
 
     DEFAULT_FORMAT_CONFIG.sectionOrder.forEach((key) => {
-      if (!seen.has(key)) normalized.push(key);
+      if (!seen.has(key)) {
+        if (key === "history") {
+          const ccIndex = normalized.indexOf("chiefComplaints");
+          if (ccIndex !== -1) {
+            normalized.splice(ccIndex + 1, 0, "history");
+            seen.add(key);
+            return;
+          }
+        }
+        normalized.push(key);
+        seen.add(key);
+      }
     });
 
     return normalized;
@@ -249,6 +263,7 @@ export const getMergedFormatConfig = (config?: Partial<PrescriptionFormatConfig>
 
 export const DEFAULT_SECTION_HEADINGS: Record<string, string> = {
   chiefComplaints: "Chief Complaints",
+  history: "History",
   diagnosis: "Diagnosis",
   testsAdvised: "Tests Advised",
   respiratoryExamination: "Respiratory Examination",

@@ -121,6 +121,12 @@ export function VisitHistory({ visits, patients, onLoadPrescription }: Props) {
                         <p className="text-sm text-neutral-300">{rx.chiefComplaints}</p>
                       </div>
                     )}
+                    {rx.history && (
+                      <div>
+                        <p className="text-xs font-semibold text-neutral-500">History</p>
+                        <p className="text-sm text-neutral-300">{rx.history}</p>
+                      </div>
+                    )}
                     {rx.diagnosis && (
                       <div>
                         <p className="text-xs font-semibold text-neutral-500">Diagnosis</p>

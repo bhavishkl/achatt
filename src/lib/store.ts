@@ -26,7 +26,6 @@ import type {
 } from "@/types/opd";
 import { DEFAULT_FORMAT_CONFIG } from "@/types/opd";
 import {
-  PULMONOLOGY_MEDICINES,
   PULMONOLOGY_TESTS,
   PULMONOLOGY_DIAGNOSES,
 } from "@/data/opdSeedData";
@@ -54,11 +53,13 @@ export interface AppState {
   historicDiagnoses: string[];
   historicMedicines: any[];
   historicChiefComplaints: string[];
+  historicHistory?: string[];
   historicTests: string[];
   setHistoricOptions: (options: {
     diagnoses: string[];
     medicines: any[];
     chiefComplaints: string[];
+    history?: string[];
     tests: string[];
   }) => void;
 
@@ -208,12 +209,14 @@ export const useAppStore = create<AppState>()(
       historicDiagnoses: [],
       historicMedicines: [],
       historicChiefComplaints: [],
+      historicHistory: [],
       historicTests: [],
       setHistoricOptions: (options) =>
         set(() => ({
           historicDiagnoses: options.diagnoses,
           historicMedicines: options.medicines,
           historicChiefComplaints: options.chiefComplaints,
+          historicHistory: options.history || [],
           historicTests: options.tests,
         })),
 
@@ -590,8 +593,7 @@ export const useAppStore = create<AppState>()(
       customDiagnoses: [],
       addCustomMedicine: (name) =>
         set((s) => {
-          const seedNames = PULMONOLOGY_MEDICINES.map((m) => typeof m === "string" ? m : (m as any).name);
-          const all = [...seedNames, ...s.customMedicines];
+          const all = [...s.customMedicines];
           if (all.some((m) => m.toLowerCase() === name.toLowerCase())) return {};
           return { customMedicines: [...s.customMedicines, name] };
         }),
