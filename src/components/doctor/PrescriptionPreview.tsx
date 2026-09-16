@@ -263,7 +263,7 @@ export function PrescriptionPreview({ patient, visit, prescription }: Props) {
           </div>
         ) : null}
 
-        <div className={formatConfig.printOffsets?.enableAbsolutePositioning ? "hidden" : "mb-0 flex flex-col gap-1 pb-0 text-sm"}>
+        <div className={formatConfig.printOffsets?.enableAbsolutePositioning ? "hidden" : "mb-2 flex flex-col gap-1 pb-1 text-sm"}>
           <div className="flex items-center justify-between font-semibold text-neutral-800 text-base">
             <span>{patient.name}</span>
             <span>{formatDate(visit.visitDate)}</span>
@@ -290,7 +290,7 @@ export function PrescriptionPreview({ patient, visit, prescription }: Props) {
 
 
         {/* Sections */}
-        <div className={formatConfig.printOffsets?.enableAbsolutePositioning ? "-mt-8 print:-mt-12 space-y-0" : "space-y-0"}>
+        <div className="space-y-2.5">
           {formatConfig.sectionOrder.map((key) => {
             if (!isVisible(key)) return null;
             const render = sectionRenderers[key];
@@ -310,11 +310,6 @@ export function PrescriptionPreview({ patient, visit, prescription }: Props) {
                 <p className="whitespace-pre-wrap text-sm text-neutral-700">{section.content}</p>
               </div>
             ))}
-        </div>
-
-        {/* Generic Medicine Note */}
-        <div className="mt-4 text-xs italic text-neutral-600 text-center">
-          * Any brand containing the above-mentioned generic medicines at the same dosage can be taken as an alternative.
         </div>
 
         {/* Footer */}
