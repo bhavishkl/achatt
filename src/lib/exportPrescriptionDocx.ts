@@ -118,6 +118,11 @@ const formatTimingRoutine = (med: { timing?: string; routine?: string; duration?
   return parts.join(" - ");
 };
 
+const getComposition = (name: string) => {
+  const splitIndex = name.indexOf('. ');
+  return splitIndex > -1 ? name.substring(splitIndex + 2) : name;
+};
+
 export async function generatePrescriptionDocx(
   patient: OpdPatient,
   visit: OpdVisit,
@@ -278,8 +283,8 @@ export async function generatePrescriptionDocx(
         children.push(
           new Paragraph({
             children: [
-              new TextRun({ text: `${i + 1}. `, bold: true, font: "Calibri", size: 22 }),
-              new TextRun({ text: `${med.name} `, bold: true, font: "Calibri", size: 22 }),
+              new TextRun({ text: `${i + 1}. `, bold: true, font: "Calibri", size: 20 }),
+              new TextRun({ text: `${getComposition(med.name)} `, bold: true, font: "Calibri", size: 20 }),
               new TextRun({
                 text: `${formatFrequency(med.frequency)} — ${timingRoutine}`,
                 font: "Calibri",
@@ -306,6 +311,22 @@ export async function generatePrescriptionDocx(
       sectionBuilders[key]();
     }
   });
+
+  // Generic Medicine Note
+  children.push(
+    new Paragraph({
+      spacing: { before: 80, after: 80 },
+      children: [
+        new TextRun({
+          text: "* Any brand containing the above-mentioned generic medicines at the same dosage can be taken as an alternative.",
+          font: "Calibri",
+          size: 18,
+          italics: true,
+          color: "666666",
+        }),
+      ],
+    }),
+  );
 
   // Custom sections
   prescription.customSections

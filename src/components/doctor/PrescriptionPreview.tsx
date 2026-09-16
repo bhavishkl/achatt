@@ -66,6 +66,11 @@ export function PrescriptionPreview({ patient, visit, prescription }: Props) {
     return parts.join(" - ");
   };
 
+  const getComposition = (name: string) => {
+    const splitIndex = name.indexOf('. ');
+    return splitIndex > -1 ? name.substring(splitIndex + 2) : name;
+  };
+
   const sectionRenderers: Record<string, () => React.ReactNode> = {
     chiefComplaints: () =>
       prescription.chiefComplaints ? (
@@ -158,7 +163,7 @@ export function PrescriptionPreview({ patient, visit, prescription }: Props) {
                   return (
                     <tr key={med.id}>
                       <td className="!py-1 !px-3 text-neutral-500">{i + 1}</td>
-                      <td className="!py-1 !px-3 font-medium text-neutral-800">{med.name}</td>
+                      <td className="!py-1 !px-3 font-medium text-neutral-800">{getComposition(med.name)}</td>
                       <td className="!py-1 !px-3 text-center text-neutral-700">{formatFrequency(med.frequency)}</td>
                       <td className="!py-1 !px-3 text-neutral-700">{timingRoutine}</td>
                     </tr>
@@ -299,6 +304,10 @@ export function PrescriptionPreview({ patient, visit, prescription }: Props) {
             if (!content) return null;
             return <div key={key}>{content}</div>;
           })}
+
+          <div className="text-xs italic text-neutral-600 pt-1">
+            * Any brand containing the above-mentioned generic medicines at the same dosage can be taken as an alternative.
+          </div>
 
           {/* Custom Sections */}
           {prescription.customSections
