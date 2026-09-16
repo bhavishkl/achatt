@@ -290,7 +290,7 @@ export function PrescriptionPreview({ patient, visit, prescription }: Props) {
 
 
         {/* Sections */}
-        <div className="space-y-2.5">
+        <div className={formatConfig.printOffsets?.enableAbsolutePositioning ? "-mt-8 print:-mt-12 space-y-2.5" : "space-y-2.5"}>
           {formatConfig.sectionOrder.map((key) => {
             if (!isVisible(key)) return null;
             const render = sectionRenderers[key];
