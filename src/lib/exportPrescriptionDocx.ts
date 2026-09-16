@@ -34,10 +34,10 @@ function heading(text: string): Paragraph {
         bold: true,
         underline: {},
         font: "Calibri",
-        size: 22,
+        size: 20,
       }),
     ],
-    spacing: { before: 80, after: 40 },
+    spacing: { before: 0, after: 0 },
   });
 }
 
@@ -47,7 +47,7 @@ function bodyText(text: string): Paragraph {
       new TextRun({
         text,
         font: "Calibri",
-        size: 22,
+        size: 20,
       }),
     ],
     spacing: { after: 20 },
@@ -60,7 +60,7 @@ function bulletText(text: string): Paragraph {
       new TextRun({
         text: `• ${text}`,
         font: "Calibri",
-        size: 22,
+        size: 20,
       }),
     ],
     spacing: { after: 40 },
@@ -70,8 +70,8 @@ function bulletText(text: string): Paragraph {
 function labelValue(label: string, value: string): Paragraph {
   return new Paragraph({
     children: [
-      new TextRun({ text: `${label}: `, bold: true, font: "Calibri", size: 22 }),
-      new TextRun({ text: value, font: "Calibri", size: 22 }),
+      new TextRun({ text: `${label}: `, bold: true, font: "Calibri", size: 20 }),
+      new TextRun({ text: value, font: "Calibri", size: 20 }),
     ],
     spacing: { after: 40 },
   });
@@ -206,19 +206,7 @@ export async function generatePrescriptionDocx(
     }
   }
 
-  children.push(
-    new Paragraph({
-      children: [
-        new TextRun({
-          text: "─".repeat(60),
-          font: "Calibri",
-          size: 16,
-          color: "999999",
-        }),
-      ],
-      spacing: { before: 40, after: 40 },
-    }),
-  );
+  // Separator removed for spacing
 
   // Rx is now printed in medicines section
 
@@ -278,12 +266,12 @@ export async function generatePrescriptionDocx(
         children.push(
           new Paragraph({
             children: [
-              new TextRun({ text: `${i + 1}. `, bold: true, font: "Calibri", size: 22 }),
-              new TextRun({ text: `${med.name} `, bold: true, font: "Calibri", size: 22 }),
+              new TextRun({ text: `${i + 1}. `, bold: true, font: "Calibri", size: 20 }),
+              new TextRun({ text: `${med.name} `, bold: true, font: "Calibri", size: 20 }),
               new TextRun({
                 text: `${formatFrequency(med.frequency)} — ${timingRoutine}`,
                 font: "Calibri",
-                size: 22,
+                size: 20,
               }),
             ],
             spacing: { after: 16 },
@@ -314,6 +302,23 @@ export async function generatePrescriptionDocx(
       children.push(heading(section.heading));
       children.push(bodyText(section.content));
     });
+
+  // Generic Medicine Note
+  children.push(
+    new Paragraph({
+      spacing: { before: 200, after: 100 },
+      alignment: AlignmentType.CENTER,
+      children: [
+        new TextRun({
+          text: "* Any brand containing the above-mentioned generic medicines at the same dosage can be taken as an alternative.",
+          font: "Calibri",
+          size: 18,
+          italics: true,
+          color: "666666",
+        }),
+      ],
+    }),
+  );
 
   // Signature
   children.push(
