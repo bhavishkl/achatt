@@ -83,7 +83,7 @@ export default function DoctorPage() {
 
   const today = getToday();
 
-  // Load data from API on mount
+  // Load data from API on mount and poll periodically
   useEffect(() => {
     if (!companyId) {
       setIsLoading(false);
@@ -91,8 +91,8 @@ export default function DoctorPage() {
     }
 
     let mounted = true;
-    const load = async () => {
-      setIsLoading(true);
+    const load = async (isInitial = false) => {
+      if (isInitial) setIsLoading(true);
       const [patients, visits, formatConfig, options] = await Promise.all([
         loadPatients(),
         loadTodayVisits(),
@@ -108,11 +108,20 @@ export default function DoctorPage() {
         if (options) {
           setHistoricOptions(options);
         }
-        setIsLoading(false);
+        if (isInitial) setIsLoading(false);
       }
     };
-    load();
-    return () => { mounted = false; };
+    
+    load(true);
+
+    const intervalId = setInterval(() => {
+      load(false);
+    }, 5000);
+
+    return () => { 
+      mounted = false; 
+      clearInterval(intervalId);
+    };
   }, [companyId, loadPatients, loadTodayVisits, loadFormatConfig, loadOpdOptions, setOpdPatients, setOpdVisits, setPrescriptionFormatConfig, setHistoricOptions]);
 
   const todayVisits = useMemo(
