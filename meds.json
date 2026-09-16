@@ -1,0 +1,3836 @@
+{
+  "medicines": [
+    {
+      "serial_number": 1,
+      "brand_name": "Rabisov 20",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Rabeprazole Sodium 20 mg",
+      "common_frequency": "1-0-0",
+      "timings": "Before food"
+    },
+    {
+      "serial_number": 2,
+      "brand_name": "Rabisov D",
+      "medicine_form": "Capsule",
+      "composition_with_strength": "Rabeprazole Sodium 20 mg + Domperidone 30 mg",
+      "common_frequency": "1-0-0",
+      "timings": "Before food"
+    },
+    {
+      "serial_number": 3,
+      "brand_name": "Rabisov 40",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Rabeprazole Sodium 40 mg",
+      "common_frequency": "1-0-0",
+      "timings": "Before food"
+    },
+    {
+      "serial_number": 4,
+      "brand_name": "Doxcef CV 200",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Cefpodoxime Proxetil 200 mg + Clavulanic Acid 125 mg",
+      "common_frequency": "1-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 5,
+      "brand_name": "Crixan 250",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Cefuroxime Axetil 250 mg",
+      "common_frequency": "1-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 6,
+      "brand_name": "Crixan 500",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Cefuroxime Axetil 500 mg",
+      "common_frequency": "1-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 7,
+      "brand_name": "Veloz L",
+      "medicine_form": "Capsule",
+      "composition_with_strength": "Rabeprazole 20 mg + Levosulpiride 75 mg",
+      "common_frequency": "1-0-0",
+      "timings": "Before food"
+    },
+    {
+      "serial_number": 8,
+      "brand_name": "Rabicipl",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Rabeprazole Sodium 20 mg",
+      "common_frequency": "1-0-0",
+      "timings": "Before food"
+    },
+    {
+      "serial_number": 9,
+      "brand_name": "Rablet D",
+      "medicine_form": "Capsule",
+      "composition_with_strength": "Rabeprazole 20 mg + Domperidone 30 mg",
+      "common_frequency": "1-0-0",
+      "timings": "Before food"
+    },
+    {
+      "serial_number": 10,
+      "brand_name": "Rablet 20",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Rabeprazole Sodium 20 mg",
+      "common_frequency": "1-0-0",
+      "timings": "Before food"
+    },
+    {
+      "serial_number": 11,
+      "brand_name": "Happi D",
+      "medicine_form": "Capsule",
+      "composition_with_strength": "Rabeprazole 20 mg + Domperidone 30 mg",
+      "common_frequency": "1-0-0",
+      "timings": "Before food"
+    },
+    {
+      "serial_number": 12,
+      "brand_name": "Rvibe",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Rabeprazole Sodium 20 mg",
+      "common_frequency": "1-0-0",
+      "timings": "Before food"
+    },
+    {
+      "serial_number": 13,
+      "brand_name": "Sompraz D 40",
+      "medicine_form": "Capsule",
+      "composition_with_strength": "Esomeprazole 40 mg + Domperidone 30 mg",
+      "common_frequency": "1-0-0",
+      "timings": "Before food"
+    },
+    {
+      "serial_number": 14,
+      "brand_name": "Respoxid",
+      "medicine_form": "Capsule",
+      "composition_with_strength": "Montelukaste 10 mg + Levocetirizine 5 mg",
+      "common_frequency": "0-0-1",
+      "timings": "Evening"
+    },
+    {
+      "serial_number": 15,
+      "brand_name": "Pantodac DSR",
+      "medicine_form": "Capsule",
+      "composition_with_strength": "Pantoprazole 40 mg + Domperidone 30 mg",
+      "common_frequency": "1-0-0",
+      "timings": "Before food"
+    },
+    {
+      "serial_number": 16,
+      "brand_name": "Tryptomer 25mg",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Amitriptyline 25 mg",
+      "common_frequency": "0-0-1",
+      "timings": "Night"
+    },
+    {
+      "serial_number": 17,
+      "brand_name": "Tryptomer 10mg",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Amitriptyline 10 mg",
+      "common_frequency": "0-0-1",
+      "timings": "Night"
+    },
+    {
+      "serial_number": 18,
+      "brand_name": "Telekast 10",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Montelukaste 10 mg",
+      "common_frequency": "0-0-1",
+      "timings": "Evening"
+    },
+    {
+      "serial_number": 19,
+      "brand_name": "Telekast L Kid",
+      "medicine_form": "Syrup",
+      "composition_with_strength": "Montelukaste 4 mg + Levocetirizine 2.5 mg per 5 ml",
+      "common_frequency": "0-0-1",
+      "timings": "Evening"
+    },
+    {
+      "serial_number": 20,
+      "brand_name": "Microcef 100 DT",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Cefixime 100 mg",
+      "common_frequency": "1-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 21,
+      "brand_name": "Maxglin ER 75",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Pregabalin 75 mg + Methylcobalamin 500 mcg",
+      "common_frequency": "1-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 22,
+      "brand_name": "Prolomet XL 25",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Metoprolol Succinate 25 mg",
+      "common_frequency": "1-0-0",
+      "timings": "Morning"
+    },
+    {
+      "serial_number": 23,
+      "brand_name": "Prolomet XL 50",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Metoprolol Succinate 50 mg",
+      "common_frequency": "1-0-0",
+      "timings": "Morning"
+    },
+    {
+      "serial_number": 24,
+      "brand_name": "Nurakind LC",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Levocarnitine 500 mg + Methylcobalamin 1500 mcg + Folic Acid 1.5 mg",
+      "common_frequency": "1-0-0",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 25,
+      "brand_name": "Abphylline SR 200",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Acebrophylline 200 mg",
+      "common_frequency": "1-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 26,
+      "brand_name": "Canditral 200",
+      "medicine_form": "Capsule",
+      "composition_with_strength": "Itraconazole 200 mg",
+      "common_frequency": "1-0-0",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 27,
+      "brand_name": "Canditral 100",
+      "medicine_form": "Capsule",
+      "composition_with_strength": "Itraconazole 100 mg",
+      "common_frequency": "1-0-0",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 28,
+      "brand_name": "Zorberry",
+      "medicine_form": "Syrup",
+      "composition_with_strength": "Multivitamin + Lysine + Minerals + DHA",
+      "common_frequency": "1-0-0",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 29,
+      "brand_name": "Dynatel AM",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Telmisartan 40 mg + Amlodipine 5 mg",
+      "common_frequency": "1-0-0",
+      "timings": "Morning"
+    },
+    {
+      "serial_number": 30,
+      "brand_name": "Dynatel H",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Telmisartan 40 mg + Hydrochlorothiazide 12.5 mg",
+      "common_frequency": "1-0-0",
+      "timings": "Morning"
+    },
+    {
+      "serial_number": 31,
+      "brand_name": "Dynatel Trio",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Telmisartan 40 mg + Amlodipine 5 mg + Hydrochlorothiazide 12.5 mg",
+      "common_frequency": "1-0-0",
+      "timings": "Morning"
+    },
+    {
+      "serial_number": 32,
+      "brand_name": "Dynatel 40",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Telmisartan 40 mg",
+      "common_frequency": "1-0-0",
+      "timings": "Morning"
+    },
+    {
+      "serial_number": 33,
+      "brand_name": "Dynatel MT 25",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Telmisartan 40 mg + Metoprolol Succinate 25 mg",
+      "common_frequency": "1-0-0",
+      "timings": "Morning"
+    },
+    {
+      "serial_number": 34,
+      "brand_name": "Dynatel MT 50",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Telmisartan 40 mg + Metoprolol Succinate 50 mg",
+      "common_frequency": "1-0-0",
+      "timings": "Morning"
+    },
+    {
+      "serial_number": 35,
+      "brand_name": "Montek FX",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Montelukaste 10 mg + Fexofenadine 120 mg",
+      "common_frequency": "0-0-1",
+      "timings": "Evening"
+    },
+    {
+      "serial_number": 36,
+      "brand_name": "Dynakast L",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Montelukaste 10 mg + Levocetirizine 5 mg",
+      "common_frequency": "0-0-1",
+      "timings": "Evening"
+    },
+    {
+      "serial_number": 37,
+      "brand_name": "Tasmont FX",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Montelukaste 10 mg + Fexofenadine 120 mg",
+      "common_frequency": "0-0-1",
+      "timings": "Evening"
+    },
+    {
+      "serial_number": 38,
+      "brand_name": "Abevia 200 SR",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Acebrophylline 200 mg",
+      "common_frequency": "1-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 39,
+      "brand_name": "Odimont LC",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Montelukaste 10 mg + Levocetirizine 5 mg",
+      "common_frequency": "0-0-1",
+      "timings": "Evening"
+    },
+    {
+      "serial_number": 40,
+      "brand_name": "Rabinok DSR",
+      "medicine_form": "Capsule",
+      "composition_with_strength": "Rabeprazole 20 mg + Domperidone 30 mg",
+      "common_frequency": "1-0-0",
+      "timings": "Before food"
+    },
+    {
+      "serial_number": 41,
+      "brand_name": "L Montus",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Levocetirizine 5 mg + Montelukaste 10 mg",
+      "common_frequency": "0-0-1",
+      "timings": "Evening"
+    },
+    {
+      "serial_number": 42,
+      "brand_name": "Criz M",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Levocetirizine 5 mg + Montelukaste 10 mg",
+      "common_frequency": "0-0-1",
+      "timings": "Evening"
+    },
+    {
+      "serial_number": 43,
+      "brand_name": "Dulcoflex",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Bisacodyl 5 mg",
+      "common_frequency": "0-0-1",
+      "timings": "Night"
+    },
+    {
+      "serial_number": 44,
+      "brand_name": "Nurakind OD",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Methylcobalamin 1500 mcg",
+      "common_frequency": "1-0-0",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 45,
+      "brand_name": "Shelcal 500",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Calcium Carbonate 1250 mg (Elemental Calcium 500 mg) + Vitamin D3 250 IU",
+      "common_frequency": "1-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 46,
+      "brand_name": "Doxt SL 100mg",
+      "medicine_form": "Capsule",
+      "composition_with_strength": "Doxycycline 100 mg + Lactic Acid Bacillus",
+      "common_frequency": "1-0-0",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 47,
+      "brand_name": "Pantodac 40",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Pantoprazole 40 mg",
+      "common_frequency": "1-0-0",
+      "timings": "Before food"
+    },
+    {
+      "serial_number": 48,
+      "brand_name": "Augmentin 625 Duo",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Amoxicillin 500 mg + Clavulanic Acid 125 mg",
+      "common_frequency": "1-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 49,
+      "brand_name": "Cefozyt",
+      "medicine_form": "Injection",
+      "composition_with_strength": "Ceftriaxone 1000 mg + Sulbactam 500 mg",
+      "common_frequency": "1-0-1",
+      "timings": "IV/IM"
+    },
+    {
+      "serial_number": 50,
+      "brand_name": "M Cin 400",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Moxifloxacin 400 mg",
+      "common_frequency": "1-0-0",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 51,
+      "brand_name": "Mucinac 200",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Acetylcysteine 200 mg",
+      "common_frequency": "1-1-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 52,
+      "brand_name": "Duomen ER",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Amoxicillin 1000 mg + Clavulanic Acid 62.5 mg",
+      "common_frequency": "1-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 53,
+      "brand_name": "Rixmin 400",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Rifaximin 400 mg",
+      "common_frequency": "1-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 54,
+      "brand_name": "Banocide Forte",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Diethylcarbamazine Citrate 100 mg",
+      "common_frequency": "1-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 55,
+      "brand_name": "Deriphyllin Retard 150",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Etofylline 115 mg + Theophylline 35 mg",
+      "common_frequency": "1-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 56,
+      "brand_name": "Deriphyllin OD 200",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Etofylline 153 mg + Theophylline 47 mg",
+      "common_frequency": "1-0-0",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 57,
+      "brand_name": "Rifakem 400",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Rifaximin 400 mg",
+      "common_frequency": "1-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 58,
+      "brand_name": "Fexy 120",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Fexofenadine 120 mg",
+      "common_frequency": "1-0-0",
+      "timings": "Before food"
+    },
+    {
+      "serial_number": 59,
+      "brand_name": "Fexy 180",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Fexofenadine 180 mg",
+      "common_frequency": "1-0-0",
+      "timings": "Before food"
+    },
+    {
+      "serial_number": 60,
+      "brand_name": "Doxolin 200",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Doxofylline 200 mg",
+      "common_frequency": "1-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 61,
+      "brand_name": "Atarax 10mg",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Hydroxyzine 10 mg",
+      "common_frequency": "1-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 62,
+      "brand_name": "Atarax 25mg",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Hydroxyzine 25 mg",
+      "common_frequency": "1-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 63,
+      "brand_name": "Fibrodone 400",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Pirfenidone 400 mg",
+      "common_frequency": "1-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 64,
+      "brand_name": "Fibrodone 800",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Pirfenidone 800 mg",
+      "common_frequency": "1-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 65,
+      "brand_name": "Telekast L",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Montelukaste 10 mg + Levocetirizine 5 mg",
+      "common_frequency": "0-0-1",
+      "timings": "Evening"
+    },
+    {
+      "serial_number": 66,
+      "brand_name": "Alerfix M",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Montelukaste 10 mg + Levocetirizine 5 mg",
+      "common_frequency": "0-0-1",
+      "timings": "Evening"
+    },
+    {
+      "serial_number": 67,
+      "brand_name": "Oflox Oz",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Ofloxacin 200 mg + Ornidazole 500 mg",
+      "common_frequency": "1-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 68,
+      "brand_name": "Omnacortil 20",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Prednisolone 20 mg",
+      "common_frequency": "1-0-0",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 69,
+      "brand_name": "Omnacortil 10",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Prednisolone 10 mg",
+      "common_frequency": "1-0-0",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 70,
+      "brand_name": "Omnacortil 5",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Prednisolone 5 mg",
+      "common_frequency": "1-0-0",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 71,
+      "brand_name": "Neuromerck",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Piracetam 800 mg",
+      "common_frequency": "1-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 72,
+      "brand_name": "Rabeloc Plus",
+      "medicine_form": "Capsule",
+      "composition_with_strength": "Rabeprazole 20 mg + Levosulpiride 75 mg",
+      "common_frequency": "1-0-0",
+      "timings": "Before food"
+    },
+    {
+      "serial_number": 73,
+      "brand_name": "Mucotab AB",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Ambroxol 75 mg",
+      "common_frequency": "1-0-0",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 74,
+      "brand_name": "Ravoz 20",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Rabeprazole Sodium 20 mg",
+      "common_frequency": "1-0-0",
+      "timings": "Before food"
+    },
+    {
+      "serial_number": 75,
+      "brand_name": "Happibiotic",
+      "medicine_form": "Capsule",
+      "composition_with_strength": "Lactic Acid Bacillus + Bifidobacterium 45 Billion CFU",
+      "common_frequency": "1-0-0",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 76,
+      "brand_name": "Rapeed D",
+      "medicine_form": "Capsule",
+      "composition_with_strength": "Rabeprazole 20 mg + Domperidone 30 mg",
+      "common_frequency": "1-0-0",
+      "timings": "Before food"
+    },
+    {
+      "serial_number": 77,
+      "brand_name": "Deskast",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Montelukaste 10 mg",
+      "common_frequency": "0-0-1",
+      "timings": "Evening"
+    },
+    {
+      "serial_number": 78,
+      "brand_name": "Bilagra 20mg",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Bilastine 20 mg",
+      "common_frequency": "1-0-0",
+      "timings": "Before food"
+    },
+    {
+      "serial_number": 79,
+      "brand_name": "Bilagra M 40mg",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Bilastine 40 mg + Montelukaste 10 mg",
+      "common_frequency": "1-0-0",
+      "timings": "Before food"
+    },
+    {
+      "serial_number": 80,
+      "brand_name": "Levoyukt MF",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Levocetirizine 5 mg + Montelukaste 10 mg",
+      "common_frequency": "0-0-1",
+      "timings": "Evening"
+    },
+    {
+      "serial_number": 81,
+      "brand_name": "Trafical CT",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Cetirizine 5 mg + Phenylephrine 10 mg + Paracetamol 325 mg",
+      "common_frequency": "1-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 82,
+      "brand_name": "Montek FX 180",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Montelukaste 10 mg + Fexofenadine 180 mg",
+      "common_frequency": "0-0-1",
+      "timings": "Evening"
+    },
+    {
+      "serial_number": 83,
+      "brand_name": "Dynaglim MV 2.2",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Glimepiride 2 mg + Metformin 500 mg + Voglibose 0.3 mg",
+      "common_frequency": "1-0-0",
+      "timings": "Before food"
+    },
+    {
+      "serial_number": 84,
+      "brand_name": "Dynaglim MV 1.3",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Glimepiride 1 mg + Metformin 500 mg + Voglibose 0.3 mg",
+      "common_frequency": "1-0-0",
+      "timings": "Before food"
+    },
+    {
+      "serial_number": 85,
+      "brand_name": "Dynaglim M2",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Glimepiride 2 mg + Metformin 500 mg",
+      "common_frequency": "1-0-0",
+      "timings": "Before food"
+    },
+    {
+      "serial_number": 86,
+      "brand_name": "Quicnac 600",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Ubiquinol 600 mg",
+      "common_frequency": "1-0-0",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 87,
+      "brand_name": "Feronia XT",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Ferrous Ascorbate 100 mg + Folic Acid 1.5 mg",
+      "common_frequency": "1-0-0",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 88,
+      "brand_name": "Orofor XT",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Ferrous Ascorbate 100 mg + Folic Acid 1.5 mg",
+      "common_frequency": "1-0-0",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 89,
+      "brand_name": "Nuzorb",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Ferrous Ascorbate 100 mg + Folic Acid 1.5 mg",
+      "common_frequency": "1-0-0",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 90,
+      "brand_name": "Dynaglim M1",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Glimepiride 1 mg + Metformin 500 mg",
+      "common_frequency": "1-0-0",
+      "timings": "Before food"
+    },
+    {
+      "serial_number": 91,
+      "brand_name": "Broclear",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Acebrophylline 100 mg + Acetylcysteine 600 mg",
+      "common_frequency": "1-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 92,
+      "brand_name": "Crampcure Forte",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Drotaverine 80 mg + Mefenamic Acid 250 mg",
+      "common_frequency": "1-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 93,
+      "brand_name": "Evion LC",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Vitamin E 400 mg + Levocarnitine 500 mg",
+      "common_frequency": "1-0-0",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 94,
+      "brand_name": "Cotipam Plus",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Paracetamol 325 mg + Tramadol 37.5 mg",
+      "common_frequency": "1-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 95,
+      "brand_name": "Cotipam Lite",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Paracetamol 325 mg + Tramadol 37.5 mg",
+      "common_frequency": "1-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 96,
+      "brand_name": "Gabantin Plus",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Gabapentin 100 mg + Methylcobalamin 500 mcg",
+      "common_frequency": "1-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 97,
+      "brand_name": "Gabantin Forte",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Gabapentin 300 mg + Methylcobalamin 500 mcg",
+      "common_frequency": "1-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 98,
+      "brand_name": "Nervmax SR 75",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Pregabalin 75 mg + Methylcobalamin 1500 mcg",
+      "common_frequency": "1-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 99,
+      "brand_name": "Amifru 40",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Furosemide 40 mg + Amiloride 5 mg",
+      "common_frequency": "1-0-0",
+      "timings": "Morning"
+    },
+    {
+      "serial_number": 100,
+      "brand_name": "L Cin 500",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Levofloxacin 500 mg",
+      "common_frequency": "1-0-0",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 101,
+      "brand_name": "L Cin 250",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Levofloxacin 250 mg",
+      "common_frequency": "1-0-0",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 102,
+      "brand_name": "L Cin 750",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Levofloxacin 750 mg",
+      "common_frequency": "1-0-0",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 1,
+      "brand_name": "Forair 500",
+      "medicine_form": "Respicaps",
+      "composition_with_strength": "Salmeterol 50 mcg + Fluticasone Propionate 500 mcg",
+      "common_frequency": "1-0-1",
+      "timings": "After food",
+      "device_type": "Respimat"
+    },
+    {
+      "serial_number": 2,
+      "brand_name": "Esiflo 500",
+      "medicine_form": "Transcaps",
+      "composition_with_strength": "Salmeterol 50 mcg + Fluticasone Propionate 500 mcg",
+      "common_frequency": "1-0-1",
+      "timings": "After food",
+      "device_type": "Transhaler"
+    },
+    {
+      "serial_number": 3,
+      "brand_name": "Formost 400",
+      "medicine_form": "Inhaler",
+      "composition_with_strength": "Formoterol 6 mcg + Mometasone 400 mcg",
+      "common_frequency": "1-0-1",
+      "timings": "After food",
+      "device_type": "MDI"
+    },
+    {
+      "serial_number": 4,
+      "brand_name": "Flutr 500",
+      "medicine_form": "Rotacaps",
+      "composition_with_strength": "Salmeterol 50 mcg + Fluticasone Propionate 500 mcg",
+      "common_frequency": "1-0-1",
+      "timings": "After food",
+      "device_type": "Rotahaler"
+    },
+    {
+      "serial_number": 5,
+      "brand_name": "Esiflo 100",
+      "medicine_form": "Transcaps",
+      "composition_with_strength": "Salmeterol 50 mcg + Fluticasone Propionate 100 mcg",
+      "common_frequency": "1-0-1",
+      "timings": "After food",
+      "device_type": "Transhaler"
+    },
+    {
+      "serial_number": 6,
+      "brand_name": "Esiflo 250",
+      "medicine_form": "Transcaps",
+      "composition_with_strength": "Salmeterol 50 mcg + Fluticasone Propionate 250 mcg",
+      "common_frequency": "1-0-1",
+      "timings": "After food",
+      "device_type": "Transhaler"
+    },
+    {
+      "serial_number": 7,
+      "brand_name": "Budamate 200",
+      "medicine_form": "Transhaler",
+      "composition_with_strength": "Budesonide 200 mcg + Formoterol 6 mcg",
+      "common_frequency": "1-0-1",
+      "timings": "After food",
+      "device_type": "Transhaler"
+    },
+    {
+      "serial_number": 8,
+      "brand_name": "Budamate 400",
+      "medicine_form": "Transhaler",
+      "composition_with_strength": "Budesonide 400 mcg + Formoterol 6 mcg",
+      "common_frequency": "1-0-1",
+      "timings": "After food",
+      "device_type": "Transhaler"
+    },
+    {
+      "serial_number": 9,
+      "brand_name": "Budamate 100",
+      "medicine_form": "Transhaler",
+      "composition_with_strength": "Budesonide 100 mcg + Formoterol 6 mcg",
+      "common_frequency": "1-0-1",
+      "timings": "After food",
+      "device_type": "Transhaler"
+    },
+    {
+      "serial_number": 10,
+      "brand_name": "Aerotrop F",
+      "medicine_form": "Inhaler",
+      "composition_with_strength": "Tiotropium 9 mcg + Formoterol 6 mcg",
+      "common_frequency": "1-0-0",
+      "timings": "Morning",
+      "device_type": "MDI"
+    },
+    {
+      "serial_number": 11,
+      "brand_name": "Odihale 100",
+      "medicine_form": "Respicaps",
+      "composition_with_strength": "Fluticasone Furoate 100 mcg + Vilanterol 25 mcg",
+      "common_frequency": "1-0-0",
+      "timings": "Evening",
+      "device_type": "Respimat"
+    },
+    {
+      "serial_number": 12,
+      "brand_name": "Odihale 200",
+      "medicine_form": "Respicaps",
+      "composition_with_strength": "Fluticasone Furoate 200 mcg + Vilanterol 25 mcg",
+      "common_frequency": "1-0-0",
+      "timings": "Evening",
+      "device_type": "Respimat"
+    },
+    {
+      "serial_number": 13,
+      "brand_name": "Odihale G 200",
+      "medicine_form": "Respicaps",
+      "composition_with_strength": "Fluticasone Furoate 200 mcg + Vilanterol 25 mcg + Glycopyrronium 50 mcg",
+      "common_frequency": "1-0-0",
+      "timings": "Evening",
+      "device_type": "Respimat"
+    },
+    {
+      "serial_number": 14,
+      "brand_name": "Formonide 400",
+      "medicine_form": "Rotacaps",
+      "composition_with_strength": "Budesonide 400 mcg + Formoterol 12 mcg",
+      "common_frequency": "1-0-1",
+      "timings": "After food",
+      "device_type": "Rotahaler"
+    },
+    {
+      "serial_number": 15,
+      "brand_name": "Formonide 200",
+      "medicine_form": "Rotacaps",
+      "composition_with_strength": "Budesonide 200 mcg + Formoterol 6 mcg",
+      "common_frequency": "1-0-1",
+      "timings": "After food",
+      "device_type": "Rotahaler"
+    },
+    {
+      "serial_number": 16,
+      "brand_name": "Formonide 100",
+      "medicine_form": "Rotacaps",
+      "composition_with_strength": "Budesonide 100 mcg + Formoterol 6 mcg",
+      "common_frequency": "1-0-1",
+      "timings": "After food",
+      "device_type": "Rotahaler"
+    },
+    {
+      "serial_number": 17,
+      "brand_name": "Quikhale FB 400",
+      "medicine_form": "Rotacaps",
+      "composition_with_strength": "Budesonide 400 mcg + Formoterol 12 mcg",
+      "common_frequency": "1-0-1",
+      "timings": "After food",
+      "device_type": "Rotahaler"
+    },
+    {
+      "serial_number": 18,
+      "brand_name": "Quikhale FB 200",
+      "medicine_form": "Rotacaps",
+      "composition_with_strength": "Budesonide 200 mcg + Formoterol 6 mcg",
+      "common_frequency": "1-0-1",
+      "timings": "After food",
+      "device_type": "Rotahaler"
+    },
+    {
+      "serial_number": 19,
+      "brand_name": "Combitide 500",
+      "medicine_form": "Rotacaps",
+      "composition_with_strength": "Fluticasone Propionate 500 mcg + Salmeterol 50 mcg",
+      "common_frequency": "1-0-1",
+      "timings": "After food",
+      "device_type": "Rotahaler"
+    },
+    {
+      "serial_number": 20,
+      "brand_name": "Pulmosmart G",
+      "medicine_form": "Pulmicaps",
+      "composition_with_strength": "Budesonide 400 mcg + Formoterol 12 mcg + Glycopyrronium 25 mcg",
+      "common_frequency": "1-0-1",
+      "timings": "After food",
+      "device_type": "Rotahaler"
+    },
+    {
+      "serial_number": 21,
+      "brand_name": "Pulmosmart 400",
+      "medicine_form": "Pulmicaps",
+      "composition_with_strength": "Budesonide 400 mcg + Formoterol 12 mcg",
+      "common_frequency": "1-0-1",
+      "timings": "After food",
+      "device_type": "Rotahaler"
+    },
+    {
+      "serial_number": 22,
+      "brand_name": "Fomtide 400",
+      "medicine_form": "Rotacaps",
+      "composition_with_strength": "Budesonide 400 mcg + Formoterol 12 mcg",
+      "common_frequency": "1-0-1",
+      "timings": "After food",
+      "device_type": "Rotahaler"
+    },
+    {
+      "serial_number": 23,
+      "brand_name": "Vilfuro 200",
+      "medicine_form": "Octacaps",
+      "composition_with_strength": "Fluticasone Furoate 200 mcg + Vilanterol 25 mcg",
+      "common_frequency": "1-0-0",
+      "timings": "Evening",
+      "device_type": "Octahaler"
+    },
+    {
+      "serial_number": 24,
+      "brand_name": "Besvil Trio 100",
+      "medicine_form": "Octacaps",
+      "composition_with_strength": "Fluticasone Furoate 100 mcg + Umeclidinium 62.5 mcg + Vilanterol 25 mcg",
+      "common_frequency": "1-0-0",
+      "timings": "Evening",
+      "device_type": "Octahaler"
+    },
+    {
+      "serial_number": 25,
+      "brand_name": "Besvil 200",
+      "medicine_form": "Octacaps",
+      "composition_with_strength": "Fluticasone Furoate 200 mcg + Vilanterol 25 mcg",
+      "common_frequency": "1-0-0",
+      "timings": "Evening",
+      "device_type": "Octahaler"
+    },
+    {
+      "serial_number": 26,
+      "brand_name": "Indaglyn",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Indapamide 2.5 mg",
+      "common_frequency": "1-0-0",
+      "timings": "Morning"
+    },
+    {
+      "serial_number": 27,
+      "brand_name": "Ecosprin Gold 20",
+      "medicine_form": "Capsule",
+      "composition_with_strength": "Aspirin 75 mg + Atorvastatin 20 mg + Clopidogrel 75 mg",
+      "common_frequency": "0-0-1",
+      "timings": "Night"
+    },
+    {
+      "serial_number": 28,
+      "brand_name": "Bactrim D.S",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Sulfamethoxazole 800 mg + Trimethoprim 160 mg",
+      "common_frequency": "1-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 29,
+      "brand_name": "Ivabrad 5",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Ivabradine 5 mg",
+      "common_frequency": "1-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 30,
+      "brand_name": "Voritrol Inj",
+      "medicine_form": "Injection",
+      "composition_with_strength": "Voriconazole 200 mg",
+      "common_frequency": "1-0-1",
+      "timings": "IV infusion"
+    },
+    {
+      "serial_number": 31,
+      "brand_name": "Colospax",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Mebeverine 135 mg",
+      "common_frequency": "1-0-1",
+      "timings": "Before food"
+    },
+    {
+      "serial_number": 32,
+      "brand_name": "Melnite",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Melatonin 3 mg",
+      "common_frequency": "0-0-1",
+      "timings": "Night"
+    },
+    {
+      "serial_number": 33,
+      "brand_name": "Dfilin",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Deriphylline (Etofylline 115 mg + Theophylline 35 mg)",
+      "common_frequency": "1-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 34,
+      "brand_name": "Urimax D",
+      "medicine_form": "Capsule",
+      "composition_with_strength": "Tamsulosin 0.4 mg + Dutasteride 0.5 mg",
+      "common_frequency": "0-0-1",
+      "timings": "Night"
+    },
+    {
+      "serial_number": 35,
+      "brand_name": "Quitipin 25",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Quetiapine 25 mg",
+      "common_frequency": "0-0-1",
+      "timings": "Night"
+    },
+    {
+      "serial_number": 36,
+      "brand_name": "Qutan 200",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Quetiapine 200 mg",
+      "common_frequency": "0-0-1",
+      "timings": "Night"
+    },
+    {
+      "serial_number": 37,
+      "brand_name": "Velentas 50",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Entecavir 0.5 mg",
+      "common_frequency": "1-0-0",
+      "timings": "Before food"
+    },
+    {
+      "serial_number": 38,
+      "brand_name": "Mirtaz 15",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Mirtazapine 15 mg",
+      "common_frequency": "0-0-1",
+      "timings": "Night"
+    },
+    {
+      "serial_number": 39,
+      "brand_name": "Lonazep 2",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Clonazepam 2 mg",
+      "common_frequency": "0-0-1",
+      "timings": "Night"
+    },
+    {
+      "serial_number": 40,
+      "brand_name": "Rivaban 15",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Rivaroxaban 15 mg",
+      "common_frequency": "1-0-0",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 41,
+      "brand_name": "Rivaban 2.5",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Rivaroxaban 2.5 mg",
+      "common_frequency": "1-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 42,
+      "brand_name": "Fludry",
+      "medicine_form": "Syrup",
+      "composition_with_strength": "Ambroxol + Guaifenesin + Terbutaline",
+      "common_frequency": "1-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 43,
+      "brand_name": "Glycomet",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Metformin 500 mg",
+      "common_frequency": "1-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 44,
+      "brand_name": "Omnacortil 10",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Prednisolone 10 mg",
+      "common_frequency": "1-0-0",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 45,
+      "brand_name": "Iprasure",
+      "medicine_form": "Rotacaps",
+      "composition_with_strength": "Ipratropium Bromide 40 mcg",
+      "common_frequency": "1-0-1",
+      "timings": "After food",
+      "device_type": "Rotahaler"
+    },
+    {
+      "serial_number": 46,
+      "brand_name": "Budamate G",
+      "medicine_form": "Rotacaps",
+      "composition_with_strength": "Budesonide 400 mcg + Formoterol 12 mcg + Glycopyrronium 18 mcg",
+      "common_frequency": "1-0-1",
+      "timings": "After food",
+      "device_type": "Rotahaler"
+    },
+    {
+      "serial_number": 47,
+      "brand_name": "Hp Kit",
+      "medicine_form": "Kit",
+      "composition_with_strength": "Clarithromycin + Amoxicillin + Rabeprazole",
+      "common_frequency": "1-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 48,
+      "brand_name": "Formoflo G",
+      "medicine_form": "Transcaps",
+      "composition_with_strength": "Formoterol 12 mcg + Fluticasone 500 mcg + Glycopyrronium 18 mcg",
+      "common_frequency": "1-0-1",
+      "timings": "After food",
+      "device_type": "Transhaler"
+    },
+    {
+      "serial_number": 49,
+      "brand_name": "Lithosun SR",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Lithium Carbonate 400 mg SR",
+      "common_frequency": "0-0-1",
+      "timings": "Night"
+    },
+    {
+      "serial_number": 50,
+      "brand_name": "Clopitab",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Clopidogrel 75 mg",
+      "common_frequency": "1-0-0",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 51,
+      "brand_name": "Voritrol 200",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Voriconazole 200 mg",
+      "common_frequency": "1-0-1",
+      "timings": "Before food"
+    },
+    {
+      "serial_number": 52,
+      "brand_name": "Tolifast D",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Tolperisone 150 mg + Diclofenac 50 mg",
+      "common_frequency": "1-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 53,
+      "brand_name": "Caripill",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Carica Papaya Leaf Extract 1100 mg",
+      "common_frequency": "1-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 54,
+      "brand_name": "Formoflo Forte",
+      "medicine_form": "Transcaps",
+      "composition_with_strength": "Formoterol 12 mcg + Fluticasone 500 mcg",
+      "common_frequency": "1-0-1",
+      "timings": "After food",
+      "device_type": "Transhaler"
+    },
+    {
+      "serial_number": 55,
+      "brand_name": "Besvil G 200",
+      "medicine_form": "Octacaps",
+      "composition_with_strength": "Fluticasone Furoate 200 mcg + Vilanterol 25 mcg + Glycopyrronium 50 mcg",
+      "common_frequency": "1-0-0",
+      "timings": "Evening",
+      "device_type": "Octahaler"
+    },
+    {
+      "serial_number": 56,
+      "brand_name": "Forglyn Plus",
+      "medicine_form": "Rotacaps",
+      "composition_with_strength": "Formoterol 12 mcg + Glycopyrronium 18 mcg",
+      "common_frequency": "1-0-1",
+      "timings": "After food",
+      "device_type": "Rotahaler"
+    },
+    {
+      "serial_number": 57,
+      "brand_name": "Budegate F 1mg",
+      "medicine_form": "Rotacaps",
+      "composition_with_strength": "Budesonide 1000 mcg + Formoterol 20 mcg",
+      "common_frequency": "1-0-1",
+      "timings": "After food",
+      "device_type": "Rotahaler"
+    },
+    {
+      "serial_number": 58,
+      "brand_name": "Budegate F 0.5mg",
+      "medicine_form": "Rotacaps",
+      "composition_with_strength": "Budesonide 500 mcg + Formoterol 20 mcg",
+      "common_frequency": "1-0-1",
+      "timings": "After food",
+      "device_type": "Rotahaler"
+    },
+    {
+      "serial_number": 59,
+      "brand_name": "Pulmosmart 1mg",
+      "medicine_form": "Pulmules",
+      "composition_with_strength": "Budesonide 1000 mcg + Formoterol 20 mcg",
+      "common_frequency": "1-0-1",
+      "timings": "After food",
+      "device_type": "Nebulizer"
+    },
+    {
+      "serial_number": 60,
+      "brand_name": "Airz FB",
+      "medicine_form": "Rotacaps",
+      "composition_with_strength": "Formoterol 12 mcg + Budesonide 400 mcg",
+      "common_frequency": "1-0-1",
+      "timings": "After food",
+      "device_type": "Rotahaler"
+    },
+    {
+      "serial_number": 61,
+      "brand_name": "Glycoquic",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Metformin 500 mg + Glimepiride 1 mg",
+      "common_frequency": "1-0-0",
+      "timings": "Before food"
+    },
+    {
+      "serial_number": 62,
+      "brand_name": "Budegate 0.5",
+      "medicine_form": "Respules",
+      "composition_with_strength": "Budesonide 0.5 mg/2ml",
+      "common_frequency": "1-0-1",
+      "timings": "After food",
+      "device_type": "Nebulizer"
+    },
+    {
+      "serial_number": 63,
+      "brand_name": "Budasure 0.5",
+      "medicine_form": "Respules",
+      "composition_with_strength": "Budesonide 0.5 mg/2ml",
+      "common_frequency": "1-0-1",
+      "timings": "After food",
+      "device_type": "Nebulizer"
+    },
+    {
+      "serial_number": 64,
+      "brand_name": "Salbair I",
+      "medicine_form": "Respules",
+      "composition_with_strength": "Levosalbutamol 2.5 mg/2.5ml",
+      "common_frequency": "1-0-1",
+      "timings": "After food",
+      "device_type": "Nebulizer"
+    },
+    {
+      "serial_number": 65,
+      "brand_name": "Levolin 0.63",
+      "medicine_form": "Respules",
+      "composition_with_strength": "Levosalbutamol 0.63 mg/2.5ml",
+      "common_frequency": "1-0-1",
+      "timings": "After food",
+      "device_type": "Nebulizer"
+    },
+    {
+      "serial_number": 66,
+      "brand_name": "Budesol 1mg",
+      "medicine_form": "Respules",
+      "composition_with_strength": "Budesonide 1 mg/2ml",
+      "common_frequency": "1-0-1",
+      "timings": "After food",
+      "device_type": "Nebulizer"
+    },
+    {
+      "serial_number": 67,
+      "brand_name": "Glycogate",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Metformin 500 mg + Teneligliptin 20 mg",
+      "common_frequency": "1-0-0",
+      "timings": "Before food"
+    },
+    {
+      "serial_number": 68,
+      "brand_name": "Flomist Ox",
+      "medicine_form": "Nasal Spray",
+      "composition_with_strength": "Fluticasone Furoate 27.5 mcg + Oxymetazoline 0.025%",
+      "common_frequency": "1-0-1",
+      "timings": "After food",
+      "device_type": "Nasal Spray"
+    },
+    {
+      "serial_number": 69,
+      "brand_name": "Ryaltris Mono",
+      "medicine_form": "Nasal Spray",
+      "composition_with_strength": "Olopatadine 665 mcg",
+      "common_frequency": "1-0-1",
+      "timings": "After food",
+      "device_type": "Nasal Spray"
+    },
+    {
+      "serial_number": 70,
+      "brand_name": "Azeflo FT",
+      "medicine_form": "Nasal Spray",
+      "composition_with_strength": "Azelastine + Fluticasone",
+      "common_frequency": "1-0-1",
+      "timings": "After food",
+      "device_type": "Nasal Spray"
+    },
+    {
+      "serial_number": 71,
+      "brand_name": "Nazac T",
+      "medicine_form": "Nasal Spray",
+      "composition_with_strength": "Triamcinolone Acetonide 55 mcg",
+      "common_frequency": "1-0-0",
+      "timings": "Morning",
+      "device_type": "Nasal Spray"
+    },
+    {
+      "serial_number": 72,
+      "brand_name": "Flutiflo",
+      "medicine_form": "Nasal Spray",
+      "composition_with_strength": "Fluticasone Furoate 27.5 mcg",
+      "common_frequency": "1-0-0",
+      "timings": "Morning",
+      "device_type": "Nasal Spray"
+    },
+    {
+      "serial_number": 73,
+      "brand_name": "Metatop",
+      "medicine_form": "Nasal Spray",
+      "composition_with_strength": "Mometasone Furoate 50 mcg",
+      "common_frequency": "1-0-0",
+      "timings": "Morning",
+      "device_type": "Nasal Spray"
+    },
+    {
+      "serial_number": 74,
+      "brand_name": "Flutiflo FT",
+      "medicine_form": "Nasal Spray",
+      "composition_with_strength": "Fluticasone Furoate 27.5 mcg",
+      "common_frequency": "1-0-1",
+      "timings": "After food",
+      "device_type": "Nasal Spray"
+    },
+    {
+      "serial_number": 75,
+      "brand_name": "FT Spray",
+      "medicine_form": "Nasal Spray",
+      "composition_with_strength": "Fluticasone + Azelastine",
+      "common_frequency": "1-0-1",
+      "timings": "After food",
+      "device_type": "Nasal Spray"
+    },
+    {
+      "serial_number": 76,
+      "brand_name": "Momeflo",
+      "medicine_form": "Nasal Spray",
+      "composition_with_strength": "Mometasone Furoate 50 mcg",
+      "common_frequency": "1-0-0",
+      "timings": "Morning",
+      "device_type": "Nasal Spray"
+    },
+    {
+      "serial_number": 77,
+      "brand_name": "Prohance HP",
+      "medicine_form": "Syrup",
+      "composition_with_strength": "Multivitamin + Minerals + Lysine",
+      "common_frequency": "1-0-0",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 78,
+      "brand_name": "Pulmoclear",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Acebrophylline 100 mg + Acetylcysteine 600 mg",
+      "common_frequency": "1-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 79,
+      "brand_name": "Reglace",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Metformin 500 mg + Glimepiride 1 mg",
+      "common_frequency": "1-0-0",
+      "timings": "Before food"
+    },
+    {
+      "serial_number": 80,
+      "brand_name": "Syp Sucrafil O Gel",
+      "medicine_form": "Syrup",
+      "composition_with_strength": "Sucralfate + Oxetacaine",
+      "common_frequency": "1-0-1",
+      "timings": "Before food"
+    },
+    {
+      "serial_number": 81,
+      "brand_name": "Sucrachild O",
+      "medicine_form": "Syrup",
+      "composition_with_strength": "Sucralfate + Oxetacaine",
+      "common_frequency": "1-0-1",
+      "timings": "Before food"
+    },
+    {
+      "serial_number": 82,
+      "brand_name": "Zincovit CL",
+      "medicine_form": "Syrup",
+      "composition_with_strength": "Multivitamin + Minerals + Zinc",
+      "common_frequency": "1-0-0",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 83,
+      "brand_name": "Pan MPS O",
+      "medicine_form": "Capsule",
+      "composition_with_strength": "Pantoprazole + Domperidone + Omeprazole",
+      "common_frequency": "1-0-0",
+      "timings": "Before food"
+    },
+    {
+      "serial_number": 84,
+      "brand_name": "Lactihep Plus",
+      "medicine_form": "Syrup",
+      "composition_with_strength": "Lactulose + Probiotics",
+      "common_frequency": "1-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 85,
+      "brand_name": "Microcef 100",
+      "medicine_form": "DT Tablet",
+      "composition_with_strength": "Cefixime 100 mg",
+      "common_frequency": "1-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 86,
+      "brand_name": "K Cit",
+      "medicine_form": "Syrup",
+      "composition_with_strength": "Potassium Citrate",
+      "common_frequency": "1-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 87,
+      "brand_name": "Aerodil",
+      "medicine_form": "Rotacaps",
+      "composition_with_strength": "Formoterol 12 mcg",
+      "common_frequency": "1-0-1",
+      "timings": "After food",
+      "device_type": "Rotahaler"
+    },
+    {
+      "serial_number": 88,
+      "brand_name": "Bevon",
+      "medicine_form": "Syrup",
+      "composition_with_strength": "Multivitamin + Minerals",
+      "common_frequency": "1-0-0",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 89,
+      "brand_name": "Syp Pulmoclear",
+      "medicine_form": "Syrup",
+      "composition_with_strength": "Acebrophylline + Ambroxol",
+      "common_frequency": "1-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 90,
+      "brand_name": "Piriton CS",
+      "medicine_form": "Syrup",
+      "composition_with_strength": "Chlorpheniramine + Dextromethorphan + Phenylephrine",
+      "common_frequency": "1-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 91,
+      "brand_name": "Cremaffin Plus",
+      "medicine_form": "Syrup",
+      "composition_with_strength": "Liquid Paraffin + Milk of Magnesia + Sodium Picosulfate",
+      "common_frequency": "0-0-1",
+      "timings": "Night"
+    },
+    {
+      "serial_number": 92,
+      "brand_name": "Syp Azithral 200",
+      "medicine_form": "Syrup",
+      "composition_with_strength": "Azithromycin 200 mg/5ml",
+      "common_frequency": "1-0-0",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 93,
+      "brand_name": "Syp Meftal P",
+      "medicine_form": "Syrup",
+      "composition_with_strength": "Paracetamol 125 mg + Mefenamic Acid 100 mg per 5ml",
+      "common_frequency": "1-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 94,
+      "brand_name": "Syp Azithral 100",
+      "medicine_form": "Syrup",
+      "composition_with_strength": "Azithromycin 100 mg/5ml",
+      "common_frequency": "1-0-0",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 95,
+      "brand_name": "Syp L Montus",
+      "medicine_form": "Syrup",
+      "composition_with_strength": "Levocetirizine 2.5 mg + Montelukaste 4 mg per 5ml",
+      "common_frequency": "0-0-1",
+      "timings": "Evening"
+    },
+    {
+      "serial_number": 96,
+      "brand_name": "Syp RitenO Plus",
+      "medicine_form": "Syrup",
+      "composition_with_strength": "Ritonavir + Lopinavir",
+      "common_frequency": "1-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 97,
+      "brand_name": "Syp Omnacortil",
+      "medicine_form": "Syrup",
+      "composition_with_strength": "Prednisolone 5 mg/5ml",
+      "common_frequency": "1-0-0",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 98,
+      "brand_name": "Syp Dolo 250",
+      "medicine_form": "Syrup",
+      "composition_with_strength": "Paracetamol 250 mg/5ml",
+      "common_frequency": "1-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 99,
+      "brand_name": "Syp Xylocaine Viscous",
+      "medicine_form": "Syrup",
+      "composition_with_strength": "Lidocaine 2%",
+      "common_frequency": "1-0-1",
+      "timings": "Before food"
+    },
+    {
+      "serial_number": 100,
+      "brand_name": "Syp Macalvit",
+      "medicine_form": "Syrup",
+      "composition_with_strength": "Calcium + Vitamin D3",
+      "common_frequency": "1-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 101,
+      "brand_name": "Syp Betonin",
+      "medicine_form": "Syrup",
+      "composition_with_strength": "Cyproheptadine + Tricholine Citrate",
+      "common_frequency": "1-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 102,
+      "brand_name": "Esiflo 250 Inhaler",
+      "medicine_form": "Inhaler",
+      "composition_with_strength": "Salmeterol 25 mcg + Fluticasone Propionate 250 mcg",
+      "common_frequency": "1-0-1",
+      "timings": "After food",
+      "device_type": "Transhaler"
+    },
+    {
+      "serial_number": 103,
+      "brand_name": "Esiflo 125 Inhaler",
+      "medicine_form": "Inhaler",
+      "composition_with_strength": "Salmeterol 25 mcg + Fluticasone Propionate 125 mcg",
+      "common_frequency": "1-0-1",
+      "timings": "After food",
+      "device_type": "Transhaler"
+    },
+    {
+      "serial_number": 104,
+      "brand_name": "Forair 250 Inhaler",
+      "medicine_form": "Inhaler",
+      "composition_with_strength": "Salmeterol 25 mcg + Fluticasone Propionate 250 mcg",
+      "common_frequency": "1-0-1",
+      "timings": "After food",
+      "device_type": "MDI"
+    },
+    {
+      "serial_number": 105,
+      "brand_name": "Forair 125 Inhaler",
+      "medicine_form": "Inhaler",
+      "composition_with_strength": "Salmeterol 25 mcg + Fluticasone Propionate 125 mcg",
+      "common_frequency": "1-0-1",
+      "timings": "After food",
+      "device_type": "MDI"
+    },
+    {
+      "serial_number": 106,
+      "brand_name": "Tiomate Inhaler",
+      "medicine_form": "Inhaler",
+      "composition_with_strength": "Tiotropium 9 mcg",
+      "common_frequency": "1-0-0",
+      "timings": "Morning",
+      "device_type": "MDI"
+    },
+    {
+      "serial_number": 107,
+      "brand_name": "Tiate Inhaler",
+      "medicine_form": "Rotacaps",
+      "composition_with_strength": "Tiotropium 18 mcg",
+      "common_frequency": "1-0-0",
+      "timings": "Morning",
+      "device_type": "Rotahaler"
+    },
+    {
+      "serial_number": 108,
+      "brand_name": "Budecort 100 Inhaler",
+      "medicine_form": "Inhaler",
+      "composition_with_strength": "Budesonide 100 mcg",
+      "common_frequency": "1-0-1",
+      "timings": "After food",
+      "device_type": "MDI"
+    },
+    {
+      "serial_number": 109,
+      "brand_name": "Seroflo Inhaler",
+      "medicine_form": "Inhaler",
+      "composition_with_strength": "Salmeterol 25 mcg + Fluticasone Propionate 250 mcg",
+      "common_frequency": "1-0-1",
+      "timings": "After food",
+      "device_type": "MDI"
+    },
+    {
+      "serial_number": 110,
+      "brand_name": "Budamate 400 Inhaler",
+      "medicine_form": "Inhaler",
+      "composition_with_strength": "Budesonide 400 mcg + Formoterol 6 mcg",
+      "common_frequency": "1-0-1",
+      "timings": "After food",
+      "device_type": "Transhaler"
+    },
+    {
+      "serial_number": 111,
+      "brand_name": "Aerolife Spacer Device",
+      "medicine_form": "Device",
+      "composition_with_strength": "N/A",
+      "common_frequency": "As needed",
+      "timings": "With inhaler",
+      "device_type": "Spacer"
+    },
+    {
+      "serial_number": 112,
+      "brand_name": "Aerolife Mini Device",
+      "medicine_form": "Device",
+      "composition_with_strength": "N/A",
+      "common_frequency": "As needed",
+      "timings": "With inhaler",
+      "device_type": "Spacer"
+    },
+    {
+      "serial_number": 113,
+      "brand_name": "Inj Moxicip 400/100",
+      "medicine_form": "Injection",
+      "composition_with_strength": "Moxifloxacin 400 mg",
+      "common_frequency": "1-0-0",
+      "timings": "IV infusion"
+    },
+    {
+      "serial_number": 114,
+      "brand_name": "Inj Pantop 40",
+      "medicine_form": "Injection",
+      "composition_with_strength": "Pantoprazole 40 mg",
+      "common_frequency": "1-0-0",
+      "timings": "IV infusion"
+    },
+    {
+      "serial_number": 115,
+      "brand_name": "Inj Magnalup S 0.5",
+      "medicine_form": "Injection",
+      "composition_with_strength": "Magnesium Sulphate 500 mg/2ml",
+      "common_frequency": "As prescribed",
+      "timings": "IV/IM"
+    },
+    {
+      "serial_number": 116,
+      "brand_name": "Budegate Inhaler Device",
+      "medicine_form": "Device",
+      "composition_with_strength": "N/A",
+      "common_frequency": "As needed",
+      "timings": "With inhaler",
+      "device_type": "Rotahaler"
+    },
+    {
+      "serial_number": 117,
+      "brand_name": "Inj Human Actrapid",
+      "medicine_form": "Injection",
+      "composition_with_strength": "Human Insulin 100 IU/ml",
+      "common_frequency": "As prescribed",
+      "timings": "SC injection"
+    },
+    {
+      "serial_number": 118,
+      "brand_name": "Inj Lupiflo 15L",
+      "medicine_form": "Injection",
+      "composition_with_strength": "Leuprolide 15 mg",
+      "common_frequency": "Once monthly",
+      "timings": "IM injection"
+    },
+    {
+      "serial_number": 119,
+      "brand_name": "Tab Nicostar 5mg",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Nicorandil 5 mg",
+      "common_frequency": "1-0-1",
+      "timings": "Before food"
+    },
+    {
+      "serial_number": 120,
+      "brand_name": "Vaccine Vacciflo",
+      "medicine_form": "Vaccine",
+      "composition_with_strength": "Varicella Vaccine",
+      "common_frequency": "Single dose",
+      "timings": "SC injection"
+    },
+    {
+      "serial_number": 121,
+      "brand_name": "Vaccine Prevenar 20",
+      "medicine_form": "Vaccine",
+      "composition_with_strength": "Pneumococcal 13-valent conjugate",
+      "common_frequency": "As per schedule",
+      "timings": "IM injection"
+    },
+    {
+      "serial_number": 122,
+      "brand_name": "Vaccine Fluarix",
+      "medicine_form": "Vaccine",
+      "composition_with_strength": "Influenza Vaccine (Trivalent)",
+      "common_frequency": "Once yearly",
+      "timings": "IM injection"
+    },
+    {
+      "serial_number": 123,
+      "brand_name": "Inj Albumin 20%",
+      "medicine_form": "Injection",
+      "composition_with_strength": "Human Albumin 20%",
+      "common_frequency": "As prescribed",
+      "timings": "IV infusion"
+    },
+    {
+      "serial_number": 124,
+      "brand_name": "Hyper Neb",
+      "medicine_form": "Solution",
+      "composition_with_strength": "Sodium Chloride 3%",
+      "common_frequency": "1-0-1",
+      "timings": "Nebulization",
+      "device_type": "Nebulizer"
+    },
+    {
+      "serial_number": 125,
+      "brand_name": "Inj Emset 2ml",
+      "medicine_form": "Injection",
+      "composition_with_strength": "Ondansetron 2 mg/ml",
+      "common_frequency": "1-0-1",
+      "timings": "IV/IM"
+    },
+    {
+      "serial_number": 126,
+      "brand_name": "Inj Cort S",
+      "medicine_form": "Injection",
+      "composition_with_strength": "Hydrocortisone 100 mg",
+      "common_frequency": "As prescribed",
+      "timings": "IV/IM"
+    },
+    {
+      "serial_number": 127,
+      "brand_name": "Inj Merotrol 1gm",
+      "medicine_form": "Injection",
+      "composition_with_strength": "Meropenem 1000 mg",
+      "common_frequency": "1-0-1",
+      "timings": "IV infusion"
+    },
+    {
+      "serial_number": 128,
+      "brand_name": "Inj Tazar 4.5gm",
+      "medicine_form": "Injection",
+      "composition_with_strength": "Piperacillin 4000 mg + Tazobactam 500 mg",
+      "common_frequency": "1-0-1",
+      "timings": "IV infusion"
+    },
+    {
+      "serial_number": 129,
+      "brand_name": "Inj Sudostar 1MIU",
+      "medicine_form": "Injection",
+      "composition_with_strength": "Streptokinase 1.5 Million IU",
+      "common_frequency": "Single dose",
+      "timings": "IV infusion"
+    },
+    {
+      "serial_number": 130,
+      "brand_name": "Revolizer Rotacaps Device",
+      "medicine_form": "Device",
+      "composition_with_strength": "N/A",
+      "common_frequency": "As needed",
+      "timings": "With rotacaps",
+      "device_type": "Rotahaler"
+    },
+    {
+      "serial_number": 131,
+      "brand_name": "Inj Lupinem 500",
+      "medicine_form": "Injection",
+      "composition_with_strength": "Levetiracetam 500 mg",
+      "common_frequency": "1-0-1",
+      "timings": "IV infusion"
+    },
+    {
+      "serial_number": 132,
+      "brand_name": "Inj Tigez 50mg",
+      "medicine_form": "Injection",
+      "composition_with_strength": "Tigecycline 50 mg",
+      "common_frequency": "1-0-1",
+      "timings": "IV infusion"
+    },
+    {
+      "serial_number": 133,
+      "brand_name": "Inj Clavam 1.2g",
+      "medicine_form": "Injection",
+      "composition_with_strength": "Amoxicillin 1000 mg + Clavulanic Acid 200 mg",
+      "common_frequency": "1-0-1",
+      "timings": "IV infusion"
+    }
+  ]
+}
+{
+  "medicines": [
+    {
+      "serial_number": 1,
+      "brand_name": "Combutol 600",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Ethambutol 600 mg",
+      "common_frequency": "1-0-0",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 2,
+      "brand_name": "Combutol 400",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Ethambutol 400 mg",
+      "common_frequency": "1-0-0",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 3,
+      "brand_name": "Combutol 1000",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Ethambutol 1000 mg",
+      "common_frequency": "1-0-0",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 4,
+      "brand_name": "Fyzina 1000",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Pyrazinamide 1000 mg",
+      "common_frequency": "1-0-0",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 5,
+      "brand_name": "Fyzina 750",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Pyrazinamide 750 mg",
+      "common_frequency": "1-0-0",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 6,
+      "brand_name": "R cinex 600",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Rifampicin 600 mg + Isoniazid 300 mg",
+      "common_frequency": "1-0-0",
+      "timings": "Before food"
+    },
+    {
+      "serial_number": 7,
+      "brand_name": "R cinex 450",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Rifampicin 450 mg + Isoniazid 300 mg",
+      "common_frequency": "1-0-0",
+      "timings": "Before food"
+    },
+    {
+      "serial_number": 8,
+      "brand_name": "R cin 600",
+      "medicine_form": "Capsule",
+      "composition_with_strength": "Rifampicin 600 mg",
+      "common_frequency": "1-0-0",
+      "timings": "Before food"
+    },
+    {
+      "serial_number": 9,
+      "brand_name": "R cin 450",
+      "medicine_form": "Capsule",
+      "composition_with_strength": "Rifampicin 450 mg",
+      "common_frequency": "1-0-0",
+      "timings": "Before food"
+    },
+    {
+      "serial_number": 10,
+      "brand_name": "R cin 300",
+      "medicine_form": "Capsule",
+      "composition_with_strength": "Rifampicin 300 mg",
+      "common_frequency": "1-0-0",
+      "timings": "Before food"
+    },
+    {
+      "serial_number": 11,
+      "brand_name": "Solonex",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Isoniazid 300 mg",
+      "common_frequency": "1-0-0",
+      "timings": "Before food"
+    },
+    {
+      "serial_number": 12,
+      "brand_name": "Taxim CV 200",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Cefixime 200 mg + Clavulanic Acid 125 mg",
+      "common_frequency": "1-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 13,
+      "brand_name": "Zortorin",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Atorvastatin 10 mg",
+      "common_frequency": "0-0-1",
+      "timings": "Night"
+    },
+    {
+      "serial_number": 14,
+      "brand_name": "Zerodol P",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Aceclofenac 100 mg + Paracetamol 325 mg",
+      "common_frequency": "1-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 15,
+      "brand_name": "Zerodol SP",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Aceclofenac 100 mg + Paracetamol 325 mg + Serratiopeptidase 15 mg",
+      "common_frequency": "1-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 16,
+      "brand_name": "Nasomark",
+      "medicine_form": "Nasal Spray",
+      "composition_with_strength": "Mometasone Furoate 50 mcg",
+      "common_frequency": "1-0-0",
+      "timings": "Morning",
+      "device_type": "Nasal Spray"
+    },
+    {
+      "serial_number": 17,
+      "brand_name": "Ab task SR 200",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Acebrophylline 200 mg",
+      "common_frequency": "1-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 18,
+      "brand_name": "Rablet 20",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Rabeprazole Sodium 20 mg",
+      "common_frequency": "1-0-0",
+      "timings": "Before food"
+    },
+    {
+      "serial_number": 19,
+      "brand_name": "Azee 250",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Azithromycin 250 mg",
+      "common_frequency": "1-0-0",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 20,
+      "brand_name": "Azee 500",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Azithromycin 500 mg",
+      "common_frequency": "1-0-0",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 21,
+      "brand_name": "Benadon 40",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Pyridoxine (Vitamin B6) 40 mg",
+      "common_frequency": "1-0-0",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 22,
+      "brand_name": "Sinarest",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Paracetamol 500 mg + Phenylephrine 10 mg + Chlorpheniramine 2 mg",
+      "common_frequency": "1-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 23,
+      "brand_name": "Duomen ER",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Amoxicillin 1000 mg + Clavulanic Acid 62.5 mg",
+      "common_frequency": "1-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 24,
+      "brand_name": "Dytor Plus 10",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Torsemide 10 mg + Spironolactone 50 mg",
+      "common_frequency": "1-0-0",
+      "timings": "Morning"
+    },
+    {
+      "serial_number": 25,
+      "brand_name": "Dytor Plus 5",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Torsemide 5 mg + Spironolactone 50 mg",
+      "common_frequency": "1-0-0",
+      "timings": "Morning"
+    },
+    {
+      "serial_number": 26,
+      "brand_name": "Corbis 2.5",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Bisoprolol 2.5 mg",
+      "common_frequency": "1-0-0",
+      "timings": "Morning"
+    },
+    {
+      "serial_number": 27,
+      "brand_name": "Dytor 5",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Torsemide 5 mg",
+      "common_frequency": "1-0-0",
+      "timings": "Morning"
+    },
+    {
+      "serial_number": 28,
+      "brand_name": "Dytor 10",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Torsemide 10 mg",
+      "common_frequency": "1-0-0",
+      "timings": "Morning"
+    },
+    {
+      "serial_number": 29,
+      "brand_name": "Dilnip 10",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Cilnidipine 10 mg",
+      "common_frequency": "1-0-0",
+      "timings": "Morning"
+    },
+    {
+      "serial_number": 30,
+      "brand_name": "Ivepred 8",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Ivermectin 8 mg",
+      "common_frequency": "0-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 31,
+      "brand_name": "Ivepred 16",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Ivermectin 16 mg",
+      "common_frequency": "0-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 32,
+      "brand_name": "Dolo 650",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Paracetamol 650 mg",
+      "common_frequency": "1-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 33,
+      "brand_name": "Lanoxin 0.25",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Digoxin 0.25 mg",
+      "common_frequency": "1-0-0",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 34,
+      "brand_name": "Amlong 2.5",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Amlodipine 2.5 mg",
+      "common_frequency": "1-0-0",
+      "timings": "Morning"
+    },
+    {
+      "serial_number": 35,
+      "brand_name": "Amlong 5",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Amlodipine 5 mg",
+      "common_frequency": "1-0-0",
+      "timings": "Morning"
+    },
+    {
+      "serial_number": 36,
+      "brand_name": "AK urit 4",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Allopurinol 400 mg",
+      "common_frequency": "1-0-0",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 37,
+      "brand_name": "AK urit 3",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Allopurinol 300 mg",
+      "common_frequency": "1-0-0",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 38,
+      "brand_name": "Normaxin",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Chlordiazepoxide 5 mg + Clidinium 2.5 mg + Dicyclomine 10 mg",
+      "common_frequency": "1-0-1",
+      "timings": "Before food"
+    },
+    {
+      "serial_number": 39,
+      "brand_name": "NS 100",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Nimesulide 100 mg",
+      "common_frequency": "1-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 40,
+      "brand_name": "NS 500",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Nimesulide 500 mg",
+      "common_frequency": "1-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 41,
+      "brand_name": "DNS 500",
+      "medicine_form": "Infusion",
+      "composition_with_strength": "Dextrose 5% + Sodium Chloride 0.9%",
+      "common_frequency": "As prescribed",
+      "timings": "IV infusion"
+    },
+    {
+      "serial_number": 42,
+      "brand_name": "RL 500",
+      "medicine_form": "Infusion",
+      "composition_with_strength": "Ringer Lactate (Sodium Chloride 0.6% + Sodium Lactate 0.32% + Potassium Chloride 0.04% + Calcium Chloride 0.027%)",
+      "common_frequency": "As prescribed",
+      "timings": "IV infusion"
+    },
+    {
+      "serial_number": 43,
+      "brand_name": "25% D",
+      "medicine_form": "Infusion",
+      "composition_with_strength": "Dextrose 25%",
+      "common_frequency": "As prescribed",
+      "timings": "IV infusion"
+    },
+    {
+      "serial_number": 44,
+      "brand_name": "Metron",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Metronidazole 400 mg",
+      "common_frequency": "1-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 45,
+      "brand_name": "Acemiz Plus",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Aceclofenac 100 mg + Paracetamol 325 mg",
+      "common_frequency": "1-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 46,
+      "brand_name": "Meftal Spas",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Mefenamic Acid 250 mg + Dicyclomine 10 mg",
+      "common_frequency": "1-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 47,
+      "brand_name": "Meftagesic",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Mefenamic Acid 500 mg + Paracetamol 325 mg",
+      "common_frequency": "1-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 48,
+      "brand_name": "Smuth Ointment",
+      "medicine_form": "Ointment",
+      "composition_with_strength": "Liquid Paraffin + Benzocaine + Chlorocresol",
+      "common_frequency": "As needed",
+      "timings": "Topical"
+    },
+    {
+      "serial_number": 49,
+      "brand_name": "Thrombophob",
+      "medicine_form": "Ointment",
+      "composition_with_strength": "Heparin 50 IU/g",
+      "common_frequency": "2-0-2",
+      "timings": "Topical"
+    },
+    {
+      "serial_number": 50,
+      "brand_name": "Candid Mouth Paint",
+      "medicine_form": "Mouth Paint",
+      "composition_with_strength": "Clotrimazole 1% w/v",
+      "common_frequency": "3-0-3",
+      "timings": "After food"
+    }
+  ]
+}
+{
+  "medicines": [
+    {
+      "serial_number": 1,
+      "brand_name": "Lox 2% Inj",
+      "medicine_form": "Injection",
+      "composition_with_strength": "Lignocaine (Lidocaine) 2% w/v (20 mg/ml)",
+      "common_frequency": "As prescribed",
+      "timings": "Local/Regional",
+      "device_type": "Injection"
+    },
+    {
+      "serial_number": 2,
+      "brand_name": "Lox 2% Adrenaline",
+      "medicine_form": "Injection",
+      "composition_with_strength": "Lignocaine 2% w/v + Adrenaline 0.005 mg/ml",
+      "common_frequency": "As prescribed",
+      "timings": "Local/Regional",
+      "device_type": "Injection"
+    },
+    {
+      "serial_number": 3,
+      "brand_name": "Potassium Chloride Inj",
+      "medicine_form": "Injection",
+      "composition_with_strength": "Potassium Chloride 15% (20 mEq/10ml)",
+      "common_frequency": "As prescribed",
+      "timings": "IV infusion (diluted)",
+      "device_type": "Injection"
+    },
+    {
+      "serial_number": 4,
+      "brand_name": "Magneon Inj",
+      "medicine_form": "Injection",
+      "composition_with_strength": "Magnesium Sulphate 50% (500 mg/ml)",
+      "common_frequency": "As prescribed",
+      "timings": "IV/IM",
+      "device_type": "Injection"
+    },
+    {
+      "serial_number": 5,
+      "brand_name": "Nitroplus IV",
+      "medicine_form": "Infusion",
+      "composition_with_strength": "Nitroglycerin 5 mg/ml",
+      "common_frequency": "As prescribed",
+      "timings": "IV infusion",
+      "device_type": "Infusion"
+    },
+    {
+      "serial_number": 6,
+      "brand_name": "NORAD",
+      "medicine_form": "Injection",
+      "composition_with_strength": "Noradrenaline (Norepinephrine) 2 mg/2ml",
+      "common_frequency": "As prescribed",
+      "timings": "IV infusion",
+      "device_type": "Injection"
+    },
+    {
+      "serial_number": 7,
+      "brand_name": "Levi pil",
+      "medicine_form": "Injection",
+      "composition_with_strength": "Levosulpiride 12.5 mg/ml",
+      "common_frequency": "As prescribed",
+      "timings": "IV/IM",
+      "device_type": "Injection"
+    },
+    {
+      "serial_number": 8,
+      "brand_name": "Bactrim DS Tab",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Sulfamethoxazole 800 mg + Trimethoprim 160 mg",
+      "common_frequency": "1-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 9,
+      "brand_name": "Urimax 0.4",
+      "medicine_form": "Capsule",
+      "composition_with_strength": "Tamsulosin 0.4 mg",
+      "common_frequency": "0-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 10,
+      "brand_name": "Urimax D",
+      "medicine_form": "Capsule",
+      "composition_with_strength": "Tamsulosin 0.4 mg + Dutasteride 0.5 mg",
+      "common_frequency": "0-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 11,
+      "brand_name": "Rotahaler",
+      "medicine_form": "Device",
+      "composition_with_strength": "N/A",
+      "common_frequency": "As needed",
+      "timings": "With rotacaps",
+      "device_type": "Rotahaler"
+    },
+    {
+      "serial_number": 12,
+      "brand_name": "Gatehaler",
+      "medicine_form": "Device",
+      "composition_with_strength": "N/A",
+      "common_frequency": "As needed",
+      "timings": "With inhaler",
+      "device_type": "Inhaler Device"
+    },
+    {
+      "serial_number": 13,
+      "brand_name": "Lupihaler",
+      "medicine_form": "Device",
+      "composition_with_strength": "N/A",
+      "common_frequency": "As needed",
+      "timings": "With inhaler",
+      "device_type": "Inhaler Device"
+    },
+    {
+      "serial_number": 14,
+      "brand_name": "Umetrio",
+      "medicine_form": "Octacaps",
+      "composition_with_strength": "Fluticasone Furoate 100 mcg + Umeclidinium 62.5 mcg + Vilanterol 25 mcg",
+      "common_frequency": "1-0-0",
+      "timings": "Evening",
+      "device_type": "Octahaler"
+    },
+    {
+      "serial_number": 15,
+      "brand_name": "Lomo 40 Inj",
+      "medicine_form": "Injection",
+      "composition_with_strength": "Esomeprazole 40 mg",
+      "common_frequency": "1-0-0",
+      "timings": "IV infusion",
+      "device_type": "Injection"
+    },
+    {
+      "serial_number": 16,
+      "brand_name": "Difizma",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Deflazacort 6 mg",
+      "common_frequency": "1-0-0",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 17,
+      "brand_name": "Formoflo G",
+      "medicine_form": "Transcaps",
+      "composition_with_strength": "Fluticasone Propionate 250 mcg + Formoterol 12 mcg + Glycopyrronium 12.5 mcg",
+      "common_frequency": "1-0-1",
+      "timings": "After food",
+      "device_type": "Transhaler"
+    },
+    {
+      "serial_number": 18,
+      "brand_name": "Hp Kit",
+      "medicine_form": "Kit",
+      "composition_with_strength": "Amoxicillin 750 mg + Clarithromycin 500 mg + Esomeprazole 40 mg",
+      "common_frequency": "1-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 19,
+      "brand_name": "Enox Save 40mg",
+      "medicine_form": "Injection",
+      "composition_with_strength": "Enoxaparin 40 mg/0.4ml",
+      "common_frequency": "1-0-0",
+      "timings": "SC injection",
+      "device_type": "Injection"
+    },
+    {
+      "serial_number": 20,
+      "brand_name": "Budamate G",
+      "medicine_form": "Rotacaps",
+      "composition_with_strength": "Budesonide 400 mcg + Formoterol 12 mcg + Glycopyrronium 18 mcg",
+      "common_frequency": "1-0-1",
+      "timings": "After food",
+      "device_type": "Rotahaler"
+    },
+    {
+      "serial_number": 21,
+      "brand_name": "Defilin Inj",
+      "medicine_form": "Injection",
+      "composition_with_strength": "Deriphylline (Etofylline 115 mg + Theophylline 35 mg)",
+      "common_frequency": "1-0-1",
+      "timings": "IV/IM",
+      "device_type": "Injection"
+    },
+    {
+      "serial_number": 22,
+      "brand_name": "Galvus Met",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Vildagliptin 50 mg + Metformin 500 mg",
+      "common_frequency": "1-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 23,
+      "brand_name": "Pankreoflat",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Pancreatin 170 mg + Dimethicone 80 mg",
+      "common_frequency": "1-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 24,
+      "brand_name": "Signoflam",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Aceclofenac 100 mg + Paracetamol 325 mg + Serratiopeptidase 15 mg",
+      "common_frequency": "1-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 25,
+      "brand_name": "Rejunex CD3 NF",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Calcium Carbonate 1250 mg (Elemental Calcium 500 mg) + Vitamin D3 2000 IU + Methylcobalamin 1500 mcg + L-Methyl Folate Calcium 1 mg + Pyridoxal-5-phosphate 20 mg",
+      "common_frequency": "1-0-0",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 26,
+      "brand_name": "Rozavel 5",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Rosuvastatin 5 mg",
+      "common_frequency": "0-0-1",
+      "timings": "Night"
+    },
+    {
+      "serial_number": 27,
+      "brand_name": "Lithosun 300",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Lithium Carbonate 300 mg",
+      "common_frequency": "1-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 28,
+      "brand_name": "Refzil O 250",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Cefprozil 250 mg",
+      "common_frequency": "1-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 29,
+      "brand_name": "Glycomet",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Metformin 500 mg",
+      "common_frequency": "1-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 30,
+      "brand_name": "Hyponat O 15",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Tolvaptan 15 mg",
+      "common_frequency": "1-0-0",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 31,
+      "brand_name": "Lithosun SR",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Lithium Carbonate 400 mg SR",
+      "common_frequency": "0-0-1",
+      "timings": "Night"
+    },
+    {
+      "serial_number": 32,
+      "brand_name": "Caripill Tab",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Carica Papaya Leaf Extract 1100 mg",
+      "common_frequency": "1-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 33,
+      "brand_name": "Sobiraise 500",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Sodium Bicarbonate 500 mg",
+      "common_frequency": "1-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 34,
+      "brand_name": "Moiz Cream",
+      "medicine_form": "Cream",
+      "composition_with_strength": "Ketoconazole 2% + Zinc Pyrithione 1%",
+      "common_frequency": "1-0-1",
+      "timings": "Topical"
+    },
+    {
+      "serial_number": 35,
+      "brand_name": "Sebandro Soap",
+      "medicine_form": "Soap",
+      "composition_with_strength": "Selenium Sulfide 1% + Ketoconazole 2%",
+      "common_frequency": "As needed",
+      "timings": "Topical"
+    },
+    {
+      "serial_number": 36,
+      "brand_name": "Mofecon 500",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Mefenamic Acid 500 mg",
+      "common_frequency": "1-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 37,
+      "brand_name": "Cetzine",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Cetirizine 10 mg",
+      "common_frequency": "0-0-1",
+      "timings": "Evening"
+    },
+    {
+      "serial_number": 38,
+      "brand_name": "Ne Bistar 5mg",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Nebivolol 5 mg",
+      "common_frequency": "1-0-0",
+      "timings": "Morning"
+    },
+    {
+      "serial_number": 39,
+      "brand_name": "Ne Bistar 2.5mg",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Nebivolol 2.5 mg",
+      "common_frequency": "1-0-0",
+      "timings": "Morning"
+    },
+    {
+      "serial_number": 40,
+      "brand_name": "Metez 2.5",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Metoprolol 2.5 mg",
+      "common_frequency": "1-0-0",
+      "timings": "Morning"
+    },
+    {
+      "serial_number": 41,
+      "brand_name": "Concor AM 2.5",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Bisoprolol 2.5 mg + Amlodipine 2.5 mg",
+      "common_frequency": "1-0-0",
+      "timings": "Morning"
+    },
+    {
+      "serial_number": 42,
+      "brand_name": "Folvite Tab",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Folic Acid 5 mg",
+      "common_frequency": "1-0-0",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 43,
+      "brand_name": "Aldactone 25",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Spironolactone 25 mg",
+      "common_frequency": "1-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 44,
+      "brand_name": "Brivgard 50",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Brivaracetam 50 mg",
+      "common_frequency": "1-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 45,
+      "brand_name": "Mirtaz 15",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Mirtazapine 15 mg",
+      "common_frequency": "0-0-1",
+      "timings": "Night"
+    },
+    {
+      "serial_number": 46,
+      "brand_name": "Liofen 10mg",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Baclofen 10 mg",
+      "common_frequency": "1-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 47,
+      "brand_name": "Sibelium 10mg",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Flunarizine 10 mg",
+      "common_frequency": "0-0-1",
+      "timings": "Night"
+    },
+    {
+      "serial_number": 48,
+      "brand_name": "Acitrom 1 mg",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Acenocoumarol 1 mg",
+      "common_frequency": "0-0-1",
+      "timings": "Night"
+    },
+    {
+      "serial_number": 49,
+      "brand_name": "Levosiz 10mg",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Levocetirizine 10 mg",
+      "common_frequency": "0-0-1",
+      "timings": "Evening"
+    },
+    {
+      "serial_number": 50,
+      "brand_name": "Udapa 5mg",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Udapagliflozin 5 mg",
+      "common_frequency": "1-0-0",
+      "timings": "Morning"
+    },
+    {
+      "serial_number": 51,
+      "brand_name": "Lasilactone 25mg",
+      "medicine_form": "Capsule",
+      "composition_with_strength": "Spironolactone 20 mg + Furosemide 40 mg",
+      "common_frequency": "1-0-0",
+      "timings": "Morning"
+    },
+    {
+      "serial_number": 52,
+      "brand_name": "Lasilactone 50mg",
+      "medicine_form": "Capsule",
+      "composition_with_strength": "Spironolactone 50 mg + Furosemide 20 mg",
+      "common_frequency": "1-0-0",
+      "timings": "Morning"
+    },
+    {
+      "serial_number": 53,
+      "brand_name": "Nexito 10mg",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Escitalopram 10 mg",
+      "common_frequency": "1-0-0",
+      "timings": "Night"
+    },
+    {
+      "serial_number": 54,
+      "brand_name": "Nexito Plus",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Escitalopram 10 mg + Clonazepam 0.5 mg",
+      "common_frequency": "0-0-1",
+      "timings": "Night"
+    },
+    {
+      "serial_number": 55,
+      "brand_name": "Imax FCM Inj",
+      "medicine_form": "Injection",
+      "composition_with_strength": "Ferric Carboxymaltose 100 mg/ml",
+      "common_frequency": "As prescribed",
+      "timings": "IV infusion",
+      "device_type": "Injection"
+    },
+    {
+      "serial_number": 56,
+      "brand_name": "Calcirol Max",
+      "medicine_form": "Sachet",
+      "composition_with_strength": "Vitamin D3 60000 IU",
+      "common_frequency": "Once weekly",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 57,
+      "brand_name": "Modalert 100",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Modafinil 100 mg",
+      "common_frequency": "1-0-0",
+      "timings": "Morning"
+    },
+    {
+      "serial_number": 58,
+      "brand_name": "Zolfresh 10mg",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Zolpidem 10 mg",
+      "common_frequency": "0-0-1",
+      "timings": "Night"
+    },
+    {
+      "serial_number": 59,
+      "brand_name": "Qutipin 25mg",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Quetiapine 25 mg",
+      "common_frequency": "0-0-1",
+      "timings": "Night"
+    },
+    {
+      "serial_number": 60,
+      "brand_name": "Glimy 1mg",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Glimepiride 1 mg",
+      "common_frequency": "1-0-0",
+      "timings": "Before food"
+    },
+    {
+      "serial_number": 61,
+      "brand_name": "Qutan 200",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Quetiapine 200 mg",
+      "common_frequency": "0-0-1",
+      "timings": "Night"
+    },
+    {
+      "serial_number": 62,
+      "brand_name": "Clop GM Neo Cream",
+      "medicine_form": "Cream",
+      "composition_with_strength": "Clobetasol 0.05% + Gentamicin 0.1% + Miconazole 2%",
+      "common_frequency": "1-0-1",
+      "timings": "Topical"
+    },
+    {
+      "serial_number": 63,
+      "brand_name": "Nucoxia Inj",
+      "medicine_form": "Injection",
+      "composition_with_strength": "Etoricoxib 90 mg",
+      "common_frequency": "As prescribed",
+      "timings": "IV/IM",
+      "device_type": "Injection"
+    },
+    {
+      "serial_number": 64,
+      "brand_name": "AD 100 Tab",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Vitamin D3 1000 IU",
+      "common_frequency": "1-0-0",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 65,
+      "brand_name": "Myospas",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Paracetamol 325 mg + Chlorzoxazone 250 mg",
+      "common_frequency": "1-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 66,
+      "brand_name": "Povergesic",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Paracetamol 500 mg",
+      "common_frequency": "1-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 67,
+      "brand_name": "Ultracet Tab",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Tramadol 37.5 mg + Paracetamol 325 mg",
+      "common_frequency": "1-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 68,
+      "brand_name": "Povergesic MR",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Paracetamol 325 mg + Chlorzoxazone 250 mg + Diclofenac 50 mg",
+      "common_frequency": "1-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 69,
+      "brand_name": "Junior Lanzol",
+      "medicine_form": "DT Tablet",
+      "composition_with_strength": "Lansoprazole 15 mg",
+      "common_frequency": "1-0-0",
+      "timings": "Before food"
+    },
+    {
+      "serial_number": 70,
+      "brand_name": "Ultracet Semi",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Tramadol 37.5 mg + Paracetamol 325 mg",
+      "common_frequency": "1-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 71,
+      "brand_name": "Tabact Cream",
+      "medicine_form": "Cream",
+      "composition_with_strength": "Terbinafine 1% + Clobetasol 0.05%",
+      "common_frequency": "1-0-1",
+      "timings": "Topical"
+    },
+    {
+      "serial_number": 72,
+      "brand_name": "Zytee Gel",
+      "medicine_form": "Gel",
+      "composition_with_strength": "Choline Salicylate + Lignocaine",
+      "common_frequency": "As needed",
+      "timings": "Topical"
+    },
+    {
+      "serial_number": 73,
+      "brand_name": "Quadriderm",
+      "medicine_form": "Cream",
+      "composition_with_strength": "Betamethasone 0.05% + Neomycin 0.5% + Clotrimazole 1% + Gentamicin 0.1%",
+      "common_frequency": "1-0-1",
+      "timings": "Topical"
+    },
+    {
+      "serial_number": 74,
+      "brand_name": "Sodac 10",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Sodium Bicarbonate 1000 mg",
+      "common_frequency": "1-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 75,
+      "brand_name": "Nindanib 100",
+      "medicine_form": "Capsule",
+      "composition_with_strength": "Nintedanib 100 mg",
+      "common_frequency": "1-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 76,
+      "brand_name": "Nindanib 150",
+      "medicine_form": "Capsule",
+      "composition_with_strength": "Nintedanib 150 mg",
+      "common_frequency": "1-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 77,
+      "brand_name": "KCL Inj",
+      "medicine_form": "Injection",
+      "composition_with_strength": "Potassium Chloride 15% (20 mEq/10ml)",
+      "common_frequency": "As prescribed",
+      "timings": "IV infusion (diluted)",
+      "device_type": "Injection"
+    },
+    {
+      "serial_number": 78,
+      "brand_name": "Lox 2% Gelly",
+      "medicine_form": "Gel",
+      "composition_with_strength": "Lignocaine (Lidocaine) 2% w/v",
+      "common_frequency": "As needed",
+      "timings": "Topical"
+    },
+    {
+      "serial_number": 79,
+      "brand_name": "LNZ IV 600",
+      "medicine_form": "Injection",
+      "composition_with_strength": "Linezolid 600 mg",
+      "common_frequency": "1-0-1",
+      "timings": "IV infusion",
+      "device_type": "Injection"
+    }
+  ]
+}
+{
+  "medicines": [
+    {
+      "serial_number": 1,
+      "brand_name": "Venlor XR 75",
+      "medicine_form": "Capsule",
+      "composition_with_strength": "Venlafaxine 75 mg SR",
+      "common_frequency": "1-0-0",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 2,
+      "brand_name": "Rozavel 10",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Rosuvastatin 10 mg",
+      "common_frequency": "0-0-1",
+      "timings": "Night"
+    },
+    {
+      "serial_number": 3,
+      "brand_name": "Rozavel 20",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Rosuvastatin 20 mg",
+      "common_frequency": "0-0-1",
+      "timings": "Night"
+    },
+    {
+      "serial_number": 4,
+      "brand_name": "Valentas 50",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Sacubitril 24 mg + Valsartan 26 mg",
+      "common_frequency": "1-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 5,
+      "brand_name": "Endeavour S Furic 40mg",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Febuxostat 40 mg",
+      "common_frequency": "1-0-0",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 6,
+      "brand_name": "Lonazep 2",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Clonazepam 2 mg",
+      "common_frequency": "0-0-1",
+      "timings": "Night"
+    },
+    {
+      "serial_number": 7,
+      "brand_name": "Rivaban 15",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Rivaroxaban 15 mg",
+      "common_frequency": "1-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 8,
+      "brand_name": "Rivaban 2.5",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Rivaroxaban 2.5 mg",
+      "common_frequency": "1-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 9,
+      "brand_name": "Rivaban 10mg",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Rivaroxaban 10 mg",
+      "common_frequency": "1-0-0",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 10,
+      "brand_name": "Orofer S 200",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Iron Polymaltose Complex 200 mg",
+      "common_frequency": "1-0-0",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 11,
+      "brand_name": "Fludry Tab",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Ambroxol 15 mg + Guaifenesin 50 mg + Terbutaline 2.5 mg",
+      "common_frequency": "1-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 12,
+      "brand_name": "Tolifast D",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Tolperisone 150 mg + Diclofenac 50 mg",
+      "common_frequency": "1-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 13,
+      "brand_name": "Ivabrad 5mg",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Ivabradine 5 mg",
+      "common_frequency": "1-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 14,
+      "brand_name": "Ulyses 300",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Ursodeoxycholic Acid 300 mg",
+      "common_frequency": "1-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 15,
+      "brand_name": "Ulyses 400",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Ursodeoxycholic Acid 400 mg",
+      "common_frequency": "1-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 16,
+      "brand_name": "Ramistar 5mg",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Ramipril 5 mg",
+      "common_frequency": "1-0-0",
+      "timings": "Morning"
+    },
+    {
+      "serial_number": 17,
+      "brand_name": "Bandy Tab",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Albendazole 400 mg + Ivermectin 6 mg",
+      "common_frequency": "0-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 18,
+      "brand_name": "Voritrol 200",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Voriconazole 200 mg",
+      "common_frequency": "1-0-1",
+      "timings": "Before food"
+    },
+    {
+      "serial_number": 19,
+      "brand_name": "Voritrol 200 Inj",
+      "medicine_form": "Injection",
+      "composition_with_strength": "Voriconazole 200 mg",
+      "common_frequency": "1-0-1",
+      "timings": "IV infusion",
+      "device_type": "Injection"
+    },
+    {
+      "serial_number": 20,
+      "brand_name": "Heparin 5000 Inj",
+      "medicine_form": "Injection",
+      "composition_with_strength": "Heparin 5000 IU/ml",
+      "common_frequency": "As prescribed",
+      "timings": "SC/IV",
+      "device_type": "Injection"
+    },
+    {
+      "serial_number": 21,
+      "brand_name": "Nupatch",
+      "medicine_form": "Patch",
+      "composition_with_strength": "Diclofenac 100 mg",
+      "common_frequency": "1-0-1",
+      "timings": "Topical"
+    },
+    {
+      "serial_number": 22,
+      "brand_name": "Colospax",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Mebeverine 135 mg",
+      "common_frequency": "1-0-1",
+      "timings": "Before food"
+    },
+    {
+      "serial_number": 23,
+      "brand_name": "Cardivas 3.125",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Carvedilol 3.125 mg",
+      "common_frequency": "1-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 24,
+      "brand_name": "Clopitab",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Clopidogrel 75 mg",
+      "common_frequency": "1-0-0",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 25,
+      "brand_name": "Clopitab A 75",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Clopidogrel 75 mg + Aspirin 75 mg",
+      "common_frequency": "1-0-0",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 26,
+      "brand_name": "Storvas 20",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Atorvastatin 20 mg",
+      "common_frequency": "0-0-1",
+      "timings": "Night"
+    },
+    {
+      "serial_number": 27,
+      "brand_name": "Chymoral Forte",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Trypsin-Chymotrypsin 100000 AU",
+      "common_frequency": "1-0-1",
+      "timings": "Before food"
+    },
+    {
+      "serial_number": 28,
+      "brand_name": "Nicotex",
+      "medicine_form": "Gum",
+      "composition_with_strength": "Nicotine 2 mg / 4 mg",
+      "common_frequency": "As needed",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 29,
+      "brand_name": "Thyronorm 100",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Levothyroxine 100 mcg",
+      "common_frequency": "1-0-0",
+      "timings": "Before food"
+    },
+    {
+      "serial_number": 30,
+      "brand_name": "Thyronorm 50",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Levothyroxine 50 mcg",
+      "common_frequency": "1-0-0",
+      "timings": "Before food"
+    },
+    {
+      "serial_number": 31,
+      "brand_name": "Thyronorm 25",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Levothyroxine 25 mcg",
+      "common_frequency": "1-0-0",
+      "timings": "Before food"
+    },
+    {
+      "serial_number": 32,
+      "brand_name": "Thyronorm 12.5mg",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Levothyroxine 12.5 mcg",
+      "common_frequency": "1-0-0",
+      "timings": "Before food"
+    },
+    {
+      "serial_number": 33,
+      "brand_name": "Thyronorm 75",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Levothyroxine 75 mcg",
+      "common_frequency": "1-0-0",
+      "timings": "Before food"
+    },
+    {
+      "serial_number": 34,
+      "brand_name": "Thyronorm 200",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Levothyroxine 200 mcg",
+      "common_frequency": "1-0-0",
+      "timings": "Before food"
+    },
+    {
+      "serial_number": 35,
+      "brand_name": "Avil Inj",
+      "medicine_form": "Injection",
+      "composition_with_strength": "Pheniramine Maleate 22.75 mg/ml",
+      "common_frequency": "1-0-1",
+      "timings": "IM/IV",
+      "device_type": "Injection"
+    },
+    {
+      "serial_number": 36,
+      "brand_name": "Laxix",
+      "medicine_form": "Injection",
+      "composition_with_strength": "Furosemide 10 mg/ml",
+      "common_frequency": "As prescribed",
+      "timings": "IV/IM",
+      "device_type": "Injection"
+    },
+    {
+      "serial_number": 37,
+      "brand_name": "Optineuron",
+      "medicine_form": "Injection",
+      "composition_with_strength": "Vitamin B1 100 mg + Vitamin B6 100 mg + Vitamin B12 1000 mcg + Vitamin B2 5 mg + Niacinamide 100 mg + D-Panthenol 50 mg per 3ml",
+      "common_frequency": "1-0-0",
+      "timings": "IM/IV",
+      "device_type": "Injection"
+    },
+    {
+      "serial_number": 38,
+      "brand_name": "Stugeron",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Cinnarizine 25 mg",
+      "common_frequency": "1-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 39,
+      "brand_name": "Fludac 20",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Fluoxetine 20 mg",
+      "common_frequency": "1-0-0",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 40,
+      "brand_name": "Dinapar Aq",
+      "medicine_form": "Injection",
+      "composition_with_strength": "Paracetamol 10 mg/ml",
+      "common_frequency": "1-0-1",
+      "timings": "IV infusion",
+      "device_type": "Injection"
+    },
+    {
+      "serial_number": 41,
+      "brand_name": "Fruselac 20",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Furosemide 20 mg + Spironolactone 50 mg",
+      "common_frequency": "1-0-0",
+      "timings": "Morning"
+    },
+    {
+      "serial_number": 42,
+      "brand_name": "Camyda 600",
+      "medicine_form": "Injection",
+      "composition_with_strength": "Clindamycin 600 mg/4ml (150 mg/ml)",
+      "common_frequency": "1-0-1",
+      "timings": "IV/IM",
+      "device_type": "Injection"
+    },
+    {
+      "serial_number": 43,
+      "brand_name": "Lesuride 25",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Levosulpiride 25 mg",
+      "common_frequency": "1-0-1",
+      "timings": "Before food"
+    },
+    {
+      "serial_number": 44,
+      "brand_name": "Pause 25",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Ethamsylate 250 mg",
+      "common_frequency": "1-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 45,
+      "brand_name": "Contramal 100",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Tramadol 100 mg SR",
+      "common_frequency": "1-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 46,
+      "brand_name": "Buscogast",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Hyoscine Butylbromide 10 mg",
+      "common_frequency": "1-0-1",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 47,
+      "brand_name": "Mucigate",
+      "medicine_form": "Syrup",
+      "composition_with_strength": "Sucralfate + Oxetacaine",
+      "common_frequency": "1-0-1",
+      "timings": "Before food"
+    },
+    {
+      "serial_number": 48,
+      "brand_name": "Mucinac Inj",
+      "medicine_form": "Injection",
+      "composition_with_strength": "Acetylcysteine 100 mg/ml",
+      "common_frequency": "1-0-1",
+      "timings": "IV/Inhalation",
+      "device_type": "Injection"
+    },
+    {
+      "serial_number": 49,
+      "brand_name": "D3 Mark 60K",
+      "medicine_form": "Sachet",
+      "composition_with_strength": "Cholecalciferol (Vitamin D3) 60000 IU",
+      "common_frequency": "Once weekly",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 50,
+      "brand_name": "Supreme D3 60K",
+      "medicine_form": "Sachet",
+      "composition_with_strength": "Cholecalciferol (Vitamin D3) 60000 IU",
+      "common_frequency": "Once weekly",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 51,
+      "brand_name": "Dynaplast",
+      "medicine_form": "Patch",
+      "composition_with_strength": "Diclofenac + Menthol + Camphor",
+      "common_frequency": "1-0-1",
+      "timings": "Topical"
+    },
+    {
+      "serial_number": 52,
+      "brand_name": "Kitkath 20",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Ketoconazole 200 mg",
+      "common_frequency": "1-0-0",
+      "timings": "After food"
+    },
+    {
+      "serial_number": 53,
+      "brand_name": "Kitkath 22",
+      "medicine_form": "Tablet",
+      "composition_with_strength": "Ketoconazole 200 mg",
+      "common_frequency": "1-0-0",
+      "timings": "After food"
+    }
+  ]
+}
+{
+  "medicines": [
+    {
+      "serial_number": 1,
+      "brand_name": "Inj Atropin",
+      "medicine_form": "Injection",
+      "composition_with_strength": "Atropine Sulphate 0.6 mg/ml",
+      "common_frequency": "As prescribed",
+      "timings": "IV/IM/SC",
+      "device_type": "Injection"
+    },
+    {
+      "serial_number": 2,
+      "brand_name": "Inj Adrenaline",
+      "medicine_form": "Injection",
+      "composition_with_strength": "Adrenaline (Epinephrine) 1 mg/ml (1:1000)",
+      "common_frequency": "As prescribed",
+      "timings": "IV/IM/SC",
+      "device_type": "Injection"
+    },
+    {
+      "serial_number": 3,
+      "brand_name": "Inj Lcin 500",
+      "medicine_form": "Infusion",
+      "composition_with_strength": "Levofloxacin 500 mg/100 ml + Dextrose 5% w/v",
+      "common_frequency": "As prescribed",
+      "timings": "IV infusion",
+      "device_type": "Infusion"
+    },
+    {
+      "serial_number": 4,
+      "brand_name": "Inj Levoflox 500",
+      "medicine_form": "Infusion",
+      "composition_with_strength": "Levofloxacin 500 mg/100 ml",
+      "common_frequency": "As prescribed",
+      "timings": "IV infusion",
+      "device_type": "Infusion"
+    },
+    {
+      "serial_number": 5,
+      "brand_name": "Insulin Syringe",
+      "medicine_form": "Device",
+      "composition_with_strength": "0.3 ml / 0.5 ml / 1 ml; U-40 or U-100 calibration",
+      "common_frequency": "As prescribed",
+      "timings": "SC injection",
+      "device_type": "Insulin Syringe"
+    },
+    {
+      "serial_number": 6,
+      "brand_name": "Easyfix Dripset",
+      "medicine_form": "Device",
+      "composition_with_strength": "Sterile IV administration set",
+      "common_frequency": "Single use",
+      "timings": "IV infusion",
+      "device_type": "IV Infusion Set"
+    },
+    {
+      "serial_number": 7,
+      "brand_name": "Rotaflo",
+      "medicine_form": "Device",
+      "composition_with_strength": "Sterile IV flow-regulator extension set",
+      "common_frequency": "Single use",
+      "timings": "IV infusion",
+      "device_type": "Flow Regulator"
+    },
+    {
+      "serial_number": 8,
+      "brand_name": "Needle 16G",
+      "medicine_form": "Device",
+      "composition_with_strength": "16 Gauge hypodermic needle",
+      "common_frequency": "Single use",
+      "timings": "Injection/Aspiration",
+      "device_type": "Hypodermic Needle"
+    },
+    {
+      "serial_number": 9,
+      "brand_name": "Needle 24G",
+      "medicine_form": "Device",
+      "composition_with_strength": "24 Gauge hypodermic needle",
+      "common_frequency": "Single use",
+      "timings": "Injection/Aspiration",
+      "device_type": "Hypodermic Needle"
+    },
+    {
+      "serial_number": 10,
+      "brand_name": "Extension Set 10 cm",
+      "medicine_form": "Device",
+      "composition_with_strength": "Sterile IV extension tubing 10 cm",
+      "common_frequency": "Single use",
+      "timings": "IV infusion",
+      "device_type": "Extension Set"
+    },
+    {
+      "serial_number": 11,
+      "brand_name": "Extension Set 200 cm",
+      "medicine_form": "Device",
+      "composition_with_strength": "Sterile IV extension tubing 200 cm",
+      "common_frequency": "Single use",
+      "timings": "IV infusion",
+      "device_type": "Extension Set"
+    },
+    {
+      "serial_number": 12,
+      "brand_name": "O2 Mask",
+      "medicine_form": "Device",
+      "composition_with_strength": "Oxygen delivery mask",
+      "common_frequency": "As prescribed",
+      "timings": "Oxygen delivery",
+      "device_type": "Oxygen Mask"
+    },
+    {
+      "serial_number": 13,
+      "brand_name": "Neb Mask",
+      "medicine_form": "Device",
+      "composition_with_strength": "Nebulizer face mask",
+      "common_frequency": "As prescribed",
+      "timings": "Nebulization",
+      "device_type": "Nebulizer Mask"
+    },
+    {
+      "serial_number": 14,
+      "brand_name": "NIV Mask",
+      "medicine_form": "Device",
+      "composition_with_strength": "Non-invasive ventilation interface",
+      "common_frequency": "As prescribed",
+      "timings": "NIV support",
+      "device_type": "NIV Mask"
+    },
+    {
+      "serial_number": 15,
+      "brand_name": "Distilled Water",
+      "medicine_form": "Solution",
+      "composition_with_strength": "Distilled Water",
+      "common_frequency": "As prescribed",
+      "timings": "Equipment use",
+      "device_type": "Sterile Water"
+    },
+    {
+      "serial_number": 16,
+      "brand_name": "Roller Bandage",
+      "medicine_form": "Device",
+      "composition_with_strength": "Cotton/crepe roller bandage",
+      "common_frequency": "As needed",
+      "timings": "Wound dressing",
+      "device_type": "Bandage"
+    },
+    {
+      "serial_number": 17,
+      "brand_name": "Foley Catheter 14Fr",
+      "medicine_form": "Device",
+      "composition_with_strength": "14 French urinary Foley catheter",
+      "common_frequency": "Single use",
+      "timings": "Urinary drainage",
+      "device_type": "Urinary Catheter"
+    },
+    {
+      "serial_number": 18,
+      "brand_name": "Foley Catheter 16Fr",
+      "medicine_form": "Device",
+      "composition_with_strength": "16 French urinary Foley catheter",
+      "common_frequency": "Single use",
+      "timings": "Urinary drainage",
+      "device_type": "Urinary Catheter"
+    },
+    {
+      "serial_number": 19,
+      "brand_name": "Trocar 32Fr",
+      "medicine_form": "Device",
+      "composition_with_strength": "32 French thoracic trocar catheter",
+      "common_frequency": "Single use",
+      "timings": "Chest drainage",
+      "device_type": "Trocar Catheter"
+    },
+    {
+      "serial_number": 20,
+      "brand_name": "Trocar 28Fr",
+      "medicine_form": "Device",
+      "composition_with_strength": "28 French thoracic trocar catheter",
+      "common_frequency": "Single use",
+      "timings": "Chest drainage",
+      "device_type": "Trocar Catheter"
+    },
+    {
+      "serial_number": 21,
+      "brand_name": "Oxyset",
+      "medicine_form": "Device",
+      "composition_with_strength": "Twin-prong nasal oxygen set",
+      "common_frequency": "Single use",
+      "timings": "Oxygen delivery",
+      "device_type": "Nasal Cannula"
+    },
+    {
+      "serial_number": 22,
+      "brand_name": "Sterile Pad",
+      "medicine_form": "Device",
+      "composition_with_strength": "Sterile absorbent wound pad",
+      "common_frequency": "Single use",
+      "timings": "Wound dressing",
+      "device_type": "Sterile Dressing"
+    },
+    {
+      "serial_number": 23,
+      "brand_name": "Silk",
+      "medicine_form": "Device",
+      "composition_with_strength": "Sterile silk surgical suture",
+      "common_frequency": "Single use",
+      "timings": "Suturing",
+      "device_type": "Surgical Suture"
+    },
+    {
+      "serial_number": 24,
+      "brand_name": "Easyglide",
+      "medicine_form": "Gel",
+      "composition_with_strength": "Water-based lubricating gel",
+      "common_frequency": "As needed",
+      "timings": "Catheter lubrication",
+      "device_type": "Lubricant Jelly"
+    },
+    {
+      "serial_number": 25,
+      "brand_name": "Surgical Blade 10",
+      "medicine_form": "Device",
+      "composition_with_strength": "Sterile surgical blade No. 10",
+      "common_frequency": "Single use",
+      "timings": "Surgical incision",
+      "device_type": "Surgical Blade"
+    },
+    {
+      "serial_number": 26,
+      "brand_name": "Surgical Blade 11",
+      "medicine_form": "Device",
+      "composition_with_strength": "Sterile surgical blade No. 11",
+      "common_frequency": "Single use",
+      "timings": "Surgical incision",
+      "device_type": "Surgical Blade"
+    },
+    {
+      "serial_number": 27,
+      "brand_name": "Surgical Blade 12",
+      "medicine_form": "Device",
+      "composition_with_strength": "Sterile surgical blade No. 12",
+      "common_frequency": "Single use",
+      "timings": "Surgical incision",
+      "device_type": "Surgical Blade"
+    },
+    {
+      "serial_number": 28,
+      "brand_name": "Surgical Blade 16",
+      "medicine_form": "Device",
+      "composition_with_strength": "Sterile surgical blade No. 16",
+      "common_frequency": "Single use",
+      "timings": "Surgical incision",
+      "device_type": "Surgical Blade"
+    },
+    {
+      "serial_number": 29,
+      "brand_name": "Surgical Blade 18",
+      "medicine_form": "Device",
+      "composition_with_strength": "Sterile surgical blade No. 18",
+      "common_frequency": "Single use",
+      "timings": "Surgical incision",
+      "device_type": "Surgical Blade"
+    },
+    {
+      "serial_number": 30,
+      "brand_name": "ICD Bag",
+      "medicine_form": "Device",
+      "composition_with_strength": "Underwater-seal chest drainage bag",
+      "common_frequency": "Single use",
+      "timings": "Chest drainage",
+      "device_type": "Intercostal Drainage Bag"
+    },
+    {
+      "serial_number": 31,
+      "brand_name": "Urine Bag",
+      "medicine_form": "Device",
+      "composition_with_strength": "Graduated urinary drainage bag",
+      "common_frequency": "Single use",
+      "timings": "Urinary drainage",
+      "device_type": "Urine Collection Bag"
+    },
+    {
+      "serial_number": 32,
+      "brand_name": "50cc Syringe",
+      "medicine_form": "Device",
+      "composition_with_strength": "50 ml disposable syringe",
+      "common_frequency": "Single use",
+      "timings": "Injection/Aspiration",
+      "device_type": "Syringe"
+    },
+    {
+      "serial_number": 33,
+      "brand_name": "20cc Syringe",
+      "medicine_form": "Device",
+      "composition_with_strength": "20 ml disposable syringe",
+      "common_frequency": "Single use",
+      "timings": "Injection/Aspiration",
+      "device_type": "Syringe"
+    },
+    {
+      "serial_number": 34,
+      "brand_name": "10cc Syringe",
+      "medicine_form": "Device",
+      "composition_with_strength": "10 ml disposable syringe",
+      "common_frequency": "Single use",
+      "timings": "Injection/Aspiration",
+      "device_type": "Syringe"
+    },
+    {
+      "serial_number": 35,
+      "brand_name": "5cc Syringe",
+      "medicine_form": "Device",
+      "composition_with_strength": "5 ml disposable syringe",
+      "common_frequency": "Single use",
+      "timings": "Injection/Aspiration",
+      "device_type": "Syringe"
+    },
+    {
+      "serial_number": 36,
+      "brand_name": "2cc Syringe",
+      "medicine_form": "Device",
+      "composition_with_strength": "2 ml disposable syringe",
+      "common_frequency": "Single use",
+      "timings": "Injection/Aspiration",
+      "device_type": "Syringe"
+    },
+    {
+      "serial_number": 37,
+      "brand_name": "Paperplaster",
+      "medicine_form": "Device",
+      "composition_with_strength": "Hypoallergenic paper medical tape",
+      "common_frequency": "As needed",
+      "timings": "Dressing fixation",
+      "device_type": "Paper Tape"
+    },
+    {
+      "serial_number": 38,
+      "brand_name": "Diaper",
+      "medicine_form": "Device",
+      "composition_with_strength": "Disposable absorbent adult diaper",
+      "common_frequency": "As needed",
+      "timings": "Incontinence care",
+      "device_type": "Adult Diaper"
+    },
+    {
+      "serial_number": 39,
+      "brand_name": "Gloves",
+      "medicine_form": "Device",
+      "composition_with_strength": "Disposable examination gloves",
+      "common_frequency": "Single use",
+      "timings": "Patient examination",
+      "device_type": "Examination Gloves"
+    },
+    {
+      "serial_number": 40,
+      "brand_name": "Surgical Gloves 6",
+      "medicine_form": "Device",
+      "composition_with_strength": "Sterile surgical gloves Size 6",
+      "common_frequency": "Single use",
+      "timings": "Surgical procedure",
+      "device_type": "Surgical Gloves"
+    },
+    {
+      "serial_number": 41,
+      "brand_name": "Surgical Gloves 6.5",
+      "medicine_form": "Device",
+      "composition_with_strength": "Sterile surgical gloves Size 6.5",
+      "common_frequency": "Single use",
+      "timings": "Surgical procedure",
+      "device_type": "Surgical Gloves"
+    },
+    {
+      "serial_number": 42,
+      "brand_name": "Surgical Gloves 7",
+      "medicine_form": "Device",
+      "composition_with_strength": "Sterile surgical gloves Size 7",
+      "common_frequency": "Single use",
+      "timings": "Surgical procedure",
+      "device_type": "Surgical Gloves"
+    },
+    {
+      "serial_number": 43,
+      "brand_name": "Surgical Gloves 7.5",
+      "medicine_form": "Device",
+      "composition_with_strength": "Sterile surgical gloves Size 7.5",
+      "common_frequency": "Single use",
+      "timings": "Surgical procedure",
+      "device_type": "Surgical Gloves"
+    }
+  ]
+}

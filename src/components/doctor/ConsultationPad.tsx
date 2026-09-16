@@ -217,8 +217,8 @@ export function ConsultationPad({ prescription, onChange, onSave, onComplete, sa
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
   const [showFormatSettings, setShowFormatSettings] = useState(false);
   const [followUpText, setFollowUpText] = useState("");
+  const [dbMedicines, setDbMedicines] = useState<Array<{ name: string; brand_name: string | null; composition: string | null; form: string; frequency: string; timing: string }>>([]);
 
-  const customMedicines = useAppStore((s) => s.customMedicines);
   const customTests = useAppStore((s) => s.customTests);
   const customDiagnoses = useAppStore((s) => s.customDiagnoses);
   
@@ -228,7 +228,6 @@ export function ConsultationPad({ prescription, onChange, onSave, onComplete, sa
   const historicHistory = useAppStore((s) => s.historicHistory);
   const historicTests = useAppStore((s) => s.historicTests);
   
-  const addCustomMedicine = useAppStore((s) => s.addCustomMedicine);
   const addCustomTest = useAppStore((s) => s.addCustomTest);
   const addCustomDiagnosis = useAppStore((s) => s.addCustomDiagnosis);
   const prescriptionTemplates = useAppStore((s) => s.prescriptionTemplates);
@@ -237,11 +236,58 @@ export function ConsultationPad({ prescription, onChange, onSave, onComplete, sa
   const formatConfig = getMergedFormatConfig(useAppStore((s) => s.prescriptionFormatConfig));
   const { addCustomItem, saveTemplate: apiSaveTemplate, deleteTemplate: apiDeleteTemplate } = useOpdApi();
 
+  // Fetch medicines from DB on mount
+  useEffect(() => {
+    fetch("/api/medicines")
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.medicines) setDbMedicines(data.medicines);
+      })
+      .catch(() => {}); // silently fail — historic medicines still work
+  }, []);
+
+
   const allMedicines = useMemo(() => {
     const opts: SuggestionOption[] = [];
-    customMedicines.forEach((med) => {
-      opts.push({ label: med, value: med, searchStr: med.toLowerCase() });
+
+    const getShortForm = (f: string) => {
+      if (!f) return "";
+      const lower = f.toLowerCase();
+      if (lower.includes("tablet")) return "Tab. ";
+      if (lower.includes("capsule")) return "Cap. ";
+      if (lower.includes("syrup")) return "Syr. ";
+      if (lower.includes("injection")) return "Inj. ";
+      if (lower.includes("inhaler")) return "Inh. ";
+      if (lower.includes("respule")) return "Resp. ";
+      if (lower.includes("rotacap")) return "Rotacap. ";
+      if (lower.includes("sachet")) return "Sachet ";
+      if (lower.includes("ointment")) return "Oint. ";
+      if (lower.includes("cream")) return "Cream ";
+      if (lower.includes("drop")) return "Drop ";
+      if (lower.includes("spray")) return "Spray ";
+      // Default: Capitalize first letter
+      return f.charAt(0).toUpperCase() + f.slice(1) + " ";
+    };
+
+    // Primary source: DB medicines
+    // label = brand name (shown in dropdown)
+    // value = composition (inserted into the medicine name field)
+    dbMedicines.forEach((med) => {
+      const brandName = med.brand_name || med.name;
+      const composition = med.composition || brandName; // fall back to brand if no composition
+      const prefix = getShortForm(med.form);
+      const label = `${prefix}${brandName}`; // show brand name in dropdown
+      const value = `${prefix}${composition}`; // insert composition on select
+      opts.push({
+        label,
+        value: value,              // insert composition on select
+        searchStr: `${brandName} ${med.composition ?? ""}`.toLowerCase(),
+        frequency: med.frequency || undefined,
+        timing: med.timing || undefined,
+      });
     });
+
+    // Secondary: historic medicines from past prescriptions (for autofill)
     historicMedicines.forEach((med) => {
       const label = `${med.name} ${med.frequency ? `(${med.frequency})` : ""}`;
       opts.push({
@@ -254,14 +300,15 @@ export function ConsultationPad({ prescription, onChange, onSave, onComplete, sa
         duration: med.duration,
       });
     });
-    // Remove duplicates by label
-    const uniqueMap = new Map();
+
+    // Remove duplicates by label (brand name)
+    const uniqueMap = new Map<string, SuggestionOption>();
     opts.forEach((o) => {
-      const lbl = typeof o === "string" ? o : o.label;
-      uniqueMap.set(lbl, o);
+      const key = typeof o === "string" ? o : o.label;
+      if (!uniqueMap.has(key)) uniqueMap.set(key, o);
     });
     return Array.from(uniqueMap.values());
-  }, [customMedicines, historicMedicines]);
+  }, [dbMedicines, historicMedicines]);
   
   const allTests = useMemo(() => Array.from(new Set([...PULMONOLOGY_TESTS, ...customTests, ...historicTests])), [customTests, historicTests]);
   const allDiagnoses = useMemo(() => Array.from(new Set([...PULMONOLOGY_DIAGNOSES, ...customDiagnoses, ...historicDiagnoses])), [customDiagnoses, historicDiagnoses]);
@@ -595,7 +642,7 @@ export function ConsultationPad({ prescription, onChange, onSave, onComplete, sa
                     suggestions={allMedicines}
                     placeholder="Medicine name"
                     className={inputCls}
-                    onSelect={(v) => { addCustomMedicine(v); addCustomItem("medicine", v); }}
+                    onSelect={(v) => { addCustomItem("medicine", v); }}
                     onSelectOption={(s) => {
                       if (typeof s !== "string") {
                         updateMedicine(med.id, {
