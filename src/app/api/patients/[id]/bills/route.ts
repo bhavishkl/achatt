@@ -101,6 +101,31 @@ export async function POST(
       return NextResponse.json({ message: "Error saving bill", error: upsertError.message }, { status: 500 });
     }
 
+    // Discharge date/time is recorded on the patient only once the final IP bill is saved.
+    // Draft bills never touch the patient's discharge fields.
+    const isFinalBill = bill.ipBillType === "final";
+    if (isFinalBill) {
+      const patientDischargeUpdate: Record<string, unknown> = {
+        status: "discharged",
+        discharge_date: bill.dischargeDate || new Date().toISOString().split("T")[0],
+        discharge_time: toTimeValue(bill.dischargeTime) ||
+          `${String(new Date().getHours()).padStart(2, "0")}:${String(new Date().getMinutes()).padStart(2, "0")}`,
+        updated_at: new Date().toISOString(),
+      };
+
+      const { error: patientDischargeError } = await supabaseAdmin
+        .from("patients")
+        .update(patientDischargeUpdate)
+        .eq("id", patientId);
+
+      if (patientDischargeError) {
+        return NextResponse.json(
+          { message: "Bill saved, but marking the patient discharged failed", error: patientDischargeError.message },
+          { status: 500 }
+        );
+      }
+    }
+
     const previousAdvanceUsed = toNumber(existingBill?.advance_used);
     const nextAdvanceUsed = toNumber(bill.advanceUsed);
     const advanceDiff = nextAdvanceUsed - previousAdvanceUsed;

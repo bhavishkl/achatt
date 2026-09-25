@@ -8,12 +8,25 @@ import { dischargeTemplates } from '../../lib/dcardTemplates';
 import { Printer, Edit, Eye, FileText, ClipboardPaste, CheckCircle, AlertCircle, ImagePlus, Trash2 } from 'lucide-react';
 import { generateDocx } from '../../lib/exportDocx';
 import { parseDischargeText } from '../../lib/parseDischargeText';
+import {
+  DcardLayoutSettings,
+  loadDcardLayoutSettings,
+  saveDcardLayoutSettings,
+  clearDcardLayoutSettings,
+  DEFAULT_DCARD_LAYOUT_SETTINGS,
+} from '../../lib/dcardLayoutSettings';
+import DcardExportSettingsPanel from '../../components/DcardExportSettingsPanel';
 
 type Tab = 'paste' | 'edit' | 'preview';
 
 const FORM_STORAGE_KEY = 'dcard-form-data';
 const TEMPLATE_STORAGE_KEY = 'dcard-template-key';
 const HEADER_IMAGE_STORAGE_KEY = 'dcard-header-image';
+
+function initialLayoutSettings(): DcardLayoutSettings {
+  if (typeof window === 'undefined') return DEFAULT_DCARD_LAYOUT_SETTINGS;
+  return loadDcardLayoutSettings();
+}
 
 export default function DischargeCardPage() {
   const [selectedTemplateKey, setSelectedTemplateKey] = useState<string>(() => {
@@ -43,6 +56,7 @@ export default function DischargeCardPage() {
     if (typeof window === 'undefined') return null;
     return window.localStorage.getItem(HEADER_IMAGE_STORAGE_KEY);
   });
+  const [layoutSettings, setLayoutSettings] = useState<DcardLayoutSettings>(initialLayoutSettings);
 
   const handleTemplateChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const key = e.target.value;
@@ -85,7 +99,17 @@ export default function DischargeCardPage() {
   };
 
   const handleExportWord = async () => {
-    await generateDocx(data, headerImageDataUrl ?? undefined);
+    await generateDocx(data, headerImageDataUrl ?? undefined, layoutSettings);
+  };
+
+  const handleLayoutSettingsChange = (settings: DcardLayoutSettings) => {
+    setLayoutSettings(settings);
+    saveDcardLayoutSettings(settings);
+  };
+
+  const handleLayoutSettingsReset = () => {
+    clearDcardLayoutSettings();
+    setLayoutSettings(DEFAULT_DCARD_LAYOUT_SETTINGS);
   };
 
   const handleParse = () => {
@@ -183,6 +207,13 @@ export default function DischargeCardPage() {
             </div>
           )}
         </div>
+
+        {/* ── Word export layout settings ── */}
+        <DcardExportSettingsPanel
+          settings={layoutSettings}
+          onChange={handleLayoutSettingsChange}
+          onReset={handleLayoutSettingsReset}
+        />
 
         {/* ── Tabs ── */}
         <div className="flex gap-1 mb-4 print:hidden border-b border-gray-300">

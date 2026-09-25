@@ -337,9 +337,8 @@ export default function AddPatientModal({
                                 </select>
                             </div>
                             <div>
-                                <label className="block text-xs text-neutral-400 mb-1">Bed No</label>
+                                <label className="block text-xs text-neutral-400 mb-1">Bed No <span className="text-neutral-600">(optional)</span></label>
                                 <input
-                                    required
                                     name="bedNo"
                                     type="text"
                                     value={formData.bedNo}

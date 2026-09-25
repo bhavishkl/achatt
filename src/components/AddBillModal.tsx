@@ -86,12 +86,16 @@ export default function AddBillModal({
     setConcession(existingBill?.concession ?? 0);
      
     const today = new Date().toISOString().split("T")[0];
-    setDischargeDate(existingBill?.dischargeDate || patient?.dischargeDate || today);
+    // Discharge date/time is only meaningful for final bills; otherwise always default to "now".
+    const wasFinalBill = existingBill?.ipBillType === "final";
+    setDischargeDate(wasFinalBill ? existingBill?.dischargeDate || patient?.dischargeDate || today : today);
 
     setDischargeTime(
-      toTimeInputValue(existingBill?.dischargeTime) ||
-        toTimeInputValue(patient?.dischargeTime) ||
-        currentTimeValue()
+      wasFinalBill
+        ? toTimeInputValue(existingBill?.dischargeTime) ||
+            toTimeInputValue(patient?.dischargeTime) ||
+            currentTimeValue()
+        : currentTimeValue()
     );
 
     setPaidCash(existingBill?.paidCash ?? 0);
@@ -226,6 +230,10 @@ export default function AddBillModal({
     setBillItems((prev) => prev.filter((item) => item.id !== id));
   };
 
+  const reorderItems = (reordered: BillDraftItem[]) => {
+    setBillItems(reordered);
+  };
+
   const totalAmount = calculateTotal(billItems);
   const availableAdvance = Math.max(
     0,
@@ -249,8 +257,9 @@ export default function AddBillModal({
       id: existingBill?.id || Date.now().toString(),
       billNo: billNo || existingBill?.billNo,
       date: billDate,
-      dischargeDate,
-      dischargeTime,
+      // Persist discharge date/time only when this is saved as the IP Final Bill.
+      dischargeDate: isIpFinalBill ? dischargeDate : "",
+      dischargeTime: isIpFinalBill ? dischargeTime : "",
       ipBillType: isIpFinalBill ? "final" : "draft",
       grossAmount: totalAmount,
       advanceUsed: autoAdvanceUsed,
@@ -275,14 +284,16 @@ export default function AddBillModal({
       return;
     }
 
+    const finalDischargeDate = isIpFinalBill ? dischargeDate : "";
+    const finalDischargeTime = isIpFinalBill ? dischargeTime : "";
     openBillPrintWindow(
       buildBillPrintHtml({
         patient,
         items: billItems,
         billDate,
         billNo: bill.billNo,
-        dischargeDate,
-        dischargeTime,
+        dischargeDate: finalDischargeDate,
+        dischargeTime: finalDischargeTime,
         ipBillType: isIpFinalBill ? "final" : "draft",
         grossAmount: totalAmount,
         advanceUsed: autoAdvanceUsed,
@@ -412,7 +423,7 @@ export default function AddBillModal({
             </div>
 
             <div className="xl:col-span-7 min-h-0 flex flex-col">
-              <BillItemsList items={billItems} onRemoveItem={removeItem} />
+              <BillItemsList items={billItems} onRemoveItem={removeItem} onReorder={reorderItems} />
 
               <div className="pt-2 border-t border-neutral-800 mt-2">
                 <BillTotalsRow

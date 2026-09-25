@@ -1,7 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import { Loader2 } from "lucide-react";
+import { Banknote, Loader2, LogOut, Pencil } from "lucide-react";
 import { Patient } from "@/types/patient";
 import { formatDisplayDate, formatDisplayTime } from "@/components/add-bill-modal/utils";
 
@@ -26,13 +25,19 @@ export default function AdmittedPatientsTable({
   onAddAdvance,
   onAddNew,
 }: AdmittedPatientsTableProps) {
-  const [openMenuFor, setOpenMenuFor] = useState<string | null>(null);
-
   return (
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-lg font-semibold text-white">Currently Admitted</h2>
+          <div className="flex items-center gap-2">
+            <h2 className="text-lg font-semibold text-white">Currently Admitted</h2>
+            <span
+              className="inline-flex items-center rounded-full border border-blue-800/50 bg-blue-950/60 px-2.5 py-0.5 text-xs font-semibold text-blue-300"
+              title="Admitted patient count"
+            >
+              {patients.length} {patients.length === 1 ? "patient" : "patients"}
+            </span>
+          </div>
           <p className="text-sm text-neutral-400">Manage admitted patients, records, and active bills</p>
         </div>
         <button
@@ -119,67 +124,47 @@ export default function AdmittedPatientsTable({
                         <span className="text-sm text-neutral-400 font-medium">
                           Total: ₹{patient.bills?.reduce((sum, b) => sum + b.totalAmount, 0).toLocaleString() || 0}
                         </span>
-                        <button
-                          onClick={() => onAddBill(patient.id)}
-                          className="text-xs bg-neutral-800 hover:bg-neutral-700 text-blue-400 px-2 py-1 rounded border border-neutral-700 w-fit"
-                        >
-                          + Add Bill
-                        </button>
+                        {(patient.bills?.length ?? 0) === 0 && (
+                          <button
+                            onClick={() => onAddBill(patient.id)}
+                            className="text-xs bg-neutral-800 hover:bg-neutral-700 text-blue-400 px-2 py-1 rounded border border-neutral-700 w-fit"
+                          >
+                            + Add Bill
+                          </button>
+                        )}
                       </div>
                     </td>
                     <td className="p-4 text-right">
-                      <div className="flex justify-end">
-                        <div className="relative">
-                          <button
-                            onClick={() => setOpenMenuFor(openMenuFor === patient.id ? null : patient.id)}
-                            className="h-8 w-8 rounded border border-neutral-700 bg-neutral-800 hover:bg-neutral-700 text-neutral-300"
-                            title="More actions"
-                          >
-                            ⋮
-                          </button>
-
-                          {openMenuFor === patient.id && (
-                            <div className="absolute right-0 mt-2 w-44 bg-neutral-900 border border-neutral-700 rounded-lg shadow-xl z-20">
-                              <button
-                                onClick={() => {
-                                  onEditPatient(patient.id);
-                                  setOpenMenuFor(null);
-                                }}
-                                className="w-full text-left px-3 py-2 text-sm text-blue-400 hover:bg-neutral-800 rounded-t-lg"
-                              >
-                                Edit Patient
-                              </button>
-                              <button
-                                onClick={() => {
-                                  onAddAdvance(patient.id);
-                                  setOpenMenuFor(null);
-                                }}
-                                className="w-full text-left px-3 py-2 text-sm text-emerald-400 hover:bg-neutral-800"
-                              >
-                                Add Advance
-                              </button>
-                              <button
-                                onClick={() => {
-                                  onDischarge(patient.id);
-                                  setOpenMenuFor(null);
-                                }}
-                                disabled={dischargingId === patient.id}
-                                className={`w-full text-left px-3 py-2 text-sm rounded-b-lg flex items-center gap-2 ${dischargingId === patient.id
-                                  ? "text-neutral-500 cursor-not-allowed"
-                                  : "text-neutral-300 hover:bg-neutral-800"
-                                  }`}
-                              >
-                                {dischargingId === patient.id ? (
-                                  <>
-                                    <Loader2 className="h-4 w-4 animate-spin" /> Discharging…
-                                  </>
-                                ) : (
-                                  "Discharge"
-                                )}
-                              </button>
-                            </div>
+                      <div className="flex justify-end gap-1">
+                        <button
+                          onClick={() => onEditPatient(patient.id)}
+                          className="h-8 w-8 inline-flex items-center justify-center rounded border border-neutral-700 bg-neutral-800 hover:bg-neutral-700 text-blue-400 transition-colors"
+                          title="Edit Patient"
+                          aria-label="Edit Patient"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => onAddAdvance(patient.id)}
+                          className="h-8 w-8 inline-flex items-center justify-center rounded border border-neutral-700 bg-neutral-800 hover:bg-neutral-700 text-emerald-400 transition-colors"
+                          title="Add Advance"
+                          aria-label="Add Advance"
+                        >
+                          <Banknote className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => onDischarge(patient.id)}
+                          disabled={dischargingId === patient.id}
+                          className="h-8 w-8 inline-flex items-center justify-center rounded border border-neutral-700 bg-neutral-800 hover:bg-neutral-700 text-neutral-300 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                          title={dischargingId === patient.id ? "Discharging…" : "Discharge"}
+                          aria-label="Discharge"
+                        >
+                          {dischargingId === patient.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <LogOut className="h-4 w-4" />
                           )}
-                        </div>
+                        </button>
                       </div>
                     </td>
                   </tr>

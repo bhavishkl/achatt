@@ -15,6 +15,18 @@ type SortDir = 'asc' | 'desc';
 
 const PAGE_SIZE = 10;
 
+/**
+ * Discharge date/time is sourced from the bill (the IP Final Bill), not the patient record.
+ * Falls back to any bill that carries a discharge date so older data still renders.
+ */
+const getDischargeBill = (p: Patient) =>
+    p.bills?.find(b => b.ipBillType === 'final') ??
+    p.bills?.find(b => b.dischargeDate) ??
+    null;
+
+const getDischargeDate = (p: Patient) => getDischargeBill(p)?.dischargeDate || '';
+const getDischargeTime = (p: Patient) => getDischargeBill(p)?.dischargeTime || '';
+
 const SortIcon = ({ field, sortField, sortDir }: { field: SortField, sortField: SortField, sortDir: SortDir }) => {
     if (sortField !== field) return <span className="text-neutral-600 ml-1">↕</span>;
     return <span className="text-blue-400 ml-1">{sortDir === 'asc' ? '↑' : '↓'}</span>;
@@ -64,12 +76,12 @@ export default function DischargedPatientsTable({
             );
         }
 
-        // Date range filter (on discharge date)
+        // Date range filter (on discharge date, sourced from the bill)
         if (dateFrom) {
-            list = list.filter(p => (p.dischargeDate || '') >= dateFrom);
+            list = list.filter(p => getDischargeDate(p) >= dateFrom);
         }
         if (dateTo) {
-            list = list.filter(p => (p.dischargeDate || '') <= dateTo);
+            list = list.filter(p => getDischargeDate(p) <= dateTo);
         }
 
         // Sort
@@ -87,7 +99,7 @@ export default function DischargedPatientsTable({
                 case 'admissionDate':
                     aVal = a.admissionDate; bVal = b.admissionDate; break;
                 case 'dischargeDate':
-                    aVal = a.dischargeDate || ''; bVal = b.dischargeDate || ''; break;
+                    aVal = getDischargeDate(a); bVal = getDischargeDate(b); break;
                 case 'totalBill':
                     aVal = getTotalBill(a); bVal = getTotalBill(b); break;
             }
@@ -258,9 +270,9 @@ export default function DischargedPatientsTable({
                                             )}
                                         </td>
                                         <td className="p-4 text-green-400">
-                                            <div>{formatDisplayDate(patient.dischargeDate)}</div>
-                                            {formatDisplayTime(patient.dischargeTime) && (
-                                                <div className="text-xs text-green-600">{formatDisplayTime(patient.dischargeTime)}</div>
+                                            <div>{formatDisplayDate(getDischargeDate(patient))}</div>
+                                            {formatDisplayTime(getDischargeTime(patient)) && (
+                                                <div className="text-xs text-green-600">{formatDisplayTime(getDischargeTime(patient))}</div>
                                             )}
                                         </td>
                                         <td className="p-4">
@@ -286,12 +298,14 @@ export default function DischargedPatientsTable({
                                                 ) : (
                                                     <span className="text-neutral-500">No bills</span>
                                                 )}
-                                                <button
-                                                    onClick={() => onAddBill(patient.id)}
-                                                    className="text-xs bg-neutral-800 hover:bg-neutral-700 text-blue-400 px-2 py-1 rounded border border-neutral-700 w-fit transition-colors"
-                                                >
-                                                    + Add Bill
-                                                </button>
+                                                {(patient.bills?.length ?? 0) === 0 && (
+                                                    <button
+                                                        onClick={() => onAddBill(patient.id)}
+                                                        className="text-xs bg-neutral-800 hover:bg-neutral-700 text-blue-400 px-2 py-1 rounded border border-neutral-700 w-fit transition-colors"
+                                                    >
+                                                        + Add Bill
+                                                    </button>
+                                                )}
                                             </div>
                                         </td>
                                     </tr>

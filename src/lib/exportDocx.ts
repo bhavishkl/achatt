@@ -13,6 +13,10 @@ import {
   ImageRun,
 } from 'docx';
 import { DischargeData } from '../types';
+import {
+  DcardLayoutSettings,
+  DEFAULT_DCARD_LAYOUT_SETTINGS,
+} from './dcardLayoutSettings';
 
 // ─── Border helpers ────────────────────────────────────────────────────────────
 
@@ -61,7 +65,10 @@ function sanitizeFileName(name: string): string {
 }
 
 /** Bold + underline heading paragraph (e.g. "FINAL DIAGNOSIS:") */
-function sectionHeadingParagraph(title: string): Paragraph {
+function sectionHeadingParagraph(
+  title: string,
+  style: DcardLayoutSettings['sections']['finalDiagnosis']
+): Paragraph {
   return new Paragraph({
     children: [
       new TextRun({
@@ -69,29 +76,37 @@ function sectionHeadingParagraph(title: string): Paragraph {
         bold: true,
         underline: {},
         font: 'Calibri',
-        size: 22,
+        size: style.fontSize,
       }),
     ],
     spacing: { before: 120, after: 60 },
   });
 }
 
-function bodyTextRun(text: string, bold = false, underline = false): TextRun {
+function bodyTextRun(
+  text: string,
+  fontSize: number,
+  bold = false,
+  underline = false
+): TextRun {
   return new TextRun({
     text,
     bold,
     underline: underline ? {} : undefined,
     font: 'Calibri',
-    size: 22,
+    size: fontSize,
   });
 }
 
 /** Plain text paragraphs split by newlines */
-function textParagraphs(content: string): Paragraph[] {
+function textParagraphs(
+  content: string,
+  style: DcardLayoutSettings['sections']['finalDiagnosis']
+): Paragraph[] {
   return content.split('\n').map(
     (line) =>
       new Paragraph({
-        children: [bodyTextRun(line)],
+        children: [bodyTextRun(line, style.fontSize)],
         spacing: { after: 60 },
       })
   );
@@ -104,8 +119,14 @@ function textParagraphs(content: string): Paragraph[] {
  *   │  content text                         │
  *   └───────────────────────────────────────┘
  */
-function boxedSection(title: string, content: string, widthPct = 100): Table {
+function boxedSection(
+  title: string,
+  content: string,
+  style: DcardLayoutSettings['sections']['hospitalCourse'],
+  widthPct = 100
+): Table {
   const contentLines = content ? content.split('\n') : [''];
+  const { margin } = style;
 
   const topCellBorders = {
     top: BORDER_SINGLE,
@@ -131,11 +152,11 @@ function boxedSection(title: string, content: string, widthPct = 100): Table {
           borders: topCellBorders,
           children: [
             new Paragraph({
-              children: [bodyTextRun(title, true, true)],
+              children: [bodyTextRun(title, style.fontSize, true, true)],
               spacing: { after: 120 },
             }),
           ],
-          margins: { top: 80, bottom: 40, left: 100, right: 100 },
+          margins: { top: margin.top, bottom: 40, left: margin.left, right: margin.right },
         }),
       ],
     }),
@@ -146,11 +167,11 @@ function boxedSection(title: string, content: string, widthPct = 100): Table {
           children: contentLines.map(
             (line) =>
               new Paragraph({
-                children: [bodyTextRun(line)],
+                children: [bodyTextRun(line, style.fontSize)],
                 spacing: { after: 80 },
               })
           ),
-          margins: { top: 20, bottom: 80, left: 100, right: 100 },
+          margins: { top: 20, bottom: margin.bottom, left: margin.left, right: margin.right },
         }),
       ],
     }),
@@ -166,9 +187,11 @@ function boxedSection(title: string, content: string, widthPct = 100): Table {
 // ─── Investigations table ──────────────────────────────────────────────────────
 
 function buildInvestigationsTable(
-  investigations: DischargeData['investigations']
+  investigations: DischargeData['investigations'],
+  style: DcardLayoutSettings['sections']['investigations']
 ): Table {
   if (!investigations.length) return new Table({ rows: [] });
+  const { margin } = style;
 
   const groups = new Map<string, { date: string; result: string; name: string }[]>();
   for (const inv of investigations) {
@@ -189,11 +212,11 @@ function buildInvestigationsTable(
             shading: { type: ShadingType.CLEAR, fill: 'FFFFFF' },
             children: [
               new Paragraph({
-                children: [bodyTextRun(category, true)],
+                children: [bodyTextRun(category, style.fontSize, true)],
                 spacing: { after: 0 },
               }),
             ],
-            margins: { top: 40, bottom: 40, left: 80, right: 80 },
+            margins: { ...margin },
           }),
         ],
       })
@@ -216,11 +239,11 @@ function buildInvestigationsTable(
               width: { size: 20, type: WidthType.PERCENTAGE },
               children: [
                 new Paragraph({
-                  children: [bodyTextRun(entry.date)],
+                  children: [bodyTextRun(entry.date, style.fontSize)],
                   spacing: { after: 0 },
                 }),
               ],
-              margins: { top: 40, bottom: 40, left: 80, right: 80 },
+              margins: { ...margin },
             }),
             new TableCell({
               borders: allSingleBorders,
@@ -228,11 +251,11 @@ function buildInvestigationsTable(
               children: findingLines.map(
                 (line, i) =>
                   new Paragraph({
-                    children: [bodyTextRun(line)],
+                    children: [bodyTextRun(line, style.fontSize)],
                     spacing: { after: i < findingLines.length - 1 ? 60 : 0 },
                   })
               ),
-              margins: { top: 40, bottom: 40, left: 80, right: 80 },
+              margins: { ...margin },
             }),
           ],
         })
@@ -250,9 +273,11 @@ function buildInvestigationsTable(
 // ─── Treatment Given table ─────────────────────────────────────────────────────
 
 function buildTreatmentTable(
-  treatmentGiven: DischargeData['treatmentGiven']
+  treatmentGiven: DischargeData['treatmentGiven'],
+  style: DcardLayoutSettings['sections']['treatmentGiven']
 ): Table {
   if (!treatmentGiven.length) return new Table({ rows: [] });
+  const { margin } = style;
 
   const rows: TableRow[] = [];
   const half = Math.ceil(treatmentGiven.length / 2);
@@ -272,11 +297,11 @@ function buildTreatmentTable(
         width: { size: 50, type: WidthType.PERCENTAGE },
         children: [
           new Paragraph({
-            children: [bodyTextRun(text)],
+            children: [bodyTextRun(text, style.fontSize)],
             spacing: { after: 0 },
           }),
         ],
-        margins: { top: 40, bottom: 40, left: 80, right: 80 },
+        margins: { ...margin },
       });
     };
 
@@ -292,7 +317,11 @@ function buildTreatmentTable(
 
 // ─── Patient info table ──────────────────────────────────────────────────────────
 
-function buildPatientTable(data: DischargeData): Table {
+function buildPatientTable(
+  data: DischargeData,
+  style: DcardLayoutSettings['sections']['patientTable']
+): Table {
+  const { margin } = style;
   const cell = (
     label: string,
     value: string,
@@ -306,13 +335,13 @@ function buildPatientTable(data: DischargeData): Table {
       children: [
         new Paragraph({
           children: [
-            bodyTextRun(`${label}  `, true),
-            bodyTextRun(value),
+            bodyTextRun(`${label}  `, style.fontSize, true),
+            bodyTextRun(value, style.fontSize),
           ],
           spacing: { after: 0 },
         }),
       ],
-      margins: { top: 40, bottom: 40, left: 80, right: 80 },
+      margins: { ...margin },
     });
 
   return new Table({
@@ -421,7 +450,12 @@ async function saveDocxBlob(blob: Blob, fileName: string): Promise<void> {
 
 // ─── Main export ────────────────────────────────────────────────────────────────
 
-export const generateDocx = async (data: DischargeData, headerImageDataUrl?: string) => {
+export const generateDocx = async (
+  data: DischargeData,
+  headerImageDataUrl?: string,
+  layoutSettings: DcardLayoutSettings = DEFAULT_DCARD_LAYOUT_SETTINGS
+) => {
+  const s = layoutSettings.sections;
   const children: (Paragraph | Table)[] = [];
 
   const headerImageParagraph = buildHeaderImageParagraph(headerImageDataUrl);
@@ -432,7 +466,7 @@ export const generateDocx = async (data: DischargeData, headerImageDataUrl?: str
   children.push(
     new Paragraph({
       alignment: AlignmentType.CENTER,
-      children: [bodyTextRun('DISCHARGE SUMMARY', true, true)],
+      children: [bodyTextRun('DISCHARGE SUMMARY', s.finalDiagnosis.fontSize, true, true)],
       spacing: { after: 160 },
     })
   );
@@ -454,50 +488,50 @@ export const generateDocx = async (data: DischargeData, headerImageDataUrl?: str
     );
   }
 
-  children.push(buildPatientTable(data));
+  children.push(buildPatientTable(data, s.patientTable));
   children.push(new Paragraph({ text: '', spacing: { after: 80 } }));
 
-  children.push(sectionHeadingParagraph('FINAL DIAGNOSIS:'));
+  children.push(sectionHeadingParagraph('FINAL DIAGNOSIS:', s.finalDiagnosis));
   if (data.finalDiagnosis) {
-    children.push(...textParagraphs(data.finalDiagnosis));
+    children.push(...textParagraphs(data.finalDiagnosis, s.finalDiagnosis));
   }
   children.push(new Paragraph({ text: '', spacing: { after: 80 } }));
 
   if (data.clinicalPresentation) {
-    children.push(sectionHeadingParagraph('CLINICAL PRESENTATION:'));
-    children.push(...textParagraphs(data.clinicalPresentation));
+    children.push(sectionHeadingParagraph('CLINICAL PRESENTATION:', s.clinicalPresentation));
+    children.push(...textParagraphs(data.clinicalPresentation, s.clinicalPresentation));
     children.push(new Paragraph({ text: '', spacing: { after: 80 } }));
   }
 
   if (data.investigations.length > 0) {
-    children.push(sectionHeadingParagraph('INVESTIGATIONS:'));
-    children.push(buildInvestigationsTable(data.investigations));
+    children.push(sectionHeadingParagraph('INVESTIGATIONS:', s.investigations));
+    children.push(buildInvestigationsTable(data.investigations, s.investigations));
     children.push(new Paragraph({ text: '', spacing: { after: 80 } }));
   }
 
   if (data.treatmentGiven.length > 0) {
     children.push(
       new Paragraph({
-        children: [bodyTextRun('TREATMENT GIVEN', true, true)],
+        children: [bodyTextRun('TREATMENT GIVEN', s.treatmentGiven.fontSize, true, true)],
         spacing: { before: 80, after: 60 },
       })
     );
-    children.push(buildTreatmentTable(data.treatmentGiven));
+    children.push(buildTreatmentTable(data.treatmentGiven, s.treatmentGiven));
     children.push(new Paragraph({ text: '', spacing: { after: 80 } }));
   }
 
   if (data.hospitalCourse) {
-    children.push(boxedSection('COURSE IN THE HOSPITAL/SURGICAL PROCEDURE:', data.hospitalCourse));
+    children.push(boxedSection('COURSE IN THE HOSPITAL/SURGICAL PROCEDURE:', data.hospitalCourse, s.hospitalCourse));
     children.push(new Paragraph({ text: '', spacing: { after: 80 } }));
   }
 
   if (data.dischargeAdvice) {
-    children.push(boxedSection('ADVISE ON DISCHARGE:', data.dischargeAdvice));
+    children.push(boxedSection('ADVISE ON DISCHARGE:', data.dischargeAdvice, s.dischargeAdvice));
     children.push(new Paragraph({ text: '', spacing: { after: 80 } }));
   }
 
   if (data.followUp) {
-    children.push(boxedSection('NEXT FOLLOW UP :', data.followUp, 50));
+    children.push(boxedSection('NEXT FOLLOW UP :', data.followUp, s.followUp, 50));
     children.push(new Paragraph({ text: '', spacing: { after: 200 } }));
   }
 
@@ -519,7 +553,9 @@ export const generateDocx = async (data: DischargeData, headerImageDataUrl?: str
               children: [
                 new Paragraph({
                   alignment: AlignmentType.CENTER,
-                  children: [bodyTextRun('CONSULTANT NAME AND SIGNATURE', true, true)],
+                  children: [
+                    bodyTextRun('CONSULTANT NAME AND SIGNATURE', s.finalDiagnosis.fontSize, true, true),
+                  ],
                 }),
               ],
             }),
@@ -530,7 +566,21 @@ export const generateDocx = async (data: DischargeData, headerImageDataUrl?: str
   );
 
   const doc = new Document({
-    sections: [{ properties: {}, children }],
+    sections: [
+      {
+        properties: {
+          page: {
+            margin: {
+              top: layoutSettings.page.top,
+              right: layoutSettings.page.right,
+              bottom: layoutSettings.page.bottom,
+              left: layoutSettings.page.left,
+            },
+          },
+        },
+        children,
+      },
+    ],
   });
 
   const blob = await Packer.toBlob(doc);

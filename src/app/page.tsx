@@ -282,12 +282,13 @@ export default function Home() {
         <div className="flex overflow-x-auto border-b border-neutral-800 mb-4 sm:mb-6 no-scrollbar">
           <button
             onClick={() => setActiveTab('admission')}
-            className={`whitespace-nowrap px-4 sm:px-6 py-3 font-medium transition-colors ${activeTab === 'admission'
+            className={`whitespace-nowrap inline-flex items-center px-4 sm:px-6 py-3 font-medium transition-colors ${activeTab === 'admission'
               ? 'border-b-2 border-blue-600 text-blue-500'
               : 'text-neutral-400 hover:text-white'
               }`}
           >
             Current Admissions
+            <span className="ml-2 inline-flex items-center justify-center rounded-full bg-blue-600/20 px-2 py-0.5 text-xs font-semibold text-blue-400">{admittedPatients.length}</span>
           </button>
           <button
             onClick={() => setActiveTab('discharged')}
