@@ -284,16 +284,16 @@ export default function AddBillModal({
       return;
     }
 
-    const finalDischargeDate = isIpFinalBill ? dischargeDate : "";
-    const finalDischargeTime = isIpFinalBill ? dischargeTime : "";
+    // The printout always shows the DOD entered in this modal, even for draft
+    // bills — only persistence is gated on the final-bill checkbox above.
     openBillPrintWindow(
       buildBillPrintHtml({
         patient,
         items: billItems,
         billDate,
         billNo: bill.billNo,
-        dischargeDate: finalDischargeDate,
-        dischargeTime: finalDischargeTime,
+        dischargeDate: dischargeDate,
+        dischargeTime: dischargeTime,
         ipBillType: isIpFinalBill ? "final" : "draft",
         grossAmount: totalAmount,
         advanceUsed: autoAdvanceUsed,
