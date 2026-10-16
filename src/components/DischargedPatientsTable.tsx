@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { Pencil } from "lucide-react";
 import { Patient } from "@/types/patient";
 import { formatDisplayDate, formatDisplayTime } from "@/components/add-bill-modal/utils";
 
@@ -8,6 +9,7 @@ interface DischargedPatientsTableProps {
     patients: Patient[];
     onViewBill: (patientId: string, billId: string) => void;
     onAddBill: (patientId: string) => void;
+    onEditPatient: (patientId: string) => void;
 }
 
 type SortField = 'regNo' | 'name' | 'wardDetails' | 'admissionDate' | 'dischargeDate' | 'totalBill';
@@ -36,6 +38,7 @@ export default function DischargedPatientsTable({
     patients,
     onViewBill,
     onAddBill,
+    onEditPatient,
 }: DischargedPatientsTableProps) {
     // Search
     const [search, setSearch] = useState('');
@@ -232,12 +235,13 @@ export default function DischargedPatientsTable({
                                 <th className="p-4 cursor-pointer select-none hover:text-white transition-colors" onClick={() => handleSort('totalBill')}>
                                     Total Bill <SortIcon field="totalBill" sortField={sortField} sortDir={sortDir} />
                                 </th>
+                                <th className="p-4 text-center">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-neutral-800">
                             {paginated.length === 0 ? (
                                 <tr>
-                                    <td colSpan={6} className="p-8 text-center text-neutral-500">
+                                    <td colSpan={7} className="p-8 text-center text-neutral-500">
                                         {hasActiveFilters
                                             ? 'No patients match your search or filters.'
                                             : 'No discharged patients found.'}
@@ -258,6 +262,9 @@ export default function DischargedPatientsTable({
                                         <td className="p-4 font-medium text-neutral-300">
                                             {patient.prefix} {patient.name}
                                             <div className="text-xs text-neutral-500">{patient.age} Yrs, {patient.gender}</div>
+                                            <div className="mt-1 text-xs text-neutral-400 font-mono flex items-center gap-1">
+                                                <span>📞</span> {patient.attenderMobile || "-"}
+                                            </div>
                                         </td>
                                         <td className="p-4 text-neutral-400">
                                             <div>{patient.wardName}</div>
@@ -307,6 +314,16 @@ export default function DischargedPatientsTable({
                                                     </button>
                                                 )}
                                             </div>
+                                        </td>
+                                        <td className="p-4">
+                                            <button
+                                                onClick={() => onEditPatient(patient.id)}
+                                                className="inline-flex items-center justify-center h-8 w-8 rounded-lg border border-neutral-700 bg-neutral-800 text-neutral-300 hover:bg-neutral-700 hover:text-white transition-colors"
+                                                title="Edit Patient"
+                                                aria-label="Edit Patient"
+                                            >
+                                                <Pencil className="h-4 w-4" />
+                                            </button>
                                         </td>
                                     </tr>
                                 ))

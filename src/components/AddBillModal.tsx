@@ -252,6 +252,16 @@ export default function AddBillModal({
     e.preventDefault();
     if (!patient || billItems.length === 0 || isSaving) return;
 
+    // Cash and online amounts are required — refuse to save when left blank
+    if (
+      paidCash === "" ||
+      paidOnline === "" ||
+      Number.isNaN(Number(paidCash)) ||
+      Number.isNaN(Number(paidOnline))
+    ) {
+      return;
+    }
+
     const billDate = existingBill?.date || new Date().toISOString().split("T")[0];
     const bill: Bill = {
       id: existingBill?.id || Date.now().toString(),

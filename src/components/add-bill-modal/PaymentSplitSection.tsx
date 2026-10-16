@@ -39,26 +39,40 @@ export default function PaymentSplitSection({
 
       <div className="grid grid-cols-2 gap-2">
         <div>
-          <label className="block text-xs text-neutral-400 mb-1">Cash Amount</label>
+          <label className="block text-xs text-neutral-400 mb-1">
+            Cash Amount <span className="text-red-400" aria-hidden="true">*</span>
+            <span className="sr-only">(required)</span>
+          </label>
           <input
             type="number"
+            required
+            aria-label="Cash Amount (required)"
             min="0"
             step="0.01"
             value={paidCash}
             onChange={(e) => onChangeCash(e.target.value === "" ? "" : Number(e.target.value))}
-            className="w-full bg-neutral-950 border border-blue-900/40 rounded px-2 py-1.5 text-sm focus:ring-2 focus:ring-blue-600 outline-none"
+            className={`w-full bg-neutral-950 border rounded px-2 py-1.5 text-sm focus:ring-2 focus:ring-blue-600 outline-none ${
+              paidCash === "" ? "border-red-500" : "border-blue-900/40"
+            }`}
             placeholder="0.00"
           />
         </div>
         <div>
-          <label className="block text-xs text-neutral-400 mb-1">Online Amount</label>
+          <label className="block text-xs text-neutral-400 mb-1">
+            Online Amount <span className="text-red-400" aria-hidden="true">*</span>
+            <span className="sr-only">(required)</span>
+          </label>
           <input
             type="number"
+            required
+            aria-label="Online Amount (required)"
             min="0"
             step="0.01"
             value={paidOnline}
             onChange={(e) => onChangeOnline(e.target.value === "" ? "" : Number(e.target.value))}
-            className="w-full bg-neutral-950 border border-blue-900/40 rounded px-2 py-1.5 text-sm focus:ring-2 focus:ring-blue-600 outline-none"
+            className={`w-full bg-neutral-950 border rounded px-2 py-1.5 text-sm focus:ring-2 focus:ring-blue-600 outline-none ${
+              paidOnline === "" ? "border-red-500" : "border-blue-900/40"
+            }`}
             placeholder="0.00"
           />
         </div>

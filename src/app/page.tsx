@@ -5,6 +5,7 @@ import { Loader2 } from "lucide-react";
 import { Patient, Bill } from "@/types/patient";
 import AdmittedPatientsTable from "@/components/AdmittedPatientsTable";
 import DischargedPatientsTable from "@/components/DischargedPatientsTable";
+import PatientBillsReportTab from "@/components/PatientBillsReportTab";
 import AddPatientModal from "@/components/AddPatientModal";
 import AddBillModal from "@/components/AddBillModal";
 import { useAppStore } from "@/lib/store";
@@ -55,7 +56,7 @@ const normalizePatient = (p: Patient): Patient => ({
 
 export default function Home() {
   const companyId = useAppStore((s) => s.companyId);
-  const [activeTab, setActiveTab] = useState<'admission' | 'discharged'>('admission');
+  const [activeTab, setActiveTab] = useState<'admission' | 'discharged' | 'reports'>('admission');
   const [patients, setPatients] = useState<Patient[]>([]);
   const [isLoadingPatients, setIsLoadingPatients] = useState(false);
   const [patientsError, setPatientsError] = useState("");
@@ -299,6 +300,15 @@ export default function Home() {
           >
             Discharged History
           </button>
+          <button
+            onClick={() => setActiveTab('reports')}
+            className={`whitespace-nowrap px-4 sm:px-6 py-3 font-medium transition-colors ${activeTab === 'reports'
+              ? 'border-b-2 border-amber-600 text-amber-500'
+              : 'text-neutral-400 hover:text-white'
+              }`}
+          >
+            Reports
+          </button>
         </div>
 
         {/* Content */}
@@ -324,7 +334,12 @@ export default function Home() {
                 patients={dischargedPatients}
                 onViewBill={openEditBillModal}
                 onAddBill={openBillModal}
+                onEditPatient={openEditPatientModal}
               />
+            )}
+
+            {activeTab === 'reports' && (
+              <PatientBillsReportTab patients={patients} />
             )}
           </>
         )}

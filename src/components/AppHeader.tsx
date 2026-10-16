@@ -158,12 +158,6 @@ export default function AppHeader({ children }: AppHeaderProps) {
 
   const navContent = (
     <div className="flex h-full flex-col">
-      <div className="border-b border-neutral-800 px-4 py-4">
-        <p className="text-xs font-semibold uppercase tracking-[0.24em] text-neutral-500">Workspace</p>
-        <p className="mt-2 text-lg font-semibold text-white">{companyName}</p>
-        <p className="mt-1 text-sm text-neutral-400">Core navigation for attendance, patients, and appointments.</p>
-      </div>
-
       <nav className="flex-1 space-y-2 overflow-y-auto px-3 py-4">
         {NAV_LINKS.map((link) => {
           const isActive = pathname === link.href;
