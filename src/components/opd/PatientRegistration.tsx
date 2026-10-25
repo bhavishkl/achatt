@@ -14,8 +14,6 @@ type Props = {
   onBack: () => void;
 };
 
-const BLOOD_GROUPS = ["", "A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"];
-
 const normalizePhone = (value: string) => {
   const digits = value.replace(/\D/g, "");
   if (digits.length === 12 && digits.startsWith("91")) return digits.slice(2);
@@ -39,8 +37,6 @@ export function PatientRegistration({ existingPatient, initialName, initialPhone
   const [phone, setPhone] = useState(existingPatient?.phone || initialPhone);
   const [age, setAge] = useState<number | "">(existingPatient?.age || "");
   const [gender, setGender] = useState<"Male" | "Female" | "Other">(existingPatient?.gender || "Male");
-  const [address, setAddress] = useState(existingPatient?.address || "");
-  const [bloodGroup, setBloodGroup] = useState(existingPatient?.bloodGroup || "");
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const addOpdPatient = useAppStore((s) => s.addOpdPatient);
@@ -70,8 +66,10 @@ export function PatientRegistration({ existingPatient, initialName, initialPhone
         phone: normalizePhone(phone.trim()),
         age: Number(age),
         gender,
-        address: address.trim(),
-        bloodGroup,
+        // Address/blood fields were removed from the form; keep any values
+        // already stored on the patient so edits don't wipe them.
+        address: existingPatient.address || "",
+        bloodGroup: existingPatient.bloodGroup || "",
       };
       // Optimistic local update
       updateOpdPatient(existingPatient.id, updatedData);
@@ -92,8 +90,8 @@ export function PatientRegistration({ existingPatient, initialName, initialPhone
         phone: normalizePhone(phone.trim()),
         age: Number(age),
         gender,
-        address: address.trim(),
-        bloodGroup,
+        address: "",
+        bloodGroup: "",
       };
       // Try API first
       const apiResult = await createPatient(patientData);
@@ -115,8 +113,8 @@ export function PatientRegistration({ existingPatient, initialName, initialPhone
     } bg-neutral-800 px-4 py-3 text-white placeholder-neutral-500 outline-none transition-colors focus:border-blue-500 focus:ring-1 focus:ring-blue-500`;
 
   return (
-    <div className="mx-auto max-w-lg">
-      <div className="rounded-2xl border border-neutral-800 bg-neutral-900/50 p-6">
+    <div className="flex h-full min-h-0 flex-col">
+      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto rounded-2xl border border-neutral-800 bg-neutral-900/50 p-6">
         <div className="mb-6 flex items-center gap-3">
           <button
             onClick={onBack}
@@ -133,48 +131,47 @@ export function PatientRegistration({ existingPatient, initialName, initialPhone
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Name */}
-          <div>
-            <label className="mb-1.5 block text-sm font-medium text-neutral-300">
-              Patient Name <span className="text-red-400">*</span>
-            </label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => { setName(e.target.value); setErrors((p) => ({ ...p, name: "" })); }}
-              placeholder="Full name"
-              className={fieldClasses("name")}
-              autoFocus={!initialName}
-            />
-            {errors.name && <p className="mt-1 text-xs text-red-400">{errors.name}</p>}
-          </div>
+          {/* Name + Phone row */}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-neutral-300">
+                Patient Name <span className="text-red-400">*</span>
+              </label>
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => { setName(e.target.value); setErrors((p) => ({ ...p, name: "" })); }}
+                placeholder="Full name"
+                className={fieldClasses("name")}
+              />
+              {errors.name && <p className="mt-1 text-xs text-red-400">{errors.name}</p>}
+            </div>
 
-          {/* Phone */}
-          <div>
-            <label className="mb-1.5 block text-sm font-medium text-neutral-300">
-              Phone Number <span className="text-red-400">*</span>
-            </label>
-            <input
-              type="tel"
-              value={phone}
-              onChange={(e) => { 
-                let val = e.target.value;
-                if (val.replace(/\D/g, "").length > 10) {
-                  const digits = val.replace(/\D/g, "");
-                  if (digits.length === 12 && digits.startsWith("91")) {
-                    val = digits.slice(2);
-                  } else {
-                    return;
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-neutral-300">
+                Phone Number <span className="text-red-400">*</span>
+              </label>
+              <input
+                type="tel"
+                value={phone}
+                onChange={(e) => { 
+                  let val = e.target.value;
+                  if (val.replace(/\D/g, "").length > 10) {
+                    const digits = val.replace(/\D/g, "");
+                    if (digits.length === 12 && digits.startsWith("91")) {
+                      val = digits.slice(2);
+                    } else {
+                      return;
+                    }
                   }
-                }
-                setPhone(val); 
-                setErrors((p) => ({ ...p, phone: "" })); 
-              }}
-              placeholder="10-digit mobile number"
-              className={fieldClasses("phone")}
-              autoFocus={!!initialName && !initialPhone}
-            />
-            {errors.phone && <p className="mt-1 text-xs text-red-400">{errors.phone}</p>}
+                  setPhone(val); 
+                  setErrors((p) => ({ ...p, phone: "" })); 
+                }}
+                placeholder="10-digit mobile number"
+                className={fieldClasses("phone")}
+              />
+              {errors.phone && <p className="mt-1 text-xs text-red-400">{errors.phone}</p>}
+            </div>
           </div>
 
           {/* Age + Gender row */}
@@ -213,33 +210,6 @@ export function PatientRegistration({ existingPatient, initialName, initialPhone
                 ))}
               </div>
             </div>
-          </div>
-
-          {/* Address */}
-          <div>
-            <label className="mb-1.5 block text-sm font-medium text-neutral-300">Address</label>
-            <input
-              type="text"
-              value={address}
-              onChange={(e) => setAddress(e.target.value)}
-              placeholder="Optional"
-              className={fieldClasses("address")}
-            />
-          </div>
-
-          {/* Blood Group */}
-          <div>
-            <label className="mb-1.5 block text-sm font-medium text-neutral-300">Blood Group</label>
-            <select
-              value={bloodGroup}
-              onChange={(e) => setBloodGroup(e.target.value)}
-              className="w-full rounded-xl border border-neutral-700 bg-neutral-800 px-4 py-3 text-white outline-none transition-colors focus:border-blue-500"
-            >
-              <option value="">Select (optional)</option>
-              {BLOOD_GROUPS.filter(Boolean).map((bg) => (
-                <option key={bg} value={bg}>{bg}</option>
-              ))}
-            </select>
           </div>
 
           {/* Submit */}

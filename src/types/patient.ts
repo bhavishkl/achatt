@@ -24,6 +24,36 @@ export interface Bill {
     items: BillItem[];
 }
 
+/** One row of the patient advance ledger (patient_advances table). */
+export interface AdvanceEntry {
+    id: string;
+    patientId: string;
+    /** "credit" = advance payment received; "debit" = adjustment against a bill. */
+    entryType: "credit" | "debit";
+    amount: number;
+    /** "cash" | "online" for credits; "adjustment" for bill debits; legacy rows may be "". */
+    mode: string;
+    note: string;
+    referenceBillId?: string;
+    /** ISO timestamp of the entry. */
+    createdAt: string;
+    /** True when the receipt was deleted (voided) — excluded from balances but kept in history. */
+    voided?: boolean;
+    /** Basic patient info joined at query time, when the patient still exists. */
+    patient?: {
+        regNo: string;
+        ipNumber?: string;
+        prefix: string;
+        name: string;
+        gender: string;
+        age: number;
+        wardName: string;
+        bedNo: string;
+        attenderMobile: string;
+        status: string;
+    } | null;
+}
+
 export interface Patient {
     id: string;
     // Generated

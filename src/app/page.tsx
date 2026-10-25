@@ -6,8 +6,13 @@ import { Patient, Bill } from "@/types/patient";
 import AdmittedPatientsTable from "@/components/AdmittedPatientsTable";
 import DischargedPatientsTable from "@/components/DischargedPatientsTable";
 import PatientBillsReportTab from "@/components/PatientBillsReportTab";
+import AdvanceHistoryTab from "@/components/AdvanceHistoryTab";
 import AddPatientModal from "@/components/AddPatientModal";
 import AddBillModal from "@/components/AddBillModal";
+import AddAdvanceModal, {
+  type AdvanceSavePayload,
+  type AdvanceSaveResult,
+} from "@/components/AddAdvanceModal";
 import { useAppStore } from "@/lib/store";
 import { currentTimeValue } from "@/components/add-bill-modal/utils";
 
@@ -38,6 +43,8 @@ function PatientsTableSkeleton() {
   );
 }
 
+const ADVANCE_ANY = "__any__";
+
 const normalizePatient = (p: Patient): Patient => ({
   ...p,
   advanceBalance: p.advanceBalance ?? 0,
@@ -56,7 +63,7 @@ const normalizePatient = (p: Patient): Patient => ({
 
 export default function Home() {
   const companyId = useAppStore((s) => s.companyId);
-  const [activeTab, setActiveTab] = useState<'admission' | 'discharged' | 'reports'>('admission');
+  const [activeTab, setActiveTab] = useState<'admission' | 'discharged' | 'advances' | 'reports'>('admission');
   const [patients, setPatients] = useState<Patient[]>([]);
   const [isLoadingPatients, setIsLoadingPatients] = useState(false);
   const [patientsError, setPatientsError] = useState("");
@@ -68,7 +75,8 @@ export default function Home() {
   const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null);
   const [editingBill, setEditingBill] = useState<Bill | null>(null);
   const [advancePatientId, setAdvancePatientId] = useState<string | null>(null);
-  const [advanceInput, setAdvanceInput] = useState<number | string>('');
+  const [advanceReloadKey, setAdvanceReloadKey] = useState(0);
+  const [patientsReloadKey, setPatientsReloadKey] = useState(0);
 
   // API in-flight states
   const [dischargingPatientId, setDischargingPatientId] = useState<string | null>(null);
@@ -99,7 +107,7 @@ export default function Home() {
     };
 
     void loadPatients();
-  }, [companyId]);
+  }, [companyId, patientsReloadKey]);
 
   const savePatientToServer = async (patient: Patient): Promise<Patient> => {
     const response = await fetch(`/api/patients/${patient.id}`, {
@@ -221,37 +229,43 @@ export default function Home() {
     setEditingBill(null);
   };
 
-  const openAdvanceModal = (patientId: string) => {
+  const openAdvanceModal = (patientId: string | typeof ADVANCE_ANY) => {
     setAdvancePatientId(patientId);
-    setAdvanceInput('');
   };
 
   const closeAdvanceModal = () => {
     setAdvancePatientId(null);
-    setAdvanceInput('');
   };
 
-  const handleSaveAdvance = async () => {
-    if (!advancePatientId || isSavingAdvance) return;
-    const amount = Number(advanceInput);
-    if (!amount || amount <= 0) return;
+  const handleSaveAdvance = async (
+    patientId: string,
+    payload: AdvanceSavePayload
+  ): Promise<AdvanceSaveResult | null> => {
+    if (isSavingAdvance) return null;
 
     setIsSavingAdvance(true);
     setPatientsError("");
     try {
-      const response = await fetch(`/api/patients/${advancePatientId}/advances`, {
+      const response = await fetch(`/api/patients/${patientId}/advances`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amount }),
+        body: JSON.stringify(payload),
       });
       const data = await response.json();
       if (!response.ok) {
         throw new Error(data.message || "Failed to save advance amount");
       }
-      setPatients((prev) => prev.map((p) => (p.id === advancePatientId ? normalizePatient(data.patient) : p)));
+      const savedPatient = normalizePatient(data.patient);
+      setPatients((prev) => prev.map((p) => (p.id === patientId ? savedPatient : p)));
+      setAdvanceReloadKey((k) => k + 1);
       closeAdvanceModal();
+      return {
+        patient: savedPatient,
+        advance: { id: String(data.advance.id), createdAt: String(data.advance.createdAt) },
+      };
     } catch (error: any) {
       setPatientsError(error.message || "Failed to save advance amount");
+      return null;
     } finally {
       setIsSavingAdvance(false);
     }
@@ -301,6 +315,16 @@ export default function Home() {
             Discharged History
           </button>
           <button
+            onClick={() => setActiveTab('advances')}
+            className={`whitespace-nowrap px-4 sm:px-6 py-3 font-medium transition-colors ${activeTab === 'advances'
+              ? 'border-b-2 border-emerald-600 text-emerald-500'
+              : 'text-neutral-400 hover:text-white'
+              }`}
+          >
+            Advances
+            <span className="ml-2 inline-flex items-center justify-center rounded-full bg-emerald-600/20 px-2 py-0.5 text-xs font-semibold text-emerald-400">Advance History</span>
+          </button>
+          <button
             onClick={() => setActiveTab('reports')}
             className={`whitespace-nowrap px-4 sm:px-6 py-3 font-medium transition-colors ${activeTab === 'reports'
               ? 'border-b-2 border-amber-600 text-amber-500'
@@ -338,6 +362,15 @@ export default function Home() {
               />
             )}
 
+            {activeTab === 'advances' && (
+              <AdvanceHistoryTab
+                patients={patients}
+                reloadKey={advanceReloadKey}
+                onAddAdvance={() => openAdvanceModal(ADVANCE_ANY)}
+                onChanged={() => setPatientsReloadKey((k) => k + 1)}
+              />
+            )}
+
             {activeTab === 'reports' && (
               <PatientBillsReportTab patients={patients} />
             )}
@@ -363,47 +396,18 @@ export default function Home() {
         onSaveBill={handleSaveBill}
       />
 
-      {advancePatientId && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
-          <div className="w-full max-w-md bg-neutral-900 border border-neutral-800 rounded-xl p-6">
-            <h3 className="text-lg font-semibold text-white mb-2">Add Advance Amount</h3>
-            <p className="text-sm text-neutral-400 mb-4">Enter advance received from patient.</p>
-            <input
-              type="number"
-              min="0"
-              step="0.01"
-              value={advanceInput}
-              onChange={(e) => setAdvanceInput(e.target.value === '' ? '' : Number(e.target.value))}
-              className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-600"
-              placeholder="e.g. 5000"
-            />
-            <div className="flex justify-end gap-3 mt-5">
-              <button
-                type="button"
-                onClick={closeAdvanceModal}
-                disabled={isSavingAdvance}
-                className="px-4 py-2 text-neutral-400 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={() => void handleSaveAdvance()}
-                disabled={isSavingAdvance}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
-              >
-                {isSavingAdvance ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" /> Saving…
-                  </>
-                ) : (
-                  "Save Advance"
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <AddAdvanceModal
+        isOpen={advancePatientId !== null}
+        patients={patients}
+        patient={
+          advancePatientId && advancePatientId !== ADVANCE_ANY
+            ? patients.find((p) => p.id === advancePatientId) || null
+            : null
+        }
+        isSaving={isSavingAdvance}
+        onClose={closeAdvanceModal}
+        onSaveAdvance={handleSaveAdvance}
+      />
     </main>
   );
 }

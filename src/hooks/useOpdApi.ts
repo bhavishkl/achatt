@@ -370,6 +370,11 @@ export function useOpdApi() {
     return fetchOpdVisits(companyId, today);
   }, [companyId]);
 
+  const loadAllVisits = useCallback(async () => {
+    if (!companyId) return [];
+    return fetchOpdVisits(companyId);
+  }, [companyId]);
+
   const loadPatientVisits = useCallback(
     async (patientId: string) => {
       if (!companyId) return [];
@@ -484,6 +489,7 @@ export function useOpdApi() {
     companyId,
     loadPatients,
     loadTodayVisits,
+    loadAllVisits,
     loadPatientVisits,
     createPatient,
     updatePatient,

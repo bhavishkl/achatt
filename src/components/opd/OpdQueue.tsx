@@ -98,7 +98,7 @@ function SortableVisitCard({
                 hour: "2-digit",
                 minute: "2-digit",
               })}
-              {visit.bill ? ` · ₹${visit.bill.totalAmount}` : ""}
+              {visit.bill && !visit.bill.voided ? ` · ₹${visit.bill.totalAmount}` : ""}
             </p>
           </div>
           {arrangeMode === "appointment" && (
@@ -187,7 +187,11 @@ export function OpdQueue({ visits, onPatientClick }: Props) {
   }, [visits]);
 
   const totalRevenue = useMemo(
-    () => visits.reduce((sum, v) => sum + (v.bill?.totalAmount ?? 0), 0),
+    () =>
+      visits.reduce(
+        (sum, v) => sum + (v.bill && !v.bill.voided ? v.bill.totalAmount : 0),
+        0
+      ),
     [visits]
   );
 

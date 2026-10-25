@@ -78,8 +78,8 @@ export function VitalsEntry({ patient, visit, onDone }: Props) {
     : bpSysStatus === "normal" && bpDiaStatus === "normal" ? "normal" : "none";
 
   return (
-    <div className="mx-auto max-w-3xl">
-      <div className="rounded-2xl border border-neutral-800 bg-neutral-900/50 p-6">
+    <div className="flex h-full min-h-0 flex-col">
+      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto rounded-2xl border border-neutral-800 bg-neutral-900/50 p-6">
         {/* Patient Info */}
         <div className="mb-6 flex items-center gap-4 rounded-xl border border-neutral-800 bg-neutral-800/50 px-4 py-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-600 text-sm font-bold text-white">

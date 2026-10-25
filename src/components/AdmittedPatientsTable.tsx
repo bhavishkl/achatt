@@ -93,6 +93,9 @@ export default function AdmittedPatientsTable({
                     <td className="p-4">
                       <div className="text-neutral-300">{patient.wardName}</div>
                       <div className="text-neutral-500 text-xs mt-1">(Bed: {patient.bedNo})</div>
+                      <div className="mt-2 inline-flex items-center gap-1 border border-emerald-900/40 bg-emerald-950/40 text-emerald-400 rounded px-1.5 py-0.5 text-xs">
+                        Advance: ₹{(patient.advanceBalance ?? 0).toLocaleString()}
+                      </div>
                     </td>
                     <td className="p-4">
                       <div className="text-neutral-300">{formatDisplayDate(patient.admissionDate)}</div>

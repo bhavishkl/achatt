@@ -87,7 +87,6 @@ export function buildOpdBillPrintHtml({
   <div class="bill-meta">
     <div><b>Bill No:</b> ${bill.billNo}</div>
     <div><b>Date:</b> ${new Date(bill.createdAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}</div>
-    <div><b>Token:</b> #${visit.tokenNo}</div>
   </div>
 
   <div class="patient-info">

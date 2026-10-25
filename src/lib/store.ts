@@ -579,7 +579,7 @@ export const useAppStore = create<AppState>()(
         set((s) => ({
           opdBillCounter: { ...s.opdBillCounter, [date]: next },
         }));
-        return `OPD-${date.replace(/-/g, "")}-${String(next).padStart(3, "0")}`;
+        return `OPD-${String(next).padStart(3, "0")}`;
       },
 
       // ---- Prescription Format ----

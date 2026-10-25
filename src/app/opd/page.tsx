@@ -8,6 +8,7 @@ import { PatientRegistration } from "@/components/opd/PatientRegistration";
 import { OpdBilling } from "@/components/opd/OpdBilling";
 import { VitalsEntry } from "@/components/opd/VitalsEntry";
 import { OpdQueue } from "@/components/opd/OpdQueue";
+import { OpdBillsLog } from "@/components/opd/OpdBillsLog";
 import { useOpdApi } from "@/hooks/useOpdApi";
 
 type Step = "search" | "register" | "billing" | "vitals";
@@ -26,6 +27,7 @@ export default function OpdPage() {
   const [selectedPatient, setSelectedPatient] = useState<OpdPatient | null>(null);
   const [activeVisit, setActiveVisit] = useState<OpdVisit | null>(null);
   const [showQueue, setShowQueue] = useState(false);
+  const [showBillsLog, setShowBillsLog] = useState(false);
   const [carryForwardSearch, setCarryForwardSearch] = useState({ name: "", phone: "" });
   const [editingPatient, setEditingPatient] = useState<OpdPatient | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -156,9 +158,9 @@ export default function OpdPage() {
   }
 
   return (
-    <div className="min-h-screen p-4 sm:p-6 lg:p-8">
+    <div className="flex h-[100dvh] flex-col overflow-hidden p-4 sm:p-6 lg:p-8">
       {/* Page Header */}
-      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="mb-4 flex shrink-0 flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-white">Frontdesk — OPD</h1>
           <p className="mt-1 text-sm text-neutral-400">
@@ -181,6 +183,20 @@ export default function OpdPage() {
           </div>
 
           <button
+            onClick={() => {
+              setShowBillsLog(!showBillsLog);
+              if (!showBillsLog) setShowQueue(false);
+            }}
+            className={`rounded-xl border px-4 py-2 text-sm font-medium transition-colors ${
+              showBillsLog
+                ? "border-blue-500 bg-blue-600 text-white"
+                : "border-neutral-700 bg-neutral-800 text-white hover:bg-neutral-700"
+            }`}
+          >
+            Bills Log
+          </button>
+
+          <button
             onClick={() => setShowQueue(!showQueue)}
             className="rounded-xl border border-neutral-700 bg-neutral-800 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-neutral-700"
           >
@@ -190,7 +206,7 @@ export default function OpdPage() {
       </div>
 
       {/* Stepper */}
-      <div className="mb-8 overflow-x-auto scrollbar-hide">
+      <div className="mb-4 shrink-0 overflow-x-auto scrollbar-hide">
         <div className="flex min-w-max items-center gap-1 rounded-2xl border border-neutral-800 bg-neutral-900/60 p-1.5">
           {STEPS.map((step, i) => {
             const isActive = step.key === activeStep;
@@ -228,53 +244,60 @@ export default function OpdPage() {
         </div>
       </div>
 
-      <div className="flex flex-col gap-6 lg:flex-row">
+      {/* Content — fills the remaining viewport height; each tab scrolls inside itself */}
+      <div className="flex min-h-0 flex-1 flex-col gap-6 lg:flex-row">
         {/* Main Content */}
-        <div className={`min-w-0 flex-1 ${showQueue ? "lg:max-w-[calc(100%-22rem)]" : ""}`}>
-          {activeStep === "search" && (
-            <PatientSearch
-              onSelectPatient={handleSelectExisting}
-              onRegisterNew={handleRegisterNew}
-            />
-          )}
+        <div className={`min-h-0 min-w-0 flex-1 flex ${showQueue ? "lg:max-w-[calc(100%-22rem)]" : ""}`}>
+          {showBillsLog ? (
+            <OpdBillsLog />
+          ) : (
+            <>
+              {activeStep === "search" && (
+                <PatientSearch
+                  onSelectPatient={handleSelectExisting}
+                  onRegisterNew={handleRegisterNew}
+                />
+              )}
 
-          {activeStep === "register" && (
-            <PatientRegistration
-              existingPatient={editingPatient}
-              initialName={carryForwardSearch.name}
-              initialPhone={carryForwardSearch.phone}
-              onRegistered={(patient) => {
-                setEditingPatient(null);
-                handlePatientRegistered(patient);
-              }}
-              onBack={() => {
-                setEditingPatient(null);
-                setActiveStep("search");
-              }}
-            />
-          )}
+              {activeStep === "register" && (
+                <PatientRegistration
+                  existingPatient={editingPatient}
+                  initialName={carryForwardSearch.name}
+                  initialPhone={carryForwardSearch.phone}
+                  onRegistered={(patient) => {
+                    setEditingPatient(null);
+                    handlePatientRegistered(patient);
+                  }}
+                  onBack={() => {
+                    setEditingPatient(null);
+                    setActiveStep("search");
+                  }}
+                />
+              )}
 
-          {activeStep === "billing" && selectedPatient && (
-            <OpdBilling
-              patient={selectedPatient}
-              visit={activeVisit}
-              onDone={handleBillingDone}
-              onSkip={handleBillingDone}
-            />
-          )}
+              {activeStep === "billing" && selectedPatient && (
+                <OpdBilling
+                  patient={selectedPatient}
+                  visit={activeVisit}
+                  onDone={handleBillingDone}
+                  onSkip={handleBillingDone}
+                />
+              )}
 
-          {activeStep === "vitals" && selectedPatient && activeVisit && (
-            <VitalsEntry
-              patient={selectedPatient}
-              visit={activeVisit}
-              onDone={handleVitalsDone}
-            />
+              {activeStep === "vitals" && selectedPatient && activeVisit && (
+                <VitalsEntry
+                  patient={selectedPatient}
+                  visit={activeVisit}
+                  onDone={handleVitalsDone}
+                />
+              )}
+            </>
           )}
         </div>
 
         {/* Queue Sidebar */}
         {showQueue && (
-          <div className="w-full shrink-0 lg:w-80">
+          <div className="min-h-0 w-full shrink-0 lg:w-80">
             <OpdQueue
               visits={todayVisits}
               onPatientClick={handleQueuePatientClick}

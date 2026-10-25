@@ -52,6 +52,9 @@ export interface OpdBill {
   paidAmount: number;
   paymentMode: "cash" | "upi" | "card" | "other";
   createdAt: string;
+  /** Soft delete: voided bills stay in the log but are excluded from totals. */
+  voided?: boolean;
+  voidedAt?: string;
 }
 
 // --- Prescription / Visit Pad ---

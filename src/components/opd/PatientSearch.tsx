@@ -61,8 +61,8 @@ export function PatientSearch({ onSelectPatient, onRegisterNew }: Props) {
   const noResults = showResults && results.length === 0;
 
   return (
-    <div className="mx-auto max-w-2xl">
-      <div className="rounded-2xl border border-neutral-800 bg-neutral-900/50 p-6">
+    <div className="flex h-full min-h-0 flex-col">
+      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto rounded-2xl border border-neutral-800 bg-neutral-900/50 p-6">
         <h2 className="mb-1 text-lg font-semibold text-white">Search Patient</h2>
         <p className="mb-6 text-sm text-neutral-400">
           Search by patient name or phone number

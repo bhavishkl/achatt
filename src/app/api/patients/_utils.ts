@@ -101,7 +101,7 @@ export async function getFinancialsByPatientIds(patientIds: string[]) {
       .order("created_at", { ascending: false }),
     supabaseAdmin
       .from("patient_advances")
-      .select("patient_id, entry_type, amount")
+      .select("patient_id, entry_type, amount, note")
       .in("patient_id", patientIds),
   ]);
 
@@ -122,6 +122,9 @@ export async function getFinancialsByPatientIds(patientIds: string[]) {
 
   const advancesByPatientId = new Map<string, number>();
   for (const row of advances ?? []) {
+    // Voided (deleted) receipts no longer count toward the patient's advance
+    // balance — they remain only in the history log.
+    if (String(row.note ?? "").startsWith("[Voided]")) continue;
     const patientId = String(row.patient_id);
     const sign = row.entry_type === "debit" ? -1 : 1;
     const running = advancesByPatientId.get(patientId) ?? 0;

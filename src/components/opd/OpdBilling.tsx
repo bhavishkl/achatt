@@ -5,7 +5,11 @@ import { Plus, Trash2, Printer, SkipForward } from "lucide-react";
 import { useAppStore } from "@/lib/store";
 import type { OpdPatient, OpdVisit, OpdBill, OpdBillItem } from "@/types/opd";
 import { OPD_QUICK_SERVICES } from "@/data/opdSeedData";
-import { buildOpdBillPrintHtml, openPrintWindow } from "@/components/opd/opdPrint";
+import { buildOpdBillPrintHtml } from "@/components/opd/opdPrint";
+import {
+  openBillPrintWindow,
+  openPendingPrintWindow,
+} from "@/components/add-bill-modal/print";
 import { useOpdApi } from "@/hooks/useOpdApi";
 
 type Props = {
@@ -84,10 +88,6 @@ export function OpdBilling({ patient, visit, onDone, onSkip }: Props) {
     descRef.current?.focus();
   };
 
-  const handleQuickAdd = (name: string, rate: number) => {
-    addItem(name, rate, 1);
-  };
-
   const handleSelectSuggestion = (name: string, rate: number) => {
     setInputDesc(name);
     setInputRate(rate);
@@ -96,6 +96,12 @@ export function OpdBilling({ patient, visit, onDone, onSkip }: Props) {
   };
 
   const handleSaveAndPrint = async () => {
+    // Reserve the print tab up-front, while the click is still a trusted user
+    // gesture — browsers block `window.open` once the awaited save requests
+    // have expired the gesture. The window shows "Preparing bill…" until the
+    // real HTML is written into it.
+    const printWindow = openPendingPrintWindow();
+
     const currentVisit = await getOrCreateVisit();
     const today = new Date().toISOString().split("T")[0];
     const billNo = getNextBillNo(today);
@@ -127,9 +133,9 @@ export function OpdBilling({ patient, visit, onDone, onSkip }: Props) {
       }
     }
 
-    // Print
+    // Fill the reserved window and trigger print
     const html = buildOpdBillPrintHtml({ patient, bill, visit: currentVisit, hospitalInfo });
-    openPrintWindow(html);
+    openBillPrintWindow(html, printWindow);
 
     onDone(currentVisit);
   };
@@ -167,7 +173,7 @@ export function OpdBilling({ patient, visit, onDone, onSkip }: Props) {
   };
 
   return (
-    <div className="mx-auto max-w-3xl flex flex-col h-full max-h-[calc(100vh-12rem)]">
+    <div className="flex h-full min-h-0 w-full flex-col">
       <div className="flex-1 min-h-0 overflow-y-auto rounded-t-2xl border border-neutral-800 border-b-0 bg-neutral-900/50 p-6">
         {/* Patient Info */}
         <div className="mb-6 flex flex-wrap items-center gap-4 rounded-xl border border-neutral-800 bg-neutral-800/50 px-4 py-3">
@@ -184,22 +190,6 @@ export function OpdBilling({ patient, visit, onDone, onSkip }: Props) {
 
         <h2 className="mb-1 text-lg font-semibold text-white">Payment & OPD Bill</h2>
         <p className="mb-5 text-sm text-neutral-400">Add services and take payment</p>
-
-        {/* Quick Add Buttons */}
-        <div className="mb-5">
-          <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-neutral-500">Quick Add</p>
-          <div className="flex flex-wrap gap-2">
-            {OPD_QUICK_SERVICES.map((s) => (
-              <button
-                key={s.name}
-                onClick={() => handleQuickAdd(s.name, s.rate)}
-                className="rounded-lg border border-neutral-700 bg-neutral-800 px-3 py-1.5 text-xs font-medium text-neutral-300 transition-colors hover:border-blue-500 hover:bg-blue-500/10 hover:text-blue-400"
-              >
-                {s.name} · ₹{s.rate}
-              </button>
-            ))}
-          </div>
-        </div>
 
         {/* Add Item Row */}
         <div className="mb-4 flex flex-col gap-2 sm:flex-row">
