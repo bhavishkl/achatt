@@ -39,7 +39,13 @@ export function buildBillPrintHtml({
 
   const formattedBillDate = formatDisplayDate(billDate);
   const formattedAdmissionDate = formatDisplayDateTime(patient.admissionDate, patient.admissionTime);
-  const formattedDischargeDate = dischargeDate ? formatDisplayDateTime(dischargeDate, dischargeTime) : "-";
+  const isFinal = ipBillType === "final";
+  // Draft bills print only the discharge date; final bills include the discharge time as well.
+  const formattedDischargeDate = dischargeDate
+    ? isFinal
+      ? formatDisplayDateTime(dischargeDate, dischargeTime)
+      : formatDisplayDate(dischargeDate)
+    : "-";
     const printDateTime = new Date().toLocaleString(undefined, {
         day: "2-digit",
         month: "2-digit",
@@ -48,7 +54,6 @@ export function buildBillPrintHtml({
         minute: "2-digit",
     });
   const netAmountWords = amountToWords(netAmount);
-  const isFinal = ipBillType === "final";
   const formatAmount = (value: number) =>
     value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
