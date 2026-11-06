@@ -111,8 +111,8 @@ export default function ReportTab() {
   }, [report, selectedDept, search]);
 
   // Build days array for the selected month
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
 
   const salaryByEmployeeId = useMemo(() => {
     const salaryMap = new Map<string, { perDaySalary: number; netSalary: number }>();
@@ -126,7 +126,6 @@ export default function ReportTab() {
     });
     return salaryMap;
   }, [filteredReport, daysInMonth]);
-
   // Quick lookup map for processed punches within the selected month
   const punchesMap = useMemo(() => {
     const m = new Map<string, typeof processedPunches[0]>();
@@ -332,24 +331,138 @@ export default function ReportTab() {
     return m;
   }, [filteredReport, empIdToInternalId, days, year, month, effectiveLeaveSet, effectiveAbsentSet, presentSet, punchesMap]);
 
+  // ===== Totals-only report: UI-only editable values =====
+  // Edits override the computed numbers per employee and re-drive the on-screen
+  // (and PDF) calculations. They are intentionally never saved anywhere.
+  type TotalsEditField = "total" | "weekOffs" | "holidays" | "leaves" | "absences" | "present" | "dd" | "late" | "basic";
+  const [edits, setEdits] = useState<Record<string, Partial<Record<TotalsEditField, number>>>>({});
+
+  const handleEditTotalsValue = (employeeId: string, field: TotalsEditField, raw: string) => {
+    setEdits((prev) => {
+      const next = { ...prev };
+      const cur = { ...(next[employeeId] ?? {}) };
+      if (raw.trim() === "") {
+        delete cur[field];
+      } else {
+        const num = Number(raw);
+        cur[field] = Number.isFinite(num) ? num : 0;
+      }
+      if (Object.keys(cur).length === 0) {
+        delete next[employeeId];
+      } else {
+        next[employeeId] = cur;
+      }
+      return next;
+    });
+  };
+
+  const handleClearEdits = () => setEdits({});
+
+  const totalsComputed = useMemo(() => {
+    const m = new Map<string, {
+      total: number;
+      weekOffs: number;
+      holidays: number;
+      leaves: number;
+      absences: number;
+      present: number;
+      dd: number;
+      late: number;
+      basic: number;
+      perDaySalary: number;
+      netSalary: number;
+      payableSalary: number;
+      advance: number;
+      sld: number;
+      lateDeduction: number;
+      grossSalary: number;
+      edited: Partial<Record<TotalsEditField, boolean>>;
+    }>();
+
+    filteredReport.forEach((r) => {
+      const e = edits[r.employeeId] ?? {};
+      const basic = e.basic ?? r.basicSalary;      const perDaySalary = basic / daysInMonth;
+      const effTotal = e.total ?? r.totalDays;
+      const effAbsences = e.absences ?? r.absences;
+      // Only absences reduce payable days (week-offs, holidays, leaves are paid)
+      const workingDays =
+        e.absences !== undefined || e.total !== undefined
+          ? Math.max(0, effTotal - effAbsences)
+          : r.workingDays;
+      const netSalary = perDaySalary * workingDays;
+                const dd = e.dd ?? (ddCountByEmployeeId.get(r.employeeId) || 0);
+      const payableSalary = netSalary + dd * perDaySalary;
+      const advance = deductions[r.employeeId]?.advance || 0;
+      const late = e.late ?? (lateDaysByEmployeeId.get(r.employeeId) || 0);
+      const lateDeduction = late * perDaySalary * LATE_DEDUCTION_RATE;
+
+      m.set(r.employeeId, {
+        total: effTotal,
+        weekOffs: e.weekOffs ?? r.weekOffs,
+        holidays: e.holidays ?? r.holidays,
+        leaves: e.leaves ?? r.leaves,
+        absences: effAbsences,
+        present: e.present ?? (presentDaysByEmployeeId.get(r.employeeId) || 0),
+        dd,
+        late,
+        basic,
+        perDaySalary: Math.round(perDaySalary * 100) / 100,
+        netSalary: Math.round(netSalary * 100) / 100,
+        payableSalary,
+        advance,
+        sld: payableSalary - advance,
+        lateDeduction,
+        grossSalary: payableSalary - advance - lateDeduction,
+        edited: Object.fromEntries((Object.keys(e) as TotalsEditField[]).map((k) => [k, true])),
+      });
+    });
+    return m;    }, [filteredReport, edits, deductions, daysInMonth, ddCountByEmployeeId, lateDaysByEmployeeId, presentDaysByEmployeeId]);
+
+  // Width that fits the current value (digits + padding), capped for extremes
+  const numericInputWidth = (value: number | "" | undefined) => {
+    const len = String(value ?? "").length;
+    return `${Math.min(14, Math.max(3, len + 2))}ch`;
+  };
+
+  const renderEditCell = (employeeId: string, field: TotalsEditField) => {
+    const c = totalsComputed.get(employeeId);
+    const isEdited = Boolean(c?.edited[field]);
+    const value = c ? c[field] : "";
+    return (
+      <td className="py-2 px-2 text-right border-b border-neutral-800">
+        <input
+          type="number"
+          min={0}
+          title="Editable — applies to screen calculations only, not saved"
+          className={`bg-neutral-800 border rounded px-1 py-1 text-xs text-right focus:outline-none focus:ring-1 focus:ring-blue-500 tabular-nums ${
+            isEdited ? "border-amber-400 bg-amber-900/30 text-amber-200" : "border-neutral-700 text-white"
+          }`}
+          style={{ width: numericInputWidth(value) }}
+          value={value}
+          onChange={(ev) => handleEditTotalsValue(employeeId, field, ev.target.value)}
+          onFocus={(ev) => ev.currentTarget.select()}
+          placeholder="0"
+        />
+      </td>
+    );
+  };
+
   const currentTotalNetSalary = useMemo(() => {
     return filteredReport.reduce((sum, r) => {
+      if (reportType === 'totals') {
+        const c = totalsComputed.get(r.employeeId);
+        if (c) return sum + c.grossSalary;
+      }
       const salary = salaryByEmployeeId.get(r.employeeId) || { perDaySalary: r.perDaySalary, netSalary: r.netSalary };
       const ddCount = ddCountByEmployeeId.get(r.employeeId) || 0;
       const ddSalary = ddCount * salary.perDaySalary;
       const payableSalary = salary.netSalary + ddSalary;
-      if (reportType === 'totals') {
-         const empDeds = deductions[r.employeeId] || { advance: 0 };
-         const totalLateDays = lateDaysByEmployeeId.get(r.employeeId) || 0;
-         const lateDeduction = totalLateDays * salary.perDaySalary * LATE_DEDUCTION_RATE;
-         return sum + (payableSalary - empDeds.advance - lateDeduction);
-      }
       if (reportType === 'attendance') {
         return sum + payableSalary;
       }
       return sum;
     }, 0);
-  }, [filteredReport, reportType, deductions, salaryByEmployeeId, ddCountByEmployeeId, lateDaysByEmployeeId]);
+  }, [filteredReport, reportType, deductions, salaryByEmployeeId, ddCountByEmployeeId, lateDaysByEmployeeId, totalsComputed]);
 
   // Helper to parse "HH:mm" or "HH:mm:ss" to minutes
   const timeToMinutes = (timeStr: string) => {
@@ -632,17 +745,8 @@ export default function ReportTab() {
       ];
 
       const rowInputs = filteredReport.map((r) => {
-        const salary = salaryByEmployeeId.get(r.employeeId) || { perDaySalary: r.perDaySalary, netSalary: r.netSalary };
-        const totalLateDays = lateDaysByEmployeeId.get(r.employeeId) || 0;
-        const presentDays = presentDaysByEmployeeId.get(r.employeeId) || 0;
-
-        const ddCount = ddCountByEmployeeId.get(r.employeeId) || 0;
-        const payableSalary = salary.netSalary + ddCount * salary.perDaySalary;
-
-        const empDeds = deductions[r.employeeId] || { advance: 0 };
-        const lateDeduction = totalLateDays * salary.perDaySalary * LATE_DEDUCTION_RATE;
-        const salaryWithoutLateDeduction = payableSalary - empDeds.advance;
-        const finalGrossSalary = salaryWithoutLateDeduction - lateDeduction;
+        // Use the (possibly edited) effective values so the PDF matches the screen
+        const c = totalsComputed.get(r.employeeId)!;
 
         return {
           department: r.department,
@@ -650,19 +754,19 @@ export default function ReportTab() {
             r.employeeId,
             r.employeeName,
             r.department,
-            r.totalDays,
-            r.weekOffs,
-            r.holidays,
-            r.leaves,
-            r.absences,
-            presentDays,
-            ddCount,
-            totalLateDays,
-            r.basicSalary.toLocaleString(),
-            empDeds.advance.toLocaleString(),
-            salaryWithoutLateDeduction.toLocaleString(),
-            lateDeduction.toLocaleString(),
-            finalGrossSalary.toLocaleString(),
+            c.total,
+            c.weekOffs,
+            c.holidays,
+            c.leaves,
+            c.absences,
+            c.present,
+            c.dd,
+            c.late,
+            c.basic.toLocaleString(),
+            c.advance.toLocaleString(),
+            Math.round(c.sld).toLocaleString(),
+            Math.round(c.lateDeduction).toLocaleString(),
+            Math.round(c.grossSalary).toLocaleString(),
           ],
         };
       });
@@ -693,7 +797,19 @@ export default function ReportTab() {
   };
 
   return (
-    <div>
+    <div className="attendance-report-tab">
+      {/* Hide native number-input spinners for all numeric inputs in this tab */}
+      <style>{`
+        .attendance-report-tab input[type="number"]::-webkit-outer-spin-button,
+        .attendance-report-tab input[type="number"]::-webkit-inner-spin-button {
+          -webkit-appearance: none;
+          margin: 0;
+        }
+        .attendance-report-tab input[type="number"] {
+          -moz-appearance: textfield;
+          appearance: textfield;
+        }
+      `}</style>
       <div className="flex flex-col items-start justify-between gap-4 mb-6 xl:flex-row xl:items-center">
         <h2 className="text-xl font-semibold text-white">Monthly Reports</h2>
         <div className="grid w-full grid-cols-1 gap-2 sm:grid-cols-2 xl:flex xl:w-auto xl:flex-wrap">
@@ -716,6 +832,15 @@ export default function ReportTab() {
               className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors no-print disabled:opacity-50"
             >
               {isSaving ? "Saving..." : "💾 Save Deductions"}
+            </button>
+          )}
+          {reportType === 'totals' && Object.keys(edits).length > 0 && (
+            <button
+              onClick={handleClearEdits}
+              className="bg-amber-700 hover:bg-amber-600 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors no-print"
+              title="Restore all values to their computed state (edits are UI-only)"
+            >
+              ↺ Reset edits
             </button>
           )}
 
@@ -790,8 +915,7 @@ export default function ReportTab() {
               <p className="text-2xl font-bold text-white mt-1">{filteredReport.length}</p>
             </div>
             <div className="bg-neutral-800 border border-neutral-700 rounded-xl p-4">
-              <p className="text-xs text-neutral-400 uppercase tracking-wide">Days in Month</p>
-              <p className="text-2xl font-bold text-white mt-1">
+              <p className="text-xs text-neutral-400 uppercase tracking-wide">Days in Month</p>                <p className="text-2xl font-bold text-white mt-1">
                 {filteredReport[0]?.totalDays ?? "—"}
               </p>
             </div>
@@ -818,6 +942,11 @@ export default function ReportTab() {
 
           {/* Report table */}
           <div className="mb-3 text-xs text-neutral-500 md:hidden">Swipe horizontally to view the full report grid.</div>
+          {reportType === 'totals' && (
+            <p className="mb-3 text-xs text-amber-400/80 no-print">
+              Editable cells (highlighted when changed) apply to this screen's calculations only — nothing is saved.
+            </p>
+          )}
           <div className="overflow-auto max-h-[calc(100vh-160px)] border border-neutral-700 rounded-xl bg-neutral-900/20">
             <table className="w-full text-sm border-separate border-spacing-0">
               <thead>
@@ -873,6 +1002,7 @@ export default function ReportTab() {
               <tbody>
                 {filteredReport.map((r) => {
                   const internalId = empIdToInternalId.get(r.employeeId);
+                  const cTotals = totalsComputed.get(r.employeeId);
                   const salary = salaryByEmployeeId.get(r.employeeId) || { perDaySalary: r.perDaySalary, netSalary: r.netSalary };
                   const ddCount = ddCountByEmployeeId.get(r.employeeId) || 0;
                   const payableSalary = salary.netSalary + ddCount * salary.perDaySalary;
@@ -999,15 +1129,23 @@ export default function ReportTab() {
 
                       {reportType !== 'attendance' && (
                         <>
-                          <td className="py-2 px-2 text-right text-neutral-300 border-b border-neutral-800">{r.totalDays}</td>
-                          <td className="py-2 px-2 text-right text-orange-400 border-b border-neutral-800">{r.weekOffs}</td>
-                          <td className="py-2 px-2 text-right text-purple-400 border-b border-neutral-800">{r.holidays}</td>
-                          <td className="py-2 px-2 text-right text-yellow-400 border-b border-neutral-800">{r.leaves}</td>
-                          <td className="py-2 px-2 text-right text-red-400 border-b border-neutral-800">{r.absences}</td>
+                          {reportType === 'totals'
+                            ? renderEditCell(r.employeeId, 'total')
+                            : (<td className="py-2 px-2 text-right text-neutral-300 border-b border-neutral-800">{r.totalDays}</td>)}
+                          {reportType === 'totals'
+                            ? renderEditCell(r.employeeId, 'weekOffs')
+                            : (<td className="py-2 px-2 text-right text-orange-400 border-b border-neutral-800">{r.weekOffs}</td>)}
+                          {reportType === 'totals'
+                            ? renderEditCell(r.employeeId, 'holidays')
+                            : (<td className="py-2 px-2 text-right text-purple-400 border-b border-neutral-800">{r.holidays}</td>)}
+                          {reportType === 'totals'
+                            ? renderEditCell(r.employeeId, 'leaves')
+                            : (<td className="py-2 px-2 text-right text-yellow-400 border-b border-neutral-800">{r.leaves}</td>)}
+                          {reportType === 'totals'
+                            ? renderEditCell(r.employeeId, 'absences')
+                            : (<td className="py-2 px-2 text-right text-red-400 border-b border-neutral-800">{r.absences}</td>)}
                           {reportType === 'totals' ? (
-                            <td className="py-2 px-2 text-right text-emerald-400 font-medium border-b border-neutral-800">
-                              {presentDays}
-                            </td>
+                            renderEditCell(r.employeeId, 'present')
                           ) : (
                             <td className="py-2 px-2 text-right text-emerald-400 font-medium border-b border-neutral-800">
                               {r.workingDays}
@@ -1018,35 +1156,37 @@ export default function ReportTab() {
                             <td className="py-2 px-2 text-neutral-400 text-xs border-b border-neutral-800">{r.shiftInfo}</td>
                           )}
                           
+                          {reportType === 'totals'
+                            ? renderEditCell(r.employeeId, 'dd')
+                            : (
                           <td className="py-2 px-2 text-right text-blue-400 font-medium border-b border-neutral-800">
                             {ddCount}
                           </td>
+                          )}
 
                           {reportType === 'totals' ? (
                             <>
-                              <td className="py-2 px-2 text-right text-orange-400 font-bold border-b border-neutral-800">
-                                {totalLateDays}
-                              </td>
-                              <td className="py-2 px-2 text-right text-neutral-300 border-b border-neutral-800">
-                                ₹{r.basicSalary.toLocaleString()}
-                              </td>
+                              {renderEditCell(r.employeeId, 'late')}
+                              {renderEditCell(r.employeeId, 'basic')}
                               <td className="py-2 px-2 text-right border-b border-neutral-800">
-                                <input 
-                                  type="number" 
-                                  className="w-16 bg-neutral-800 border border-neutral-700 rounded px-1 py-1 text-xs text-white text-right"
+                                <input
+                                  type="number"
+                                  className="bg-neutral-800 border border-neutral-700 rounded px-1 py-1 text-xs text-white text-right tabular-nums"
+                                  style={{ width: numericInputWidth(deductions[r.employeeId]?.advance || "") }}
                                   value={deductions[r.employeeId]?.advance || ""}
                                   onChange={(e) => handleDeductionChange(r.employeeId, 'advance', e.target.value)}
+                                  onFocus={(e) => e.currentTarget.select()}
                                   placeholder="0"
                                 />
                               </td>
                               <td className="py-2 px-2 text-right text-neutral-300 border-b border-neutral-800">
-                                ₹{(payableSalary - (deductions[r.employeeId]?.advance || 0)).toLocaleString()}
+                                ₹{Math.round(cTotals?.sld ?? (payableSalary - (deductions[r.employeeId]?.advance || 0))).toLocaleString()}
                               </td>
                               <td className="py-2 px-2 text-right text-red-400 border-b border-neutral-800">
-                                ₹{lateDeduction.toLocaleString()}
+                                ₹{Math.round(cTotals?.lateDeduction ?? lateDeduction).toLocaleString()}
                               </td>
                               <td className="py-2 px-2 text-right text-emerald-400 font-semibold border-b border-neutral-800">
-                                ₹{(payableSalary - (deductions[r.employeeId]?.advance || 0) - lateDeduction).toLocaleString()}
+                                ₹{Math.round(cTotals?.grossSalary ?? (payableSalary - (deductions[r.employeeId]?.advance || 0) - lateDeduction)).toLocaleString()}
                               </td>
                             </>
                           ) : (

@@ -6,6 +6,7 @@ import { Patient, Bill } from "@/types/patient";
 import AdmittedPatientsTable from "@/components/AdmittedPatientsTable";
 import DischargedPatientsTable from "@/components/DischargedPatientsTable";
 import PatientBillsReportTab from "@/components/PatientBillsReportTab";
+import AdmissionsReportTab from "@/components/AdmissionsReportTab";
 import AdvanceHistoryTab from "@/components/AdvanceHistoryTab";
 import AddPatientModal from "@/components/AddPatientModal";
 import AddBillModal from "@/components/AddBillModal";
@@ -64,6 +65,7 @@ const normalizePatient = (p: Patient): Patient => ({
 export default function Home() {
   const companyId = useAppStore((s) => s.companyId);
   const [activeTab, setActiveTab] = useState<'admission' | 'discharged' | 'advances' | 'reports'>('admission');
+  const [reportView, setReportView] = useState<'bills' | 'admissions'>('bills');
   const [patients, setPatients] = useState<Patient[]>([]);
   const [isLoadingPatients, setIsLoadingPatients] = useState(false);
   const [patientsError, setPatientsError] = useState("");
@@ -372,7 +374,33 @@ export default function Home() {
             )}
 
             {activeTab === 'reports' && (
-              <PatientBillsReportTab patients={patients} />
+              <div className="space-y-4">
+                <div className="inline-flex rounded-lg border border-neutral-800 bg-neutral-900 p-1">
+                  <button
+                    onClick={() => setReportView('bills')}
+                    className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${reportView === 'bills'
+                      ? 'bg-blue-600/20 text-blue-400'
+                      : 'text-neutral-400 hover:text-white'
+                      }`}
+                  >
+                    Bills Report
+                  </button>
+                  <button
+                    onClick={() => setReportView('admissions')}
+                    className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${reportView === 'admissions'
+                      ? 'bg-blue-600/20 text-blue-400'
+                      : 'text-neutral-400 hover:text-white'
+                      }`}
+                  >
+                    Admissions Report
+                  </button>
+                </div>
+                {reportView === 'bills' ? (
+                  <PatientBillsReportTab patients={patients} />
+                ) : (
+                  <AdmissionsReportTab patients={patients} />
+                )}
+              </div>
             )}
           </>
         )}
