@@ -262,6 +262,11 @@ export default function AddBillModal({
       return;
     }
 
+    // At least one of cash / online must be non-zero
+    if (cashAmount === 0 && onlineAmount === 0) {
+      return;
+    }
+
     const billDate = existingBill?.date || new Date().toISOString().split("T")[0];
     const bill: Bill = {
       id: existingBill?.id || Date.now().toString(),
