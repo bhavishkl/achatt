@@ -396,7 +396,7 @@ export default function Home() {
                   </button>
                 </div>
                 {reportView === 'bills' ? (
-                  <PatientBillsReportTab patients={patients} />
+                  <PatientBillsReportTab patients={patients} onBillUpdate={handleSaveBill} />
                 ) : (
                   <AdmissionsReportTab patients={patients} />
                 )}

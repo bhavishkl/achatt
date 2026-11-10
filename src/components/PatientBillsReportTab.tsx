@@ -1,14 +1,15 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useRef, useState, useMemo } from "react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import * as XLSX from "xlsx";
-import { Patient } from "@/types/patient";
+import { Patient, Bill } from "@/types/patient";
 import { formatDisplayDate } from "@/components/add-bill-modal/utils";
 
 interface PatientBillsReportTabProps {
   patients: Patient[];
+  onBillUpdate?: (patientId: string, bill: Bill) => void;
 }
 
 interface ReportRow {
@@ -23,7 +24,7 @@ const getPatientDOD = (patient: Patient): string =>
   patient.dischargeDate ||
   "";
 
-export default function PatientBillsReportTab({ patients }: PatientBillsReportTabProps) {
+export default function PatientBillsReportTab({ patients, onBillUpdate }: PatientBillsReportTabProps) {
   const [search, setSearch] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
@@ -99,6 +100,108 @@ export default function PatientBillsReportTab({ patients }: PatientBillsReportTa
   const formatMoney = (n: number) => `₹${n.toLocaleString()}`;
 
   const [exportFormat, setExportFormat] = useState<"pdf" | "excel">("pdf");
+
+  // ─── Inline amount editing (cash / online) ───
+  type EditableField = "paidCash" | "paidOnline";
+
+  interface EditCell {
+    patientId: string;
+    billId: string;
+    field: EditableField;
+  }
+
+  const [editing, setEditing] = useState<EditCell | null>(null);
+  const [editValue, setEditValue] = useState("");
+  const [savingId, setSavingId] = useState<string | null>(null); // "${patientId}-${billId}-${field}"
+  const [notice, setNotice] = useState<{ text: string; kind: "success" | "error" } | null>(null);
+
+  function EditableAmountCell({ patient, bill, field }: { patient: Patient; bill: Bill; field: EditableField }) {
+    const isEditing =
+      editing !== null &&
+      editing.patientId === patient.id &&
+      editing.billId === bill.id &&
+      editing.field === field;
+    const isSaving = savingId === `${patient.id}-${bill.id}-${field}`;
+    const current = bill[field] ?? 0;
+    const inputRef = useRef<HTMLInputElement>(null);
+
+    const startEdit = () => {
+      setEditing({ patientId: patient.id, billId: bill.id, field });
+      setEditValue(String(current));
+    };
+
+    const saveEdit = async () => {
+      const n = Number(editValue);
+      if (!Number.isFinite(n) || n < 0) {
+        setNotice({ text: "Enter a valid amount", kind: "error" });
+        setTimeout(() => setNotice(null), 3000);
+        return;
+      }
+      if (n === current) {
+        setEditing(null);
+        return;
+      }
+      const label = field === "paidCash" ? "cash" : "online";
+      if (!window.confirm(`Update ${label} amount to ₹${n.toLocaleString()}?`)) return;
+
+      const key = `${patient.id}-${bill.id}-${field}`;
+      setSavingId(key);
+      try {
+        const updatedBill: Bill = { ...bill, [field]: n };
+        await onBillUpdate?.(patient.id, updatedBill);
+        setNotice({
+          text: `${label.charAt(0).toUpperCase() + label.slice(1)} amount updated to ₹${n.toLocaleString()}`,
+          kind: "success",
+        });
+        setTimeout(() => setNotice(null), 3000);
+      } catch (err: any) {
+        setNotice({ text: err.message || "Failed to update amount", kind: "error" });
+        setTimeout(() => setNotice(null), 4000);
+      } finally {
+        setSavingId(null);
+        setEditing(null);
+      }
+    };
+
+    const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === "Enter") saveEdit();
+      else if (e.key === "Escape") setEditing(null);
+    };
+
+    const amountCls = field === "paidCash" ? "text-emerald-400" : field === "paidOnline" ? "text-blue-400" : "text-amber-400";
+
+    if (isEditing) {
+      return (
+        <td className="p-0" onDoubleClick={(e) => e.stopPropagation()}>
+          <input
+            ref={inputRef}
+            autoFocus
+            defaultValue={editValue}
+            value={editValue}
+            onChange={(e) => setEditValue(e.target.value)}
+            onKeyDown={onKeyDown}
+            onBlur={() => setEditing(null)}
+            disabled={isSaving}
+            className={`w-full h-full bg-neutral-950 ${isSaving ? "opacity-60" : ""} text-right px-3 py-2 text-sm font-medium border-b-2 border-blue-600 outline-none focus:ring-0 ${amountCls}`}
+          />
+        </td>
+      );
+    }
+
+    return (
+      <td
+        className="p-4 text-right cursor-pointer hover:bg-neutral-800/30 transition-colors border-b border-neutral-800/50"
+        onDoubleClick={startEdit}
+        title={`Double-click to edit ${field === "paidCash" ? "cash" : "online"} amount`}
+      >
+        {isSaving ? (
+          <span className="animate-pulse text-neutral-500">{formatMoney(current)}</span>
+        ) : (
+          <span className={`font-medium ${amountCls}`}>{formatMoney(current)}</span>
+        )}
+      </td>
+    );
+  }
 
   const handleExportExcel = () => {
     const header = [
@@ -318,6 +421,20 @@ export default function PatientBillsReportTab({ patients }: PatientBillsReportTa
         </div>
       </div>
 
+      {/* Update confirmation / error notice */}
+      {notice && (
+        <div
+          className={`rounded-lg border px-4 py-3 text-sm flex items-center gap-2 ${
+            notice.kind === "success"
+              ? "border-emerald-800/50 bg-emerald-900/40 text-emerald-300"
+              : "border-red-800/50 bg-red-900/40 text-red-300"
+          }`}
+        >
+          {notice.kind === "success" ? <span>✓</span> : <span>✖</span>}
+          {notice.text}
+        </div>
+      )}
+
       {/* Table */}
       <div className="bg-neutral-900 rounded-xl border border-neutral-800 overflow-hidden">
         <div className="overflow-x-auto">
@@ -359,8 +476,8 @@ export default function PatientBillsReportTab({ patients }: PatientBillsReportTa
                         {getPatientDOD(patient) ? formatDisplayDate(getPatientDOD(patient)) : "-"}
                       </td>
                       <td className="p-4 text-right font-medium text-neutral-200">{formatMoney(bill.totalAmount)}</td>
-                      <td className="p-4 text-right text-emerald-400">{formatMoney(bill.paidCash ?? 0)}</td>
-                      <td className="p-4 text-right text-blue-400">{formatMoney(bill.paidOnline ?? 0)}</td>
+                      <EditableAmountCell patient={patient} bill={bill} field="paidCash" />
+                      <EditableAmountCell patient={patient} bill={bill} field="paidOnline" />
                       <td className="p-4 text-right text-amber-400">{formatMoney(bill.concession ?? 0)}</td>
                     </tr>
                   ))}
