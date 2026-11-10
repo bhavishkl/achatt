@@ -129,8 +129,11 @@ function parsePatientHeader(headerLines: string[]): PatientInfo {
       continue;
     }
 
-    // DOD / Discharge date
-    if (/^d[\/.]?o[\/.]?d\b/i.test(line) || /^date\s*of\s*dis/i.test(line)) {
+    // DOD / Discharge date — handles "DOD", "D/O/D", "D//0/D-", "DOD 10/11/2026"
+    if (
+      /^d\W{0,4}(?:o|0)\W{0,4}d\b/i.test(line) ||
+      /^date\s*of\s*dis/i.test(line)
+    ) {
       const d = extractDate(line);
       if (d) dischargeDate = normalizeDate(d);
       continue;
@@ -207,12 +210,12 @@ const KNOWN_CATEGORIES = [
 ];
 
 function isCategoryHeader(line: string): boolean {
-  const l = line.trim().toLowerCase();
+  const l = line.trim().replace(/[-:/~\s]+$/, '').toLowerCase();
   return KNOWN_CATEGORIES.includes(l);
 }
 
 function normalizeCategoryName(line: string): string {
-  const l = line.trim();
+  const l = line.trim().replace(/[-:/~\s]+$/, '');
   const lower = l.toLowerCase();
   if (lower === 'abg') return 'ABG';
   if (lower === 'usg') return 'USG';
@@ -288,7 +291,17 @@ function parseTreatment(lines: string[]): TreatmentEntry[] {
   return lines
     .map((l) => l.trim())
     .filter(Boolean)
-    .map((line) => ({ id: uid(), name: line, dosage: '' }));
+    .map((line) => {
+      let name = line;
+      let dosage = '';
+      // Split on '@' — e.g. "Inj- Pantop infusion@4ml/hr" -> name + "@4ml/hr"
+      const atIdx = line.indexOf('@');
+      if (atIdx >= 0) {
+        name = line.slice(0, atIdx).replace(/[-:\s]+$/, '').trim();
+        dosage = line.slice(atIdx).trim();
+      }
+      return { id: uid(), name, dosage };
+    });
 }
 
 // ─── Main parser ──────────────────────────────────────────────────────────────
