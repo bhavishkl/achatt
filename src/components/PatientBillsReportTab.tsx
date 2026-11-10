@@ -144,6 +144,13 @@ export default function PatientBillsReportTab({ patients, onBillUpdate }: Patien
       const label = field === "paidCash" ? "cash" : "online";
       if (!window.confirm(`Update ${label} amount to ₹${n.toLocaleString()}?`)) return;
 
+      const other = field === "paidCash" ? (bill.paidOnline ?? 0) : (bill.paidCash ?? 0);
+      if (n === 0 && other === 0) {
+        setNotice({ text: "At least one of cash or online must be non-zero", kind: "error" });
+        setTimeout(() => setNotice(null), 3000);
+        return;
+      }
+
       const key = `${patient.id}-${bill.id}-${field}`;
       setSavingId(key);
       try {
