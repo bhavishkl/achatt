@@ -176,7 +176,6 @@ export default function PatientBillsReportTab({ patients, onBillUpdate }: Patien
           <input
             ref={inputRef}
             autoFocus
-            defaultValue={editValue}
             value={editValue}
             onChange={(e) => setEditValue(e.target.value)}
             onKeyDown={onKeyDown}
