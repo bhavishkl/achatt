@@ -46,6 +46,15 @@ export async function POST(
       return NextResponse.json({ message: "Bill payload with bill.id is required" }, { status: 400 });
     }
 
+    const paidCash = toNumber(bill.paidCash);
+    const paidOnline = toNumber(bill.paidOnline);
+    if (paidCash === 0 && paidOnline === 0) {
+      return NextResponse.json(
+        { message: "At least one of paid_cash or paid_online must be non-zero" },
+        { status: 400 }
+      );
+    }
+
     const { data: existingBill, error: existingBillError } = await supabaseAdmin
       .from("patient_bills")
       .select("id, patient_id, advance_used, bill_no")
