@@ -2,12 +2,10 @@ import type { Company } from "@/lib/types";
 import type { Patient } from "@/types/patient";
 import { amountToWords } from "@/components/add-bill-modal/utils";
 
-/**
- * Deterministic, simple receipt number for a manual advance entry, derived
- * from the entry id so the same entry always reprints with the same number.
- */
-export function advanceReceiptNo(entry: { id: string }) {
-  return `ADV-${(entry.id || "").slice(0, 6).toUpperCase()}`;
+/** Stable, database-assigned receipt number. */
+export function advanceReceiptNo(entry: { receiptNo?: number | string | null; id?: string }) {
+  if (entry.receiptNo == null || entry.receiptNo === "") return "----";
+  return String(entry.receiptNo).padStart(4, "0");
 }
 
 export function advanceModeLabel(mode: string) {
@@ -68,7 +66,7 @@ export function buildAdvanceReceiptHtml({
             <title>Advance Receipt (${receiptNo}) - ${patient.prefix} ${patient.name}</title>
             <style>
                 * { margin: 0; padding: 0; box-sizing: border-box; }
-                body { font-family: 'Segoe UI', Arial, sans-serif; color: #1a1a1a; padding: 32px; max-width: 720px; margin: 0 auto; }
+                body { font-family: 'Segoe UI', Arial, sans-serif; color: #1a1a1a; padding: 8mm; width: 148mm; min-height: 210mm; margin: 0 auto; }
                 .header { text-align: center; padding-top: 10px; padding-bottom: 10px; margin-bottom: 10px; }
                 .header h1 { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
                 .header p { font-size: 12px; color: #000; }
@@ -89,7 +87,7 @@ export function buildAdvanceReceiptHtml({
                 .print-date { color: #6b7280; font-size: 10px; margin-bottom: 4px; }
                 @media print {
                     body { padding: 16px; }
-                    @page { margin: 12mm; }
+                    @page { size: A5 portrait; margin: 8mm; }
                 }
             </style>
         </head>
