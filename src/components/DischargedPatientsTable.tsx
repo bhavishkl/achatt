@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Pencil } from "lucide-react";
+import { Pencil, Printer, ReceiptText } from "lucide-react";
 import { Patient } from "@/types/patient";
 import { formatDisplayDate, formatDisplayTime } from "@/components/add-bill-modal/utils";
 
@@ -10,6 +10,8 @@ interface DischargedPatientsTableProps {
     onViewBill: (patientId: string, billId: string) => void;
     onAddBill: (patientId: string) => void;
     onEditPatient: (patientId: string) => void;
+    onPrintBill: (patientId: string, billId: string) => void;
+    onViewReceipts: (patient: Patient) => void;
 }
 
 type SortField = 'regNo' | 'name' | 'wardDetails' | 'admissionDate' | 'dischargeDate' | 'totalBill';
@@ -39,6 +41,8 @@ export default function DischargedPatientsTable({
     onViewBill,
     onAddBill,
     onEditPatient,
+    onPrintBill,
+    onViewReceipts,
 }: DischargedPatientsTableProps) {
     // Search
     const [search, setSearch] = useState('');
@@ -295,7 +299,15 @@ export default function DischargedPatientsTable({
                                                                 {bill.billNo && <span className="text-blue-400 font-mono font-medium">#{bill.billNo}</span>}
                                                                 <span className="text-neutral-500">{formatDisplayDate(bill.date)}</span>
                                                                 <span>₹{bill.totalAmount.toLocaleString()}</span>
-                                                                <span className="text-neutral-500">👁</span>
+                                                                <span className="text-neutral-500">View</span>
+                                                            </button>
+                                                            <button
+                                                                onClick={() => onPrintBill(patient.id, bill.id)}
+                                                                className="inline-flex items-center justify-center h-7 w-7 rounded border border-neutral-700 bg-neutral-800 hover:bg-neutral-700 text-blue-400"
+                                                                title="Print saved bill (A5)"
+                                                                aria-label="Print saved bill"
+                                                            >
+                                                                <Printer className="h-3.5 w-3.5" />
                                                             </button>
                                                         ))}
                                                         <span className="text-sm text-neutral-400 font-medium">
@@ -316,6 +328,15 @@ export default function DischargedPatientsTable({
                                             </div>
                                         </td>
                                         <td className="p-4">
+                                            <div className="flex items-center justify-center gap-1">
+                                            <button
+                                                onClick={() => onViewReceipts(patient)}
+                                                className="inline-flex items-center justify-center h-8 w-8 rounded-lg border border-neutral-700 bg-neutral-800 text-emerald-400 hover:bg-neutral-700 transition-colors"
+                                                title="View and reprint patient receipts"
+                                                aria-label="View patient receipts"
+                                            >
+                                                <ReceiptText className="h-4 w-4" />
+                                            </button>
                                             <button
                                                 onClick={() => onEditPatient(patient.id)}
                                                 className="inline-flex items-center justify-center h-8 w-8 rounded-lg border border-neutral-700 bg-neutral-800 text-neutral-300 hover:bg-neutral-700 hover:text-white transition-colors"
@@ -324,6 +345,7 @@ export default function DischargedPatientsTable({
                                             >
                                                 <Pencil className="h-4 w-4" />
                                             </button>
+                                            </div>
                                         </td>
                                     </tr>
                                 ))
