@@ -416,6 +416,7 @@ export default function Home() {
 
             {activeTab === 'advances' && (
               <AdvanceHistoryTab
+                key={advanceInitialSearch || "all"}
                 patients={patients}
                 reloadKey={advanceReloadKey}
                 onAddAdvance={() => openAdvanceModal(ADVANCE_ANY)}
