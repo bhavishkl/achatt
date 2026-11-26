@@ -23,7 +23,7 @@ export interface AdvanceSavePayload {
 /** What the parent's save handler must resolve with (used for the receipt). */
 export interface AdvanceSaveResult {
   patient: Patient;
-  advance: { id: string; createdAt: string };
+  advance: { id: string; receiptNo: number; createdAt: string };
 }
 
 interface AddAdvanceModalProps {
@@ -118,7 +118,7 @@ export default function AddAdvanceModal({
             amount: parsedAmount,
             mode: paymentMode,
             note: note.trim(),
-            receiptNo: advanceReceiptNo({ id: result.advance.id }),
+            receiptNo: advanceReceiptNo({ receiptNo: result.advance.receiptNo }),
             createdAt: result.advance.createdAt,
             advanceBalance: result.patient.advanceBalance ?? null,
             companyProfile,
