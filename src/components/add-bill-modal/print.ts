@@ -73,7 +73,7 @@ export function buildBillPrintHtml({
             <title>Bill ${billNo ? `(${billNo}) ` : ""}- ${patient.name} - ${formattedBillDate}</title>
             <style>
                 * { margin: 0; padding: 0; box-sizing: border-box; }
-                body { font-family: 'Segoe UI', Arial, sans-serif; color: #1a1a1a; padding: 8mm; width: 148mm; min-height: 210mm; margin: 0 auto; }
+                body { font-family: 'Segoe UI', Arial, sans-serif; color: #1a1a1a; padding: 0; width: auto; max-width: 132mm; min-height: 194mm; margin: 0 auto; }
                 body.final-bill { padding-top: 10px; }
                 .header { text-align: center; padding-top: 10px; padding-bottom: 10px; margin-bottom: 10px; }
                 .header h1 { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
@@ -101,7 +101,7 @@ export function buildBillPrintHtml({
                 .footer { text-align: center; margin-top: 40px; padding-top: 16px; border-top: 1px solid #000; font-size: 11px; color: #000; }
                 .print-date { color: #6b7280; font-size: 10px; margin-bottom: 4px; }
                 @media print {
-                    body { padding: 16px; }
+                    body { padding: 0; width: auto; max-width: 132mm; }
                     body.final-bill { padding-top: 0; }
                     @page { size: A5 portrait; margin: 8mm; }
                 }
