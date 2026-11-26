@@ -16,6 +16,8 @@ import AddAdvanceModal, {
 } from "@/components/AddAdvanceModal";
 import { useAppStore } from "@/lib/store";
 import { currentTimeValue } from "@/components/add-bill-modal/utils";
+import { buildBillPrintHtml, openBillPrintWindow } from "@/components/add-bill-modal/print";
+import type { Company } from "@/lib/types";
 
 function PatientsTableSkeleton() {
   return (
@@ -79,6 +81,7 @@ export default function Home() {
   const [advancePatientId, setAdvancePatientId] = useState<string | null>(null);
   const [advanceReloadKey, setAdvanceReloadKey] = useState(0);
   const [patientsReloadKey, setPatientsReloadKey] = useState(0);
+  const [advanceInitialSearch, setAdvanceInitialSearch] = useState("");
 
   // API in-flight states
   const [dischargingPatientId, setDischargingPatientId] = useState<string | null>(null);
@@ -273,6 +276,49 @@ export default function Home() {
     }
   };
 
+  const openPatientReceipts = (patient: Patient) => {
+    setAdvanceInitialSearch(patient.regNo);
+    setActiveTab("advances");
+  };
+
+  const printSavedBill = async (patientId: string, billId: string) => {
+    const patient = patients.find((p) => p.id === patientId);
+    const bill = patient?.bills?.find((b) => b.id === billId);
+    if (!patient || !bill || !companyId) return;
+    try {
+      const response = await fetch(`/api/ipd/hospital-info?companyId=${companyId}`);
+      const info = response.ok ? await response.json() : null;
+      const companyProfile = info ? ({
+        name: info.name || "",
+        address: [info.address, info.city, info.state, info.pincode].filter(Boolean).join(", "),
+        emailId: info.email || "",
+        mobileNumber1: info.phone || "",
+        mobileNumber2: info.altPhone || "",
+      } as Company) : null;
+      const grossAmount = bill.grossAmount ?? bill.totalAmount;
+      const html = buildBillPrintHtml({
+        patient,
+        items: (bill.items || []).map((item) => ({
+          id: item.id, description: item.description, rate: item.rate,
+          quantity: item.quantity, amount: item.amount,
+        })),
+        billDate: bill.date,
+        billNo: bill.billNo,
+        dischargeDate: bill.dischargeDate || patient.dischargeDate || "",
+        dischargeTime: bill.dischargeTime || patient.dischargeTime || "",
+        ipBillType: bill.ipBillType || "draft",
+        grossAmount,
+        advanceUsed: bill.advanceUsed || 0,
+        concession: bill.concession || 0,
+        netAmount: bill.totalAmount,
+        companyProfile,
+      });
+      openBillPrintWindow(html);
+    } catch (error) {
+      setPatientsError(error instanceof Error ? error.message : "Unable to print bill");
+    }
+  };
+
   const admittedPatients = patients.filter(p => p.status === 'admitted');
   const dischargedPatients = patients.filter(p => p.status === 'discharged');
   const selectedPatient = patients.find(p => p.id === selectedPatientId) || null;
@@ -361,6 +407,8 @@ export default function Home() {
                 onViewBill={openEditBillModal}
                 onAddBill={openBillModal}
                 onEditPatient={openEditPatientModal}
+                onPrintBill={printSavedBill}
+                onViewReceipts={openPatientReceipts}
               />
             )}
 
@@ -370,6 +418,7 @@ export default function Home() {
                 reloadKey={advanceReloadKey}
                 onAddAdvance={() => openAdvanceModal(ADVANCE_ANY)}
                 onChanged={() => setPatientsReloadKey((k) => k + 1)}
+                initialSearch={advanceInitialSearch}
               />
             )}
 
