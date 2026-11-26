@@ -27,6 +27,8 @@ export interface Bill {
 /** One row of the patient advance ledger (patient_advances table). */
 export interface AdvanceEntry {
     id: string;
+    /** Database-assigned sequential receipt number; present on credit entries. */
+    receiptNo?: number;
     patientId: string;
     /** "credit" = advance payment received; "debit" = adjustment against a bill. */
     entryType: "credit" | "debit";
