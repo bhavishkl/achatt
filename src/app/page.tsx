@@ -263,7 +263,7 @@ export default function Home() {
       closeAdvanceModal();
       return {
         patient: savedPatient,
-        advance: { id: String(data.advance.id), createdAt: String(data.advance.createdAt) },
+        advance: { id: String(data.advance.id), receiptNo: Number(data.advance.receiptNo), createdAt: String(data.advance.createdAt) },
       };
     } catch (error: any) {
       setPatientsError(error.message || "Failed to save advance amount");
