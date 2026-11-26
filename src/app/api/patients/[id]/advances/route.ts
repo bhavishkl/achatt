@@ -33,7 +33,7 @@ export async function POST(
           reference_bill_id: null,
         },
       ])
-      .select("id, patient_id, entry_type, amount, source, reference_bill_id, note, created_at")
+      .select("id, receipt_no, patient_id, entry_type, amount, source, reference_bill_id, note, created_at")
       .single();
 
     if (insertError) {
@@ -55,6 +55,7 @@ export async function POST(
       patient,
       advance: {
         id: String(advanceRow.id),
+        receiptNo: Number(advanceRow.receipt_no),
         createdAt: advanceRow.created_at,
         amount: Number(advanceRow.amount) || amount,
         mode,
