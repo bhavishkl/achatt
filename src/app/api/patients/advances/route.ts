@@ -34,7 +34,7 @@ export async function GET(request: Request) {
 
     const { data: advances, error: advancesError } = await supabaseAdmin
       .from("patient_advances")
-      .select("id, patient_id, entry_type, amount, source, reference_bill_id, note, created_at")
+      .select("id, receipt_no, patient_id, entry_type, amount, source, reference_bill_id, note, created_at")
       .in("patient_id", patientIds)
       .order("created_at", { ascending: false });
 
@@ -66,6 +66,7 @@ export async function GET(request: Request) {
 
       return {
         id: String(row.id),
+        receiptNo: row.receipt_no == null ? undefined : Number(row.receipt_no),
         patientId: String(row.patient_id),
         entryType: row.entry_type === "debit" ? "debit" : "credit",
         amount: Number(row.amount) || 0,
