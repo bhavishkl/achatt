@@ -26,9 +26,10 @@ interface AdvanceHistoryTabProps {
   onAddAdvance: () => void;
   /** Called after a receipt is voided so the parent can refresh balances. */
   onChanged?: () => void;
+  initialSearch?: string;
 }
 
-export default function AdvanceHistoryTab({ reloadKey = 0, onAddAdvance, onChanged }: AdvanceHistoryTabProps) {
+export default function AdvanceHistoryTab({ reloadKey = 0, onAddAdvance, onChanged, initialSearch = "" }: AdvanceHistoryTabProps) {
   const { companyId } = useAppStore();
   const [entries, setEntries] = useState<AdvanceEntry[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -37,7 +38,9 @@ export default function AdvanceHistoryTab({ reloadKey = 0, onAddAdvance, onChang
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [refreshTick, setRefreshTick] = useState(0);
 
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(initialSearch);
+
+  useEffect(() => { setSearch(initialSearch); }, [initialSearch]);
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [modeFilter, setModeFilter] = useState<"all" | "cash" | "online" | "adjustment">("all");
