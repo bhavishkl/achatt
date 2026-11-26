@@ -16,7 +16,7 @@ import AddAdvanceModal, {
 } from "@/components/AddAdvanceModal";
 import { useAppStore } from "@/lib/store";
 import { currentTimeValue } from "@/components/add-bill-modal/utils";
-import { buildBillPrintHtml, openBillPrintWindow } from "@/components/add-bill-modal/print";
+import { buildBillPrintHtml, openBillPrintWindow, openPendingPrintWindow } from "@/components/add-bill-modal/print";
 import type { Company } from "@/lib/types";
 
 function PatientsTableSkeleton() {
@@ -285,6 +285,7 @@ export default function Home() {
     const patient = patients.find((p) => p.id === patientId);
     const bill = patient?.bills?.find((b) => b.id === billId);
     if (!patient || !bill || !companyId) return;
+    const printWindow = openPendingPrintWindow();
     try {
       const response = await fetch(`/api/ipd/hospital-info?companyId=${companyId}`);
       const info = response.ok ? await response.json() : null;
@@ -313,8 +314,9 @@ export default function Home() {
         netAmount: bill.totalAmount,
         companyProfile,
       });
-      openBillPrintWindow(html);
+      openBillPrintWindow(html, printWindow);
     } catch (error) {
+      printWindow?.close();
       setPatientsError(error instanceof Error ? error.message : "Unable to print bill");
     }
   };
