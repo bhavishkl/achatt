@@ -301,7 +301,7 @@ export default function Home() {
         patient,
         items: (bill.items || []).map((item) => ({
           id: item.id, description: item.description, rate: item.rate,
-          quantity: item.quantity, amount: item.amount,
+          quantity: item.quantity,
         })),
         billDate: bill.date,
         billNo: bill.billNo,
