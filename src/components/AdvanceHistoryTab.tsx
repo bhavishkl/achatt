@@ -39,8 +39,6 @@ export default function AdvanceHistoryTab({ reloadKey = 0, onAddAdvance, onChang
   const [refreshTick, setRefreshTick] = useState(0);
 
   const [search, setSearch] = useState(initialSearch);
-
-  useEffect(() => { setSearch(initialSearch); }, [initialSearch]);
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [modeFilter, setModeFilter] = useState<"all" | "cash" | "online" | "adjustment">("all");
